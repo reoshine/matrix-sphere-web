@@ -1,0 +1,55 @@
+@font-face {
+  font-family: "iconfont"; /* Project id 3991153 */
+  src: url('iconfont.woff2?t=1683205900814') format('woff2'),
+       url('iconfont.woff?t=1683205900814') format('woff'),
+       url('iconfont.ttf?t=1683205900814') format('truetype');
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-fuwuqiguanli:before {
+  content: "\e60b";
+}
+
+.icon-kubernetes:before {
+  content: "\ebee";
+}
+
+.icon-bxl-kubernetes:before {
+  content: "\e6f7";
+}
+
+.icon-service:before {
+  content: "\e941";
+}
+
+.icon-rongqi:before {
+  content: "\e609";
+}
+
+.icon-zu1773:before {
+  content: "\e62c";
+}
+
+.icon-code-branch-full:before {
+  content: "\e993";
+}
+
+.icon-yingyong:before {
+  content: "\e64f";
+}
+
+.icon-yunweiguanli:before {
+  content: "\e61e";
+}
+
+.icon-DeploymentUnit:before {
+  content: "\e613";
+}
+

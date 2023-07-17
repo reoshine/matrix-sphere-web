@@ -1,0 +1,79 @@
+{
+  "id": "3991153",
+  "name": "adp-matrix",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "22806232",
+      "name": "服务器管理",
+      "font_class": "fuwuqiguanli",
+      "unicode": "e60b",
+      "unicode_decimal": 58891
+    },
+    {
+      "icon_id": "15378529",
+      "name": "kubernetes",
+      "font_class": "kubernetes",
+      "unicode": "ebee",
+      "unicode_decimal": 60398
+    },
+    {
+      "icon_id": "20113942",
+      "name": "bxl-kubernetes ",
+      "font_class": "bxl-kubernetes",
+      "unicode": "e6f7",
+      "unicode_decimal": 59127
+    },
+    {
+      "icon_id": "18169764",
+      "name": "服务器,服务端",
+      "font_class": "service",
+      "unicode": "e941",
+      "unicode_decimal": 59713
+    },
+    {
+      "icon_id": "9673167",
+      "name": "容器",
+      "font_class": "rongqi",
+      "unicode": "e609",
+      "unicode_decimal": 58889
+    },
+    {
+      "icon_id": "14934417",
+      "name": "服务监控",
+      "font_class": "zu1773",
+      "unicode": "e62c",
+      "unicode_decimal": 58924
+    },
+    {
+      "icon_id": "18170242",
+      "name": "代码,分支,分流,分叉",
+      "font_class": "code-branch-full",
+      "unicode": "e993",
+      "unicode_decimal": 59795
+    },
+    {
+      "icon_id": "1503777",
+      "name": "应用",
+      "font_class": "yingyong",
+      "unicode": "e64f",
+      "unicode_decimal": 58959
+    },
+    {
+      "icon_id": "1249948",
+      "name": "运维管理",
+      "font_class": "yunweiguanli",
+      "unicode": "e61e",
+      "unicode_decimal": 58910
+    },
+    {
+      "icon_id": "19099139",
+      "name": "DeploymentUnit",
+      "font_class": "DeploymentUnit",
+      "unicode": "e613",
+      "unicode_decimal": 58899
+    }
+  ]
+}

@@ -1,0 +1,252 @@
+<template>
+  <div>
+    <el-divider content-position="left">应用信息</el-divider>
+    <div style="margin-bottom: 40px;">
+      <el-descriptions class="appDeployDiv" title="" :column="2" border>
+        <el-descriptions-item>
+          <template slot="label">
+            <i class="el-icon-s-order"></i>
+            应用编码
+          </template>
+          <el-tag size="small" v-show="(projectInfo.projectCode)">{{projectInfo.projectCode}}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item>
+          <template slot="label">
+            <i class="el-icon-document"></i>
+            应用名称
+          </template>
+          <el-tag size="small"  v-show="(projectInfo.projectName)">{{projectInfo.projectName}}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item>
+          <template slot="label">
+            <i class="el-icon-location-outline"></i>
+            应用分组
+          </template>
+          <el-tag size="small" v-show="(projectInfo.projectGroupName)">{{projectInfo.projectGroupName}}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item>
+          <template slot="label">
+            <i class="el-icon-link"></i>
+            git地址
+          </template>
+          <el-tag size="small" v-show="(projectInfo.gitUrl)">{{projectInfo.gitUrl}}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item :span="2">
+          <template slot="label">
+            <i class="el-icon-link"></i>
+            release分支
+          </template>
+          <el-tag size="small" v-show="(deployedInfo.deployInfo.releaseBranchName)">{{deployedInfo.deployInfo.releaseBranchName}}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item>
+          <template slot="label">
+            <i class="el-icon-link"></i>
+            feature分支
+          </template>
+            <el-tag v-show="(deployedInfo.deployInfo.featureBranchList.length > 0)" v-for="item in deployedInfo.deployInfo.featureBranchList" size="small" style="margin-right: 5px">
+            {{item.branchName}}
+          </el-tag>
+        </el-descriptions-item>
+      </el-descriptions>
+    </div>
+    <el-divider content-position="left">部署发布</el-divider>
+    <el-col>
+      <el-tabs class="envTabs" v-model="activeName" type="card" @tab-click="tabClick">
+        <el-tab-pane label="开发环境" name="dev"><DeployByEnv v-if="this.deployRecord.deployInfo !== {}" :projectInfo="projectInfo" :deployRecord="deployRecord" :getActiveName="activeName"/></el-tab-pane>
+        <el-tab-pane label="测试环境" name="test"><DeployByEnv :getActiveName="activeName" v-if="activeTest"/></el-tab-pane>
+        <el-tab-pane label="演示环境" name="poc"><DeployByEnv :getActiveName="activeName" v-if="activePoc"/></el-tab-pane>
+        <el-tab-pane label="生产环境" name="prod"><DeployByEnv :getActiveName="activeName" v-if="activeProd"/></el-tab-pane>
+      </el-tabs>
+    </el-col>
+  </div>
+</template>
+
+<script>
+import DeployByEnv  from "@/components/deployByEnv/DeployByEnv";
+import {getDeployMaster, getDeployRecord, getProjectById} from "@/api/api";
+import bus from "@/util/bus";
+
+export default {
+  name: "ApplicationDeploy",
+  components: {
+    DeployByEnv
+  },
+  data() {
+    return {
+
+      projectId: '',
+      deployMasterId: '',
+
+      //tabs 当前激活环境
+      activeName: "dev",
+      activeDev: true,
+      activeTest: false,
+      activePoc: false,
+      activeProd: false,
+
+      //应用信息
+      projectInfo: {
+        id: '',
+        projectCode: '',
+        projectName: '',
+        projectGroupId: '',
+        projectGroupName: '',
+        gitUrl: '',
+        enableStatus: ''
+      },
+
+      deployedInfo: {
+        deployInfo: {
+          projectId: '',
+          masterId: '',
+          releaseBranchId: '',
+          releaseBranchName: '',
+          deployEnvironment: '',
+          featureBranchList: []
+        },
+        deployStepList: {}
+      },
+
+      deployMaster: {
+        id: '',
+        deploySerialNo: '',
+        projectId: '',
+        deployStatus: '',
+        deployEnvironment: '',
+        isDeleted: ''
+      },
+
+      deployRecord: {
+        deployInfo: {
+          projectId: '',
+          masterId: '',
+          releaseBranchId: '',
+          releaseBranchName: '',
+          deployEnvironment: '',
+          featureBranchList: []
+        },
+        deployStepList: {}
+      },
+
+      //已合并分支列表
+      featureBranchList: [],
+      deployedBranch: ''
+    };
+  },
+  methods: {
+    tabClick(tab) {
+      if (tab.name === 'dev') {
+        this.activeName = 'dev';
+        this.activeDev = true;
+        this.activeTest = false;
+        this.activePoc = false;
+        this.activeProd = false;
+      } else if(tab.name === 'test') {
+        this.activeName = 'test';
+        this.activeDev = false;
+        this.activeTest = true;
+        this.activePoc = false;
+        this.activeProd = false;
+      } else if(tab.name === 'poc') {
+        this.activeName = 'poc';
+        this.activeDev = false;
+        this.activeTest = false;
+        this.activePoc = true;
+        this.activeProd = false;
+      } else {
+        this.activeName = 'prod';
+        this.activeDev = false;
+        this.activeTest = false;
+        this.activePoc = false;
+        this.activeProd = true;
+      }
+    },
+
+    //获取项目信息
+    getProject(projectId) {
+      getProjectById({
+        projectId: projectId
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.projectInfo = res.data.body;
+          localStorage.setItem('projectId', JSON.stringify(this.projectInfo.id))
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署信息失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+        this.loading = false
+      })
+    },
+
+    async getDeployMaster(projectId, activeName) {
+      let result
+      await getDeployMaster({
+        projectId: projectId,
+        deployEnvironment: activeName
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployMaster = res.data.body
+          result = res.data.body
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署信息失败，原因：' + err,
+          type: 'error',
+          duration: 2000
+        });
+      })
+      if (result) {
+        await this.getDeployRecord(result.id)
+      }
+    },
+
+    async getDeployRecord(deployMasterId) {
+      await getDeployRecord({
+        deployMasterId: deployMasterId
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployRecord = res.data.body
+          this.deployedInfo = res.data.body
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署信息失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+    }
+  },
+
+  mounted() {
+    bus.$on('deployInfo', data => {
+      this.deployedInfo = data
+    });
+  },
+
+  created() {
+    if (localStorage.getItem('projectId')) {
+      const projectId = JSON.parse(localStorage.getItem('projectId'))
+      this.getProject(projectId)
+      this.getDeployMaster(projectId, this.activeName)
+      return
+    }
+    if (this.$route.params.projectId) {
+      this.projectId = this.$route.params.projectId;
+      this.getProject(this.projectId)
+      this.getDeployMaster(this.projectId, this.activeName)
+    }
+  },
+
+  beforeDestroy() {
+    localStorage.removeItem('projectId')
+  },
+};
+</script>
+
+<style lang="less" scoped>
+
+</style>

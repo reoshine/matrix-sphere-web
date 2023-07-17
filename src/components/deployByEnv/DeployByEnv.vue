@@ -1,0 +1,464 @@
+<template>
+  <div>
+    <el-steps
+      class="deploySpeed"
+      :align-center="true"
+      :active="deployProcessActive"
+      finish-status="success">
+      <el-step title="合并" :icon="iconName1" :status="mergeBranchStatus"></el-step>
+      <el-step title="构建" :icon="iconName2" :status="buildStatus" ></el-step>
+      <el-step title="部署" :icon="iconName3" :status="deployStatus"></el-step>
+      <el-step title="完成" :icon="iconName4" :status="finishStatus"></el-step>
+    </el-steps>
+    <el-divider content-position="left">已部署分支</el-divider>
+    <div>
+      <el-button type="warning" size="small" @click="withdrawBranch" :disabled="isDisabled">退出分支</el-button>
+      <el-button type="primary" size="small" @click="reBuild" :disabled="isDisabled">重新部署</el-button>
+      <el-button type="primary" size="small" @click="deploy">部署main分支</el-button>
+      <el-empty v-show="!deployInfo.deployInfo || !deployInfo.deployInfo.featureBranchList || deployInfo.deployInfo.featureBranchList.length <= 0" description="无已部署分支"></el-empty>
+      <el-table v-show="deployInfo.deployInfo && deployInfo.deployInfo.featureBranchList && deployInfo.deployInfo.featureBranchList.length > 0" :data="deployInfo.deployInfo.featureBranchList" @selection-change="selectedDeployed" border>
+        <el-table-column type="selection"></el-table-column>
+        <el-table-column prop="branchName" label="分支" width="400"></el-table-column>
+        <el-table-column prop="description" label="描述" width="400"></el-table-column>
+        <el-table-column prop="createByName" label="创建人" width="180"></el-table-column>
+        <el-table-column prop="gmtCreate" label="创建时间"></el-table-column>
+      </el-table>
+    </div>
+
+    <el-divider content-position="left">未部署分支</el-divider>
+    <el-empty v-show="unDeployedBranchList.length <= 0" description="无未部署分支"></el-empty>
+    <div v-show="unDeployedBranchList.length > 0">
+      <el-button type="primary" size="small" @click="deploy">部署分支</el-button>
+      <el-table :data="unDeployedBranchList" @selection-change="getUnDeployBranchIds" ref="selectedStatus" border>
+        <el-table-column type="selection"></el-table-column>
+        <el-table-column prop="branchName" label="分支" width="400"></el-table-column>
+        <el-table-column prop="description" label="描述" width="400"></el-table-column>
+        <el-table-column prop="createByName" label="创建人" width="180"></el-table-column>
+        <el-table-column prop="gmtCreate" label="创建时间"></el-table-column>
+      </el-table>
+    </div>
+  </div>
+</template>
+
+<script>
+import {
+  build,
+  deploy,
+  getDeployRecord,
+  getUnDeployedBranchList,
+  mergeBranch,
+  withdrawBranch
+} from "@/api/api";
+import bus from "@/util/bus";
+
+export default {
+  name: "DeployByEnv",
+  props : {
+    getActiveName: {
+      type: String,
+      default:'dev'
+    },
+
+    deployRecord: {
+      type: Object,
+      default: {}
+    },
+
+    projectInfo: {
+      type: Object,
+      default: {}
+    }
+  },
+  data() {
+    return {
+      //部署环境
+      deployEnvironment: this.getActiveName,
+
+      //部署按钮是否禁用
+      isDisabled: true,
+
+      //应用信息
+      curProjectInfo: {
+        id: '',
+        projectCode: '',
+        projectName: '',
+        projectGroupId: '',
+        projectGroupName: '',
+        gitUrl: '',
+        enableStatus: ''
+      },
+
+      //部署信息（从父组件获取）
+      deployInfo: {
+        deployInfo: {
+          projectId: '',
+          masterId: '',
+          releaseBranchId: '',
+          releaseBranchName: '',
+          deployEnvironment: '',
+          featureBranchList: []
+        },
+        deployStepList: [{
+          masterId: '',
+          stepCode: '',
+          stepName: '',
+          stepNo: '',
+          stepSerialNo: '',
+          stepStatus: 0
+        }]
+      },
+
+      //未部署分支
+      unDeployedBranchList: [],
+
+      deployResult: {
+        projectInfo: {},
+        releaseBranch: {},
+        featureBranchList: [],
+        deployMaster: {},
+      },
+
+      deployProcessActive: -1,
+      iconName1: '',
+      iconName2: '',
+      iconName3: '',
+      iconName4: '',
+
+      mergeBranchStatus: '',
+      buildStatus: '',
+      deployStatus: '',
+      finishStatus: '',
+
+      //触发部署流程
+      deployTrigger: false
+    };
+  },
+  methods: {
+    //根据项目id查询未部署分支列表
+    getUnDeployedBranchList(projectId) {
+      getUnDeployedBranchList({
+        projectId: projectId,
+        deployEnvironment: this.deployEnvironment
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.unDeployedBranchList = res.data.body;
+        }
+      }).catch(err => {
+        this.$message({
+          message: '获取分支列表失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+    },
+
+    //获取部署信息
+    async getDeployRecord(deployMasterId) {
+      let result
+      await getDeployRecord({
+        deployMasterId: deployMasterId
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployInfo = res.data.body
+          result = res.data.body
+          this.deployInfo = result
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署信息失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+      return result
+    },
+
+    //部署分支
+    async deploy() {
+      this.deployTrigger = true
+      this.deployProcessActive = -1
+      let result
+      const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.deployInfo.featureBranchList.map((item) => item.id));
+      await deploy({
+        projectId: this.projectInfo.id,
+        branchIds: toBeDeployBranchIds,
+        deployEnvironment: this.deployEnvironment,
+        deployType: 1
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployResult = res.data.body
+          result = res.data.body
+        } else {
+          this.$message({
+            message: res.data.message,
+            type: 'error',
+            duration: 2000,
+          });
+        }
+      }).catch(err => {
+        this.$message({
+          message: '获取分支列表失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+      await this.getUnDeployedBranchList(result.projectInfo.id)
+      let deployRecord = await this.getDeployRecord(result.deployMaster.id)
+      await bus.$emit('deployInfo', deployRecord)
+      await this.$refs.selectedStatus.clearSelection()
+      await this.next()
+    },
+
+    //退出分支
+    withdrawBranch() {
+      withdrawBranch({
+        data: {
+          projectId: this.projectInfo.id,
+          branchIds: this.deployedBranchIds,
+          deployEnvironment: this.deployEnvironment,
+          deployType: 2
+        }
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.getUnDeployedBranchList(this.projectInfo.id);
+          this.getDeployRecord(this.deployResult.deployMaster.id);
+        }
+      }).catch(err => {
+        this.$message({
+          message: '获取分支列表失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+      this.$refs.selectedStatus.clearSelection();
+    },
+
+    //重新部署
+    async reBuild() {
+      this.clearDeployStatus()
+      if (!this.deployedBranchIds) {
+        return
+      }
+      let result
+      await deploy({
+        projectId: this.projectInfo.id,
+        branchIds: this.deployedBranchIds,
+        deployEnvironment: this.deployEnvironment,
+        deployType: 1
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployResult = res.data.body
+          result = res.data.body
+        } else {
+          this.$message({
+            message: res.data.message,
+            type: 'error',
+            duration: 2000,
+          });
+        }
+      }).catch(err => {
+        this.$message({
+          message: '获取分支列表失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+      await this.getUnDeployedBranchList(result.projectInfo.id)
+      let deployRecord = await this.getDeployRecord(result.deployMaster.id)
+      await bus.$emit('deployInfo', deployRecord)
+      await this.$refs.selectedStatus.clearSelection()
+      await this.next()
+    },
+
+    //未部署分支选择器
+    getUnDeployBranchIds(val) {
+      this.unDeployedBranchIds = val.map((item) => item.id);
+    },
+
+    //选择需要部署的分支
+    selectedDeployed(selectedBranchList) {
+      this.deployedBranchIds = selectedBranchList.map((item) => item.id);
+      this.isDisabled = this.deployedBranchIds.length <= 0
+    },
+
+    //步骤一：合并分支
+    mergeBranch() {
+      mergeBranch({
+        projectInfo: this.deployResult.projectInfo,
+        releaseBranch: this.deployResult.releaseBranch,
+        featureBranchList: this.deployResult.featureBranchList,
+        deployMaster: this.deployResult.deployMaster
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.mergeBranchStatus = 'success'
+          this.iconName1 = null
+          this.next()
+        } else {
+          this.$message({
+            message: res.data.message,
+            type: 'error',
+            duration: 4000,
+          });
+          this.mergeBranchStatus = 'error'
+          this.iconName1 = null
+        }
+      }).catch(err => {
+        this.$message({
+          message: '合并分支失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        })
+        this.mergeBranchStatus = 'error'
+        this.iconName1 = null
+      })
+    },
+
+    //步骤二：构建
+    build() {
+      build({
+        projectInfo: this.deployResult.projectInfo,
+        releaseBranch: this.deployResult.releaseBranch,
+        featureBranchList: this.deployResult.featureBranchList,
+        deployMaster: this.deployResult.deployMaster
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.buildStatus = 'success'
+          this.iconName2 = null
+          this.next()
+        } else {
+          this.$message({
+            message: res.data.message,
+            type: 'error',
+            duration: 4000,
+          });
+          this.buildStatus = 'error'
+          this.iconName2 = null
+        }
+      }).catch(err => {
+        this.$message({
+          message: '应用打包失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        })
+        this.buildStatus = 'error'
+        this.iconName2 = null
+      })
+    },
+
+    //step的下一步
+    next() {
+      this.deployProcessActive++
+      if (this.deployProcessActive === 0) {
+        this.iconName1 = 'el-icon-loading'
+        this.mergeBranch()
+      }
+      if (this.deployProcessActive === 1) {
+        this.iconName2 = 'el-icon-loading'
+        this.build()
+      }
+      if (this.deployProcessActive === 2) {
+        this.iconName3 = 'el-icon-loading'
+        setTimeout(() => {
+          this.deployStatus = 'success'
+          this.iconName3 = null
+          this.next()
+        }, 3000)
+      }
+      if (this.deployProcessActive === 3) {
+        this.iconName4 = 'el-icon-loading'
+        setTimeout(() => {
+          this.finishStatus = 'success'
+          this.iconName4 = null
+          this.next()
+        }, 2000)
+      }
+    },
+
+    clearDeployStatus() {
+      this.deployTrigger = true
+      this.deployProcessActive = -1
+      this.mergeBranchStatus = ''
+      this.buildStatus = ''
+      this.deployStatus = ''
+      this.finishStatus = ''
+    }
+  },
+
+  watch: {
+    getActiveName(val) {
+      this.deployEnvironment = val;
+      this.getUnDeployedBranchList(this.deployInfo.deployInfo.projectId);
+    },
+
+    //监听部署记录的变化
+    'deployRecord': {
+      handler(n, o) {
+        this.deployInfo = n;
+      },
+      deep: true
+    },
+
+    //监听部署信息的变化
+    'projectInfo': {
+      handler(n, o) {
+        this.curProjectInfo = n;
+        this.getUnDeployedBranchList(this.curProjectInfo.id)
+      },
+      deep: true
+    },
+  },
+
+  computed: {
+
+  },
+
+  mounted() {
+  },
+
+  updated() {
+    if (!this.deployTrigger) {
+      if (this.deployInfo.deployStepList[0].masterId) {
+        this.deployProcessActive = this.deployInfo.deployStepList.filter(item => item.stepStatus === 2).length
+        this.deployInfo.deployStepList.forEach(item => {
+          if (item.stepCode === 'build') {
+            if (item.stepStatus === 0) {
+              this.buildStatus = 'wait'
+              this.iconName2 = null
+            } else if (item.stepStatus === 1) {
+              this.buildStatus = 'process'
+              this.iconName2 = null
+            } else if (item.stepStatus === 2) {
+              this.buildStatus = 'success'
+              this.iconName2 = null
+            } else {
+              this.buildStatus = 'error'
+              this.iconName2 = null
+            }
+          }
+        })
+      }
+    }
+  },
+
+  created() {
+  },
+
+  beforeDestroy() {
+  },
+};
+</script>
+<style lang="less" scoped>
+.envTabs {
+  margin-top: 30px;
+  .el-button {
+    margin-bottom: 10px;
+  }
+}
+.el-steps {
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+.deploySpeed {
+  padding: 0 50px;
+}
+</style>
