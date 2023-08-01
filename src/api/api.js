@@ -18,6 +18,23 @@ export function getDbTypeList() {
   return axios.get('/adp-matrix/adp-matrix/getMenuList');
 }
 
+// ====================================== 应用分组 ======================================
+export function queryPage(data) {
+  return axios.post('/adp-matrix/projectGroup/queryPage', data)
+}
+
+export function add(data) {
+  return axios.post('/adp-matrix/projectGroup/add', data)
+}
+
+export function modifyById(data) {
+  return axios.post('/adp-matrix/projectGroup/modifyById', data)
+}
+
+export function removeById(data) {
+  return axios.post(`/adp-matrix/projectGroup/removeById/${data}`)
+}
+
 // ====================================== 应用列表 ======================================
 export function queryProjectPage(data) {
   return axios.post('/adp-matrix/project/queryListPage', data)

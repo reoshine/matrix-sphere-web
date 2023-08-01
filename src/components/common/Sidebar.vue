@@ -84,6 +84,11 @@ export default {
           subs: [
             {
               icon: 'iconfont icon-yingyong',
+              index: 'applicationGroup',
+              title: '应用分组',
+            },
+            {
+              icon: 'iconfont icon-yingyong',
               index: 'applicationList',
               title: '应用列表',
             },

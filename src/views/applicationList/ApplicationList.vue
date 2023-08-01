@@ -57,6 +57,9 @@
             </div>
             <div>
               <el-tag style="color: #324157" type="" size="small">{{ project.projectName }}</el-tag>
+              <el-tag style="color: #324157; float: right; margin-right: -13px" type="" size="small">
+                git仓库项目ID：{{project.gitProjectId}}
+              </el-tag>
             </div>
           </div>
           <el-button @click.stop="toAppDeploy(project.id)" style="float: left; margin-left: 10px;"
@@ -221,6 +224,7 @@ export default {
           projectName: '',
           projectGroupId: '',
           projectGroupName: '',
+          gitProjectId: '',
           gitUrl: '',
           enableStatus: ''
         }

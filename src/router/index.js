@@ -29,6 +29,13 @@ const router = new Router({
           }
         },
         {
+          path: '/applicationGroup',
+          component: resolve => require(['@/views/applicationGroup/ApplicationGroup.vue'], resolve),
+          meta: {
+            title: '应用列表'
+          }
+        },
+        {
           path: '/applicationList',
           component: resolve => require(['@/views/applicationList/ApplicationList.vue'], resolve),
           meta: {
