@@ -63,9 +63,21 @@
     <el-empty v-show="branchList.length <= 0" description="无分支信息"></el-empty>
     <el-table v-show="branchList.length > 0" :data="branchList" border>
       <el-table-column prop="branchName" label="分支名称" width="400"></el-table-column>
-      <el-table-column prop="description" label="分支描述" width="400"></el-table-column>
+      <el-table-column prop="description" label="分支描述" width="300"></el-table-column>
+      <el-table-column prop="canPush" label="是否可推送" width="180">
+        <template slot-scope="scope">
+          <span v-if="scope.row.canPush === true">是</span>
+          <span v-if="scope.row.canPush === false">否</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="isProtected" label="是否是保护分支" width="180">
+        <template slot-scope="scope">
+          <span v-if="scope.row.isProtected === true">是</span>
+          <span v-if="scope.row.isProtected === false">否</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="createByName" label="创建人" width="180"></el-table-column>
-      <el-table-column prop="gmtCreate" label="创建时间"></el-table-column>
+      <el-table-column prop="gmtCreate" label="创建时间" width="180"></el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
           <el-button size="small" type="primary" icon="el-icon-edit" @click="editBranchInfo(scope.row)">修 改</el-button>
@@ -84,11 +96,31 @@
                :rules="modifyBranchRules"
                ref="modifyBranchRef"
                size="small">
-        <el-form-item label="分支名称" prop="branchName" label-width="100px">
+        <el-form-item label="分支名称" prop="branchName" label-width="130px">
           <el-input v-model="editBranchForm.branchName" disabled autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="分支描述" prop="description" label-width="100px">
+        <el-form-item label="分支描述" prop="description" label-width="130px">
           <el-input v-model="editBranchForm.description" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="是否可推送" prop="canPush" label-width="130px">
+          <el-select size="medium" v-model="editBranchForm.canPush" placeholder="请选择" disabled>
+            <el-option
+                v-for="item in canPushList"
+                :key="item.canPush"
+                :label="item.canPushDesc"
+                :value="item.canPush">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="是否是保护分支" prop="isProtected" label-width="130px">
+          <el-select size="medium" v-model="editBranchForm.isProtected" placeholder="请选择">
+            <el-option
+                v-for="item in isProtectedList"
+                :key="item.isProtected"
+                :label="item.isProtectedDesc"
+                :value="item.isProtected">
+            </el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -128,12 +160,14 @@ export default {
       // 编辑弹窗表单对象
       editBranchForm: {
         id: '',
-        projectCode: '',
-        projectName: '',
-        projectGroupId: '',
-        projectGroupName: '',
-        gitUrl: '',
-        enableStatus: ''
+        projectId: '',
+        branchName: '',
+        description: '',
+        canPush: false,
+        isProtected: false,
+        gmtCreate: '',
+        createBy: '',
+        createByName: ''
       },
 
       branchList: [],
@@ -143,10 +177,36 @@ export default {
         projectId: '',
         branchName: '',
         description: '',
+        canPush: false,
+        isProtected: false,
         gmtCreate: '',
         createBy: '',
         createByName: ''
       },
+
+      canPushList: [
+        {
+          canPush: false,
+          canPushDesc: '否',
+
+        },
+        {
+          canPush: true,
+          canPushDesc: '是',
+        }
+      ],
+
+      isProtectedList: [
+        {
+          isProtected: false,
+          isProtectedDesc: '否',
+
+        },
+        {
+          isProtected: true,
+          isProtectedDesc: '是',
+        }
+      ],
 
       buildProcessActive: 1,
       checked: '',
@@ -248,7 +308,8 @@ export default {
           modifyBranch({
             projectId: this.projectInfo.id,
             branchName: this.editBranchForm.branchName,
-            description: this.editBranchForm.description
+            description: this.editBranchForm.description,
+            isProtected: this.editBranchForm.isProtected
           }).then(res => {
             if (res.data.code === 2000) {
               this.$message({

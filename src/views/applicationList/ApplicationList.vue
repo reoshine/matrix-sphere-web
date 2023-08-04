@@ -172,12 +172,12 @@ export default {
       projectGroupId: '',
       projectGroupList: [
         {
-          projectGroupId: '1',
+          projectGroupId: 1,
           projectGroupCode: 'adp',
 
         },
         {
-          projectGroupId: '2',
+          projectGroupId: 2,
           projectGroupCode: 'deployment',
         }
       ],
