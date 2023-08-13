@@ -62,23 +62,23 @@
     <el-divider content-position="left">分支列表</el-divider>
     <el-empty v-show="branchList.length <= 0" description="无分支信息"></el-empty>
     <el-table v-show="branchList.length > 0" :data="branchList" border>
-      <el-table-column prop="branchName" label="分支名称" width="400"></el-table-column>
-      <el-table-column prop="description" label="分支描述" width="300"></el-table-column>
-      <el-table-column prop="canPush" label="是否可推送" width="180">
+      <el-table-column prop="branchName" label="分支名称"></el-table-column>
+      <el-table-column prop="description" label="分支描述"></el-table-column>
+      <el-table-column prop="canPush" label="可推送" width="130">
         <template slot-scope="scope">
           <span v-if="scope.row.canPush === true">是</span>
           <span v-if="scope.row.canPush === false">否</span>
         </template>
       </el-table-column>
-      <el-table-column prop="isProtected" label="是否是保护分支" width="180">
+      <el-table-column prop="isProtected" label="保护分支" width="130">
         <template slot-scope="scope">
           <span v-if="scope.row.isProtected === true">是</span>
           <span v-if="scope.row.isProtected === false">否</span>
         </template>
       </el-table-column>
-      <el-table-column prop="createByName" label="创建人" width="180"></el-table-column>
+      <el-table-column prop="createByName" label="创建人" width="130"></el-table-column>
       <el-table-column prop="gmtCreate" label="创建时间" width="180"></el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" width="220">
         <template slot-scope="scope">
           <el-button size="small" type="primary" icon="el-icon-edit" @click="editBranchInfo(scope.row)">修 改</el-button>
           <el-button size="small" type="danger" icon="el-icon-delete" @click="deleteConfirm(scope.row)">删 除</el-button>

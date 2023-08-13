@@ -15,6 +15,7 @@
       <el-button type="warning" size="small" @click="withdrawBranch" :disabled="isDisabled">退出分支</el-button>
       <el-button type="primary" size="small" @click="reBuild" :disabled="isDisabled">重新部署</el-button>
       <el-button type="primary" size="small" @click="deploy">部署main分支</el-button>
+      <el-button type="primary" size="small" @click="getDepLoyLogList">部署记录</el-button>
       <el-empty v-show="!deployInfo.deployInfo || !deployInfo.deployInfo.featureBranchList || deployInfo.deployInfo.featureBranchList.length <= 0" description="无已部署分支"></el-empty>
       <el-table v-show="deployInfo.deployInfo && deployInfo.deployInfo.featureBranchList && deployInfo.deployInfo.featureBranchList.length > 0" :data="deployInfo.deployInfo.featureBranchList" @selection-change="selectedDeployed" border>
         <el-table-column type="selection"></el-table-column>
@@ -37,6 +38,64 @@
         <el-table-column prop="gmtCreate" label="创建时间"></el-table-column>
       </el-table>
     </div>
+
+    <el-drawer
+        size="30%"
+        :visible.sync="dialog"
+        direction="rtl"
+        custom-class="demo-drawer"
+        :modal=false
+        ref="drawer">
+      <div class="demo-drawer__content" style="margin-bottom: 20px">
+        <el-card class="box-card" style="width: 95%; margin: 0 15px">
+          <div slot="header" class="clearfix">
+            <span>test-demo部署记录</span>
+          </div>
+
+          <el-descriptions v-for="deployLog in deployLogList" :labelStyle="{width:'100px'}" :size="'mini'" :column="2" border>
+            <el-descriptions-item>
+              <template slot="label">
+                部署人
+              </template>
+              <el-tag size="small" type="primary">{{ deployLog.deployByName }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template slot="label">
+                部署环境
+              </template>
+              <el-tag size="small" type="primary">{{ deployLog.deployEnvironment }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item :span="2">
+              <template slot="label">
+                feature分支
+              </template>
+              <el-tag size="small" type="primary" v-for="item in deployLog.featureBranchNameList">{{ item }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item :span="2">
+              <template slot="label">
+                release分支
+              </template>
+              <el-tag size="small" type="primary">{{ deployLog.releaseBranchName }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item :span="2">
+              <template slot="label">
+                部署时间
+              </template>
+              <el-tag size="small" type="primary">{{ deployLog.deployTime }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template slot="label">
+                部署状态
+              </template>
+              <el-tag size="small" effect="dark" v-if="deployLog.deployStatus === 0" type="info">初始化</el-tag>
+              <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 1" type="warning">部署中</el-tag>
+              <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 2" type="success">部署成功</el-tag>
+              <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 3" type="danger">部署失败</el-tag>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -44,6 +103,7 @@
 import {
   build,
   deploy,
+  getDepLoyLogList,
   getDeployRecord,
   getUnDeployedBranchList,
   mergeBranch,
@@ -130,7 +190,33 @@ export default {
       finishStatus: '',
 
       //触发部署流程
-      deployTrigger: false
+      deployTrigger: false,
+
+      //打开/关闭抽屉
+      dialog: false,
+      loading: false,
+
+      saveProjectForm: {
+        projectCode: '',
+        projectName: '',
+        projectGroupId: '',
+        projectGroupName: '',
+        gitUrl: '',
+        enableStatus: ''
+      },
+
+      deployLogList: [
+          {
+            projectId: '',
+            projectName: '',
+            featureBranchNameList: [],
+            releaseBranchName: '',
+            deployTime: '',
+            deployEnvironment: '',
+            deployStatus: '',
+            deployByName: ''
+          }
+      ],
     };
   },
   methods: {
@@ -177,6 +263,7 @@ export default {
     async deploy() {
       this.deployTrigger = true
       this.deployProcessActive = -1
+      this.clearDeployStatus()
       let result
       const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.deployInfo.featureBranchList.map((item) => item.id));
       await deploy({
@@ -374,6 +461,24 @@ export default {
       }
     },
 
+    getDepLoyLogList() {
+      this.dialog = true
+      getDepLoyLogList({
+        projectId: this.projectInfo.id,
+        deployEnvironment: this.deployEnvironment,
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployLogList = res.data.body
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署信息失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+    },
+
     clearDeployStatus() {
       this.deployTrigger = true
       this.deployProcessActive = -1
@@ -381,7 +486,20 @@ export default {
       this.buildStatus = ''
       this.deployStatus = ''
       this.finishStatus = ''
-    }
+    },
+
+    //关闭抽屉时间
+    handleClose(done) {
+      if (this.loading) {
+        return;
+      }
+      this.$confirm('确认关闭吗？')
+          .then(_ => {
+            done();
+          })
+          .catch(_ => {
+          });
+    },
   },
 
   watch: {
@@ -460,5 +578,8 @@ export default {
 }
 .deploySpeed {
   padding: 0 50px;
+}
+.deployLogDrawer {
+  //width: 200px;
 }
 </style>

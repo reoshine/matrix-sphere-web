@@ -101,3 +101,7 @@ export function mergeBranch(data) {
 export function build(data) {
   return axios.post('/adp-matrix/deploy/build', data)
 }
+
+export function getDepLoyLogList(data) {
+  return axios.post('/adp-matrix/deploy/getDepLoyLogList', data)
+}
