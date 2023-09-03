@@ -62,7 +62,7 @@
     <el-divider content-position="left">分支列表</el-divider>
     <el-empty v-show="branchList.length <= 0" description="无分支信息"></el-empty>
     <el-table v-show="branchList.length > 0" :data="branchList" border>
-      <el-table-column prop="branchName" label="分支名称"></el-table-column>
+      <el-table-column prop="branchName" label="分支名称" width="400px"></el-table-column>
       <el-table-column prop="description" label="分支描述"></el-table-column>
       <el-table-column prop="canPush" label="可推送" width="130">
         <template slot-scope="scope">

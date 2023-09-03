@@ -107,7 +107,31 @@ export default {
         }
       });
     },
+
+    async authorize() {
+      await authorize().then()
+    }
   },
+  created() {
+    let loginUrl = window.location.href
+    console.log(loginUrl)
+    if (loginUrl.includes('/login')) {
+      let params = loginUrl.split('?')
+      if (params[1] === undefined) {
+        this.authorize()
+      } else {
+        let tokenStr = params[1].split('=')
+        if (tokenStr[0] === 'accessToken') {
+          localStorage.setItem("adpSsoToken", tokenStr[1]);
+          this.$router.replace("/applicationList");
+        }
+      }
+    }
+    if (loginUrl.includes('/oauth/authorize')) {
+
+    }
+
+  }
 };
 </script>
 

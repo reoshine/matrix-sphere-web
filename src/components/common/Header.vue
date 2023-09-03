@@ -47,6 +47,7 @@
 
 <script>
 import bus from '@/util/bus';
+import {logout} from "@/api/api";
 
 export default {
   // 组建的名称
@@ -77,9 +78,22 @@ export default {
   methods: {
     // 用户名下拉菜单选择事件
     handleCommand(command) {
-      if (command === 'loginout') {
-        localStorage.removeItem('ms_username');
-        this.$router.push('/login');
+      if (command === 'loginOut') {
+        logout().then(res => {
+          this.$swal({
+            title: "退出成功！",
+            type: "success",
+            timer: "2000",
+            confirmButtonText: '确定',
+            showCancelButton: false,
+          }).then(() => {
+            localStorage.removeItem("adpSsoToken")
+            window.location.href = 'http://localhost:7001/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback';
+          });
+        }).catch(err => {
+          localStorage.removeItem("adpSsoToken")
+          window.location.href = 'http://localhost:7001/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback';
+        })
       }
     },
     // 侧边栏折叠

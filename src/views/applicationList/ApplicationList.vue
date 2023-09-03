@@ -233,8 +233,8 @@ export default {
       //分页组件
       total: 0,
       pageNum: 1,
-      pageCount: 10,
-      pageSizes: [10, 20, 50, 100],
+      pageCount: 16,
+      pageSizes: [16, 50, 100],
       // page: {
       //   pageNum: 1,
       //   pageCount: 10,

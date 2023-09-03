@@ -2,18 +2,24 @@ import axios from 'axios'
 
 // 登录
 export function login(data) {
-  return axios.post('/adp-sso/oauth/token', data, {
+  return axios.post('/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback', data, {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
     },
     auth: {
-      username: "oauth2-client-1",
+      username: "adp-matrix",
       password: "oauth2-client-1",
     }
   })
 }
 
-// 测试请求
+export function logout() {
+  return axios.get('/adp-sso/sso/logout')
+}
+
+export function authorize() {
+  return axios.get("http://localhost:7001/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback")
+}
 export function getDbTypeList() {
   return axios.get('/adp-matrix/adp-matrix/getMenuList');
 }

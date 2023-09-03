@@ -1,6 +1,6 @@
 import axios from 'axios'
-import router from "@/router";
 import swal from 'sweetalert2'
+import {logout} from "@/api/api";
 
 // 设置post请求参数格式为json
 axios.defaults.headers.post['Content-Type'] = 'application/json;charset=UTF-8'
@@ -23,7 +23,13 @@ axios.interceptors.response.use(res => {
     }).then(() => {
       localStorage.removeItem('adpSsoToken')
       localStorage.removeItem('adpSsoRefreshToken')
-      router.replace('/login')
+      logout().then(res => {
+        localStorage.removeItem("adpSsoToken")
+        window.location.href = 'http://localhost:7001/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback';
+      }).catch(err => {
+        localStorage.removeItem("adpSsoToken")
+        window.location.href = 'http://localhost:7001/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback';
+      })
     })
   }
   return res
