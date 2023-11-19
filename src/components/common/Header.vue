@@ -1,7 +1,7 @@
 <template>
   <div class="header">
     <!-- 折叠按钮 -->
-    <div class="collapse-btn" @click="collapseChage">
+    <div class="collapse-btn" @click="collapseChange">
       <i v-if="!collapse" class="el-icon-s-fold"></i>
       <i v-else class="el-icon-s-unfold"></i>
     </div>
@@ -17,9 +17,9 @@
         <!-- 消息中心 -->
         <div class="btn-bell">
           <el-tooltip
-            effect="dark"
-            :content="message?`有${message}条未读消息`:`消息中心`"
-            placement="bottom">
+              effect="dark"
+              :content="message?`有${message}条未读消息`:`消息中心`"
+              placement="bottom">
             <router-link to="/tabs">
               <i class="el-icon-bell"></i>
             </router-link>
@@ -31,13 +31,13 @@
         <!-- 用户名下拉菜单 -->
         <el-dropdown class="user-name" trigger="click" @command="handleCommand">
           <span class="el-dropdown-link">
-            {{ username }} <i class="el-icon-caret-bottom"></i>
+            {{ username }} | 研发中心 <i class="el-icon-caret-bottom"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <a href="https://github.com/lin-xin/vue-manage-system" target="_blank">
-              <el-dropdown-item>项目仓库</el-dropdown-item>
+              <el-dropdown-item>修改密码</el-dropdown-item>
             </a>
-            <el-dropdown-item divided command="loginout">退出登录</el-dropdown-item>
+            <el-dropdown-item divided command="loginOut">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -71,7 +71,7 @@ export default {
 
   mounted() {
     if (document.body.clientWidth < 1500) {
-      this.collapseChage();
+      this.collapseChange();
     }
   },
   // 事件处理
@@ -88,16 +88,16 @@ export default {
             showCancelButton: false,
           }).then(() => {
             localStorage.removeItem("adpSsoToken")
-            window.location.href = 'http://localhost:7001/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback';
+            window.location.href = '/adp-matrix/client/login';
           });
         }).catch(err => {
           localStorage.removeItem("adpSsoToken")
-          window.location.href = 'http://localhost:7001/adp-sso/oauth/authorize?response_type=code&scope=all&client_id=adp-matrix&state=ok&redirect_uri=http://localhost:7001/adp-sso/sso/callback';
+          window.location.href = '/adp-matrix/client/login';
         })
       }
     },
     // 侧边栏折叠
-    collapseChage() {
+    collapseChange() {
       this.collapse = !this.collapse;
       bus.$emit('collapse', this.collapse);
     },

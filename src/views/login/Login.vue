@@ -7,26 +7,26 @@
       </div>
       <!-- 表单区域 -->
       <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="rules"
-        label-width="0px"
-        class="login_form"
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="rules"
+          label-width="0px"
+          class="login_form"
       >
         <!-- 用户名 -->
         <el-form-item prop="accountNo">
           <el-input
-            v-model="loginForm.username"
-            prefix-icon="el-icon-user"
+              v-model="loginForm.username"
+              prefix-icon="el-icon-user"
           ></el-input>
         </el-form-item>
 
         <!-- 密码 -->
         <el-form-item prop="accountPassword">
           <el-input
-            v-model="loginForm.password"
-            prefix-icon="el-icon-lock"
-            type="password"
+              v-model="loginForm.password"
+              prefix-icon="el-icon-lock"
+              type="password"
           ></el-input>
         </el-form-item>
 
@@ -55,8 +55,8 @@ export default {
       },
 
       auth: {
-        username: 'oauth2-client-1',
-        password: 'oauth2-client-1',
+        username: 'adp-matrix',
+        password: 'adp-matrix-secret',
       },
 
       rules: {
@@ -107,10 +107,6 @@ export default {
         }
       });
     },
-
-    async authorize() {
-      await authorize().then()
-    }
   },
   created() {
     let loginUrl = window.location.href
@@ -127,10 +123,6 @@ export default {
         }
       }
     }
-    if (loginUrl.includes('/oauth/authorize')) {
-
-    }
-
   }
 };
 </script>
