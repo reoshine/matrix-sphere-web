@@ -20,6 +20,14 @@ module.exports = {
         pathRewrite: {
           '^/adp-matrix': ''
         }
+      },
+      '/adp-management': {
+        target: 'http://nginx:7004/adp-management',
+        changeOrigin: true,
+        ws: true,
+        pathRewrite: {
+          '^/adp-management': ''
+        }
       }
     }
   }

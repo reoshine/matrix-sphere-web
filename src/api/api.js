@@ -16,8 +16,8 @@ export function clientLogin() {
 export function authorize() {
   return axios.get("/adp-sso/client/login")
 }
-export function getDbTypeList() {
-  return axios.get('/adp-matrix/adp-matrix/getMenuList');
+export function getMenuList(data) {
+  return axios.get(`/adp-management/menu/getMenuList/${data}`)
 }
 
 // ====================================== 应用分组 ======================================

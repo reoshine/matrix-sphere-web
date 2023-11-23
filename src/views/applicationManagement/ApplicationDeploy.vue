@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import DeployByEnv  from "@/components/deployByEnv/DeployByEnv";
+import DeployByEnv  from "@/components/deployByEnv/DeployByEnv.vue";
 import {getDeployMaster, getDeployRecord, getProjectById} from "@/api/api";
 import bus from "@/util/bus";
 

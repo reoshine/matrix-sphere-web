@@ -119,7 +119,7 @@ export default {
         let tokenStr = params[1].split('=')
         if (tokenStr[0] === 'accessToken') {
           localStorage.setItem("adpSsoToken", tokenStr[1]);
-          this.$router.replace("/applicationList");
+          this.$router.replace("/applicationManagement/applicationList");
         }
       }
     }

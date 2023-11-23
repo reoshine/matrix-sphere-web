@@ -29,45 +29,45 @@ const router = new Router({
           }
         },
         {
-          path: '/applicationGroup',
-          component: resolve => require(['@/views/applicationGroup/ApplicationGroup.vue'], resolve),
+          path: '/applicationManagement/applicationGroup',
+          component: resolve => require(['@/views/applicationManagement/ApplicationGroup.vue'], resolve),
           meta: {
             title: '应用列表'
           }
         },
         {
-          path: '/applicationList',
-          component: resolve => require(['@/views/applicationList/ApplicationList.vue'], resolve),
+          path: '/applicationManagement/applicationList',
+          component: resolve => require(['@/views/applicationManagement/ApplicationList.vue'], resolve),
           meta: {
             title: '应用列表'
           }
         },
         {
-          path: '/branchManagement',
+          path: '/applicationManagement/branchManagement',
           name: 'BranchManagement',
-          component: (resolve) => require(['@/views/branchManagement/BranchManagement'], resolve),
+          component: (resolve) => require(['@/views/applicationManagement/BranchManagement'], resolve),
           meta: {
             title: '分支管理'
           },
         },
         {
-          path: '/applicationDeploy',
+          path: '/applicationManagement/applicationDeploy',
           name: 'ApplicationDeploy',
-          component: (resolve) => require(['@/views/applicationDeploy/ApplicationDeploy'], resolve),
+          component: (resolve) => require(['@/views/applicationManagement/ApplicationDeploy.vue'], resolve),
           meta: {
             title: '应用部署'
           },
         },
         {
-          path: '/serverManagement',
+          path: '/serviceMonitor/serverManagement',
           name: 'ServerManagement',
-          component: (resolve) => require(['@/views/serverManagement/ServerManagement'], resolve),
+          component: (resolve) => require(['@/views/serviceMonitor/ServerManagement.vue'], resolve),
           meta: {
             title: '服务器管理'
           },
         },
         {
-          path: '/serviceMonitor',
+          path: '/serviceMonitor/serviceMonitor',
           name: 'ServiceMonitor',
           component: (resolve) => require(['@/views/serviceMonitor/ServiceMonitor'], resolve),
           meta: {
@@ -75,7 +75,7 @@ const router = new Router({
           },
         },
         {
-          path: '/containerMonitor',
+          path: '/serviceMonitor/containerMonitor',
           name: 'ContainerMonitor',
           component: (resolve) => require(['@/views/containerMonitor/ContainerMonitor.vue'], resolve),
           meta: {
