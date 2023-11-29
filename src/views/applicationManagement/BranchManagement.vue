@@ -38,7 +38,7 @@
       <el-form-item prop="branchName" label="分支名称" label-width="100px">
         <el-input
           minlength="0"
-          maxlength="20"
+          maxlength="30"
           size="medium"
           placeholder="请输入分支名称"
           suffix-icon="el-icon-search"
@@ -214,7 +214,7 @@ export default {
       createBranchRules: {
         branchName: [
           { required: true, message: "请输入分支名称", trigger: "blur" },
-          { min: 2, max: 50, message: "长度在3到50个字符", trigger: "blur" },
+          { min: 2, max: 100, message: "长度在3到100个字符", trigger: "blur" },
         ],
         description: [
           { required: true, message: "请输入分支描述", trigger: "blur" },
