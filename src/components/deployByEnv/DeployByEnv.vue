@@ -197,6 +197,9 @@ export default {
       publishStatus: '',
       finishStatus: '',
 
+      //触发部署流程
+      deployTrigger: true,
+
       //打开/关闭抽屉
       dialog: false,
       loading: false,
@@ -268,15 +271,15 @@ export default {
 
     //部署分支
     async deploy() {
-      this.deployProcessActive = -1
       this.clearDeployStatus()
+      this.deployTrigger = false
       let result
       const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.deployInfo.featureBranchList.map((item) => item.id));
       await deploy({
         projectId: this.projectInfo.id,
         branchIds: toBeDeployBranchIds,
         deployEnvironment: this.deployEnvironment,
-        deployType: 1
+        deployType: 'SUBMIT_BRANCH'
       }).then(res => {
         if (res.data.code === 2000) {
           this.deployResult = res.data.body
@@ -303,18 +306,26 @@ export default {
     },
 
     //退出分支
-    withdrawBranch() {
-      withdrawBranch({
-        data: {
-          projectId: this.projectInfo.id,
-          branchIds: this.deployedBranchIds,
-          deployEnvironment: this.deployEnvironment,
-          deployType: 2
-        }
+    async withdrawBranch() {
+      this.clearDeployStatus()
+      this.deployTrigger = false
+      let result
+      await deploy({
+        projectId: this.projectInfo.id,
+        branchIds: this.deployedBranchIds,
+        deployEnvironment: this.deployEnvironment,
+        deployType: 'WITHDRAW_BRANCH'
       }).then(res => {
         if (res.data.code === 2000) {
-          this.getUnDeployedBranchList(this.projectInfo.id);
-          this.getDeployRecord(this.deployResult.deployMaster.id);
+          this.deployResult = res.data.body
+          result = res.data.body
+          this.listenDeployStepMessage()
+        } else {
+          this.$message({
+            message: '部署失败，原因：' + res.data.message,
+            type: 'error',
+            duration: 2000,
+          });
         }
       }).catch(err => {
         this.$message({
@@ -323,12 +334,16 @@ export default {
           duration: 2000,
         });
       })
-      this.$refs.selectedStatus.clearSelection();
+      await this.getUnDeployedBranchList(result.project.id)
+      let deployRecord = await this.getDeployRecord(result.deployMaster.id)
+      await bus.$emit('deployInfo', deployRecord)
+      await this.$refs.selectedStatus.clearSelection()
     },
 
     //重新部署
     async reBuild() {
       this.clearDeployStatus()
+      this.deployTrigger = false
       if (!this.deployedBranchIds) {
         return
       }
@@ -337,7 +352,7 @@ export default {
         projectId: this.projectInfo.id,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
-        deployType: 1
+        deployType: 'SUBMIT_BRANCH'
       }).then(res => {
         if (res.data.code === 2000) {
           this.deployResult = res.data.body
@@ -377,7 +392,6 @@ export default {
     listenDeployStepMessage() {
       this.eventSource.onmessage = (res => {
         this.deployState = JSON.parse(res.data)
-        console.log(this.deployState)
         if (this.deployState.deployStep === 'merge') {
           this.iconName1 = 'el-icon-loading'
           this.deployProcessActive = 0
@@ -409,44 +423,29 @@ export default {
     },
 
     next() {
+      console.log('当前状态: ' + this.deployProcessActive)
       if (this.deployProcessActive === 0) {
         if (this.deployState.deployStatusCode === 2) {
           this.mergeBranchStatus = 'success'
           this.listenDeployStepMessage()
-        } else {
-          setTimeout(() => {
-            this.next()
-          }, 200)
         }
       }
       if (this.deployProcessActive === 1) {
         if (this.deployState.deployStatusCode === 2) {
           this.buildStatus = 'success'
           this.listenDeployStepMessage()
-        } else {
-          setTimeout(() => {
-            this.next()
-          }, 200)
         }
       }
       if (this.deployProcessActive === 2) {
         if (this.deployState.deployStatusCode === 2) {
           this.publishStatus = 'success'
           this.listenDeployStepMessage()
-        } else {
-          setTimeout(() => {
-            this.next()
-          }, 200)
         }
       }
       if (this.deployProcessActive === 3) {
         if (this.deployState.deployStatusCode === 2) {
           this.finishStatus = 'success'
           this.listenDeployStepMessage()
-        } else {
-          setTimeout(() => {
-            this.next()
-          }, 200)
         }
       }
     },
@@ -506,6 +505,7 @@ export default {
 
     sseClose() {
       sseClose(1)
+      console.log('连接已关闭')
     }
   },
 
@@ -541,6 +541,11 @@ export default {
   },
 
   updated() {
+    if (this.deployTrigger) {
+      if (this.deployInfo.deployStepList[0].masterId) {
+        this.deployProcessActive = this.deployInfo.deployStepList.filter(item => item.stepStatus === 2).length
+      }
+    }
   },
 
   created() {
