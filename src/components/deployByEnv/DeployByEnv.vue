@@ -5,10 +5,10 @@
       :align-center="true"
       :active="deployProcessActive"
       finish-status="success">
-      <el-step title="合并" :icon="iconName1" :status="mergeBranchStatus"></el-step>
-      <el-step title="构建" :icon="iconName2" :status="buildStatus" ></el-step>
-      <el-step title="部署" :icon="iconName3" :status="publishStatus"></el-step>
-      <el-step title="完成" :icon="iconName4" :status="finishStatus"></el-step>
+      <el-step title="合并" :icon="iconName1" :description="mergeErrorMessage" :status="mergeBranchStatus"></el-step>
+      <el-step title="构建" :icon="iconName2" :description="buildErrorMessage" :status="buildStatus" ></el-step>
+      <el-step title="部署" :icon="iconName3" :description="publishErrorMessage" :status="publishStatus"></el-step>
+      <el-step title="完成" :icon="iconName4" :description="finishErrorMessage" :status="finishStatus"></el-step>
     </el-steps>
     <el-divider content-position="left">已部署分支</el-divider>
     <div>
@@ -49,7 +49,7 @@
       <div class="demo-drawer__content" v-for="deployLog in deployLogList"  style="margin-bottom: 20px">
         <el-card class="box-card" style="width: 95%; margin: 0 15px">
           <div slot="header" class="clearfix">
-            <span>{{ deployLog.projectName }}部署记录</span>
+            <span>{{ deployLog.projectName }} 最新10次部署记录</span>
           </div>
 
           <el-descriptions :labelStyle="{width:'100px'}" :size="'mini'" :column="2" border>
@@ -83,7 +83,7 @@
               </template>
               <el-tag size="small" type="primary">{{ deployLog.deployTime }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item>
+            <el-descriptions-item :span="2">
               <template slot="label">
                 部署状态
               </template>
@@ -91,6 +91,12 @@
               <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 1" type="warning">部署中</el-tag>
               <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 2" type="success">部署成功</el-tag>
               <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 3" type="danger">部署失败</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item v-if="deployLog.deployStatus === 3" :span="2">
+              <template slot="label">
+                失败原因
+              </template>
+              <el-tag size="small" type="primary">{{ deployLog.errorMessage }}</el-tag>
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
@@ -192,6 +198,11 @@ export default {
       iconName3: '',
       iconName4: '',
 
+      mergeErrorMessage: '',
+      buildErrorMessage: '',
+      publishErrorMessage: '',
+      finishErrorMessage: '',
+
       mergeBranchStatus: '',
       buildStatus: '',
       publishStatus: '',
@@ -222,7 +233,8 @@ export default {
             deployTime: '',
             deployEnvironment: '',
             deployStatus: '',
-            deployByName: ''
+            deployByName: '',
+            errorMessage: '',
           }
       ],
 
@@ -428,6 +440,10 @@ export default {
         if (this.deployState.deployStatusCode === 2) {
           this.mergeBranchStatus = 'success'
           this.listenDeployStepMessage()
+        } else if (this.deployState.deployStatusCode === 3) {
+          this.mergeBranchStatus = 'error'
+          this.iconName1 = null
+          // this.listenDeployStepMessage()
         }
       }
       if (this.deployProcessActive === 1) {
@@ -474,6 +490,10 @@ export default {
       this.buildStatus = ''
       this.publishStatus = ''
       this.finishStatus = ''
+      this.mergeErrorMessage = ''
+      this.buildErrorMessage = ''
+      this.publishErrorMessage = ''
+      this.finishErrorMessage = ''
     },
 
     //关闭抽屉时间
@@ -544,6 +564,25 @@ export default {
     if (this.deployTrigger) {
       if (this.deployInfo.deployStepList[0].masterId) {
         this.deployProcessActive = this.deployInfo.deployStepList.filter(item => item.stepStatus === 2).length
+        this.deployInfo.deployStepList.forEach(item => {
+          // debugger
+          if (item.stepCode === 'merge') {
+            if (item.stepStatus === 0) {
+              this.mergeBranchStatus = 'wait'
+              this.iconName1 = null
+            } else if (item.stepStatus === 1) {
+              this.mergeBranchStatus = 'process'
+              this.iconName1 = null
+            } else if (item.stepStatus === 2) {
+              this.mergeBranchStatus = 'success'
+              this.iconName1 = null
+            } else {
+              this.mergeBranchStatus = 'error'
+              this.mergeErrorMessage = item.errorMessage
+              this.iconName1 = null
+            }
+          }
+        })
       }
     }
   },
