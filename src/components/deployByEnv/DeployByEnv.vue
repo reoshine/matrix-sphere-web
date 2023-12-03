@@ -435,33 +435,40 @@ export default {
     },
 
     next() {
-      console.log('当前状态: ' + this.deployProcessActive)
       if (this.deployProcessActive === 0) {
         if (this.deployState.deployStatusCode === 2) {
           this.mergeBranchStatus = 'success'
-          this.listenDeployStepMessage()
         } else if (this.deployState.deployStatusCode === 3) {
           this.mergeBranchStatus = 'error'
           this.iconName1 = null
-          // this.listenDeployStepMessage()
+          this.mergeErrorMessage = this.deployState.errorMessage
         }
       }
       if (this.deployProcessActive === 1) {
         if (this.deployState.deployStatusCode === 2) {
           this.buildStatus = 'success'
-          this.listenDeployStepMessage()
+        } else if (this.deployState.deployStatusCode === 3) {
+          this.buildStatus = 'error'
+          this.iconName2 = null
+          this.buildErrorMessage = this.deployState.errorMessage
         }
       }
       if (this.deployProcessActive === 2) {
         if (this.deployState.deployStatusCode === 2) {
           this.publishStatus = 'success'
-          this.listenDeployStepMessage()
+        } else if (this.deployState.deployStatusCode === 3) {
+          this.publishStatus = 'error'
+          this.iconName3 = null
+          this.publishErrorMessage = this.deployState.errorMessage
         }
       }
       if (this.deployProcessActive === 3) {
         if (this.deployState.deployStatusCode === 2) {
           this.finishStatus = 'success'
-          this.listenDeployStepMessage()
+        } else if (this.deployState.deployStatusCode === 3) {
+          this.finishStatus = 'error'
+          this.iconName4 = null
+          this.finishErrorMessage = this.deployState.errorMessage
         }
       }
     },
@@ -565,7 +572,6 @@ export default {
       if (this.deployInfo.deployStepList[0].masterId) {
         this.deployProcessActive = this.deployInfo.deployStepList.filter(item => item.stepStatus === 2).length
         this.deployInfo.deployStepList.forEach(item => {
-          // debugger
           if (item.stepCode === 'merge') {
             if (item.stepStatus === 0) {
               this.mergeBranchStatus = 'wait'
@@ -580,6 +586,51 @@ export default {
               this.mergeBranchStatus = 'error'
               this.mergeErrorMessage = item.errorMessage
               this.iconName1 = null
+            }
+          } else if (item.stepCode === 'build') {
+            if (item.stepStatus === 0) {
+              this.buildStatus = 'wait'
+              this.iconName2 = null
+            } else if (item.stepStatus === 1) {
+              this.buildStatus = 'process'
+              this.iconName2 = null
+            } else if (item.stepStatus === 2) {
+              this.buildStatus = 'success'
+              this.iconName2 = null
+            } else {
+              this.buildStatus = 'error'
+              this.buildErrorMessage = item.errorMessage
+              this.iconName2 = null
+            }
+          } else if (item.stepCode === 'publish') {
+            if (item.stepStatus === 0) {
+              this.publishStatus = 'wait'
+              this.iconName3 = null
+            } else if (item.stepStatus === 1) {
+              this.publishStatus = 'process'
+              this.iconName3 = null
+            } else if (item.stepStatus === 2) {
+              this.publishStatus = 'success'
+              this.iconName3 = null
+            } else {
+              this.publishStatus = 'error'
+              this.publishErrorMessage = item.errorMessage
+              this.iconName3 = null
+            }
+          } else if (item.stepCode === 'finish') {
+            if (item.stepStatus === 0) {
+              this.finishStatus = 'wait'
+              this.iconName4 = null
+            } else if (item.stepStatus === 1) {
+              this.finishStatus = 'process'
+              this.iconName4 = null
+            } else if (item.stepStatus === 2) {
+              this.finishStatus = 'success'
+              this.iconName4 = null
+            } else {
+              this.finishStatus = 'error'
+              this.finishErrorMessage = item.errorMessage
+              this.iconName4 = null
             }
           }
         })
