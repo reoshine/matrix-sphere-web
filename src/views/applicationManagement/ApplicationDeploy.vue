@@ -43,7 +43,7 @@
             <i class="el-icon-link"></i>
             feature分支
           </template>
-            <el-tag v-show="(deployedInfo.deployInfo.featureBranchList.length > 0)" v-for="item in deployedInfo.deployInfo.featureBranchList" size="small" style="margin-right: 5px">
+            <el-tag v-show="deployedInfo.deployInfo.featureBranchList && deployedInfo.deployInfo.featureBranchList.length > 0" v-for="item in deployedInfo.deployInfo.featureBranchList" size="small" style="margin-right: 5px">
             {{item.branchName}}
           </el-tag>
         </el-descriptions-item>
@@ -52,10 +52,10 @@
     <el-divider content-position="left">部署发布</el-divider>
     <el-col>
       <el-tabs class="envTabs" v-model="activeName" type="card" @tab-click="tabClick">
-        <el-tab-pane label="开发环境" name="dev"><DeployByEnv v-if="this.deployRecord.deployInfo !== {}" :projectInfo="projectInfo" :deployRecord="deployRecord" :getActiveName="activeName"/></el-tab-pane>
-        <el-tab-pane label="测试环境" name="test"><DeployByEnv :getActiveName="activeName" v-if="activeTest"/></el-tab-pane>
-        <el-tab-pane label="演示环境" name="poc"><DeployByEnv :getActiveName="activeName" v-if="activePoc"/></el-tab-pane>
-        <el-tab-pane label="生产环境" name="prod"><DeployByEnv :getActiveName="activeName" v-if="activeProd"/></el-tab-pane>
+        <el-tab-pane label="开发环境" name="dev"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeDev"/></el-tab-pane>
+        <el-tab-pane label="测试环境" name="test"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeTest"/></el-tab-pane>
+        <el-tab-pane label="演示环境" name="poc"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activePoc"/></el-tab-pane>
+        <el-tab-pane label="生产环境" name="prod"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeProd"/></el-tab-pane>
       </el-tabs>
     </el-col>
   </div>
@@ -223,7 +223,9 @@ export default {
 
   mounted() {
     bus.$on('deployInfo', data => {
-      this.deployedInfo = data
+      if (JSON.stringify(data)) {
+        this.deployedInfo = data
+      }
     });
   },
 
@@ -231,17 +233,16 @@ export default {
     if (localStorage.getItem('projectId')) {
       const projectId = JSON.parse(localStorage.getItem('projectId'))
       this.getProject(projectId)
-      this.getDeployMaster(projectId, this.activeName)
       return
     }
     if (this.$route.params.projectId) {
       this.projectId = this.$route.params.projectId;
       this.getProject(this.projectId)
-      this.getDeployMaster(this.projectId, this.activeName)
     }
   },
 
   beforeDestroy() {
+    bus.$off('deployInfo')
     localStorage.removeItem('projectId')
   },
 };

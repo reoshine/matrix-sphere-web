@@ -109,11 +109,9 @@
 import {
   build,
   deploy,
-  getDepLoyLogList,
+  getDepLoyLogList, getDeployMaster,
   getDeployRecord,
   getUnDeployedBranchList,
-  mergeBranch,
-  withdrawBranch,
   sseClose,
 } from "@/api/api";
 import bus from "@/util/bus";
@@ -122,25 +120,17 @@ import { EventSourcePolyfill } from 'event-source-polyfill'
 export default {
   name: "DeployByEnv",
   props : {
-    getActiveName: {
+    activeName: {
       type: String,
       default:'dev'
     },
 
-    deployRecord: {
-      type: Object,
-      default: {}
-    },
-
-    projectInfo: {
-      type: Object,
-      default: {}
-    }
+    projectId: ''
   },
   data() {
     return {
       //部署环境
-      deployEnvironment: this.getActiveName,
+      deployEnvironment: this.activeName,
 
       //部署按钮是否禁用
       isDisabled: true,
@@ -155,6 +145,8 @@ export default {
         gitUrl: '',
         enableStatus: ''
       },
+
+      deployMaster: {},
 
       //部署信息（从父组件获取）
       deployInfo: {
@@ -209,7 +201,7 @@ export default {
       finishStatus: '',
 
       //触发部署流程
-      deployTrigger: true,
+      deployTrigger: false,
 
       //打开/关闭抽屉
       dialog: false,
@@ -260,8 +252,36 @@ export default {
       })
     },
 
+    async getDeployMaster(projectId, activeName) {
+      let result
+      await getDeployMaster({
+        projectId: projectId,
+        deployEnvironment: activeName
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployMaster = res.data.body
+          result = res.data.body
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署信息失败，原因：' + err,
+          type: 'error',
+          duration: 2000
+        });
+      })
+      if (result) {
+        await this.getDeployRecord(result.id)
+        if (this.deployInfo) {
+          await bus.$emit('deployInfo', this.deployInfo)
+        }
+      } else {
+        await bus.$emit('deployInfo', {deployInfo: {}, featureBranchList: []})
+      }
+    },
+
     //获取部署信息
     async getDeployRecord(deployMasterId) {
+      this.deployTrigger = true
       let result
       await getDeployRecord({
         deployMasterId: deployMasterId
@@ -537,27 +557,33 @@ export default {
   },
 
   watch: {
-    getActiveName(val) {
-      this.deployEnvironment = val;
-      this.getUnDeployedBranchList(this.deployInfo.deployInfo.projectId);
-    },
-
-    //监听部署记录的变化
-    'deployRecord': {
-      handler(n, o) {
-        this.deployInfo = n;
-      },
-      deep: true
-    },
+    // 'activeName': {
+    //   immediate: true,
+    //   handler: function (val) {
+    //     this.deployEnvironment = val;
+    //     console.log('curProjectInfo ===> ' + JSON.stringify(this.curProjectInfo))
+    //     if (this.curProjectInfo.id) {
+    //       this.getDeployMaster(this.curProjectInfo.id, this.activeName)
+    //     }
+    //   },
+    //   deep: true
+    // },
 
     //监听部署信息的变化
-    'projectInfo': {
-      handler(n, o) {
-        this.curProjectInfo = n;
-        this.getUnDeployedBranchList(this.curProjectInfo.id)
-      },
-      deep: true
-    },
+    // 'projectInfo': {
+    //   immediate: true,
+    //   handler: function (val) {
+    //     this.curProjectInfo = val;
+    //     if (this.curProjectInfo.id) {
+    //       this.deployTrigger = true
+    //       this.getUnDeployedBranchList(this.curProjectInfo.id)
+    //       if (!this.deployMaster.id) {
+    //         this.getDeployMaster(this.curProjectInfo.id, this.activeName)
+    //       }
+    //     }
+    //   },
+    //   deep: true
+    // },
   },
 
   computed: {
@@ -565,11 +591,13 @@ export default {
   },
 
   mounted() {
+    this.getUnDeployedBranchList(this.projectId)
+    this.getDeployMaster(this.projectId, this.activeName)
   },
 
   updated() {
     if (this.deployTrigger) {
-      if (this.deployInfo.deployStepList[0].masterId) {
+      if (this.deployInfo.deployInfo.masterId) {
         this.deployProcessActive = this.deployInfo.deployStepList.filter(item => item.stepStatus === 2).length
         this.deployInfo.deployStepList.forEach(item => {
           if (item.stepCode === 'merge') {
