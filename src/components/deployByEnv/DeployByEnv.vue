@@ -308,7 +308,7 @@ export default {
       let result
       const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.deployInfo.featureBranchList.map((item) => item.id));
       await deploy({
-        projectId: this.projectInfo.id,
+        projectId: this.projectId,
         branchIds: toBeDeployBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'SUBMIT_BRANCH'
@@ -381,7 +381,7 @@ export default {
       }
       let result
       await deploy({
-        projectId: this.projectInfo.id,
+        projectId: this.projectId,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'SUBMIT_BRANCH'
@@ -496,7 +496,7 @@ export default {
     getDepLoyLogList() {
       this.dialog = true
       getDepLoyLogList({
-        projectId: this.projectInfo.id,
+        projectId: this.projectId,
         deployEnvironment: this.deployEnvironment,
       }).then(res => {
         if (res.data.code === 2000) {
@@ -557,33 +557,6 @@ export default {
   },
 
   watch: {
-    // 'activeName': {
-    //   immediate: true,
-    //   handler: function (val) {
-    //     this.deployEnvironment = val;
-    //     console.log('curProjectInfo ===> ' + JSON.stringify(this.curProjectInfo))
-    //     if (this.curProjectInfo.id) {
-    //       this.getDeployMaster(this.curProjectInfo.id, this.activeName)
-    //     }
-    //   },
-    //   deep: true
-    // },
-
-    //监听部署信息的变化
-    // 'projectInfo': {
-    //   immediate: true,
-    //   handler: function (val) {
-    //     this.curProjectInfo = val;
-    //     if (this.curProjectInfo.id) {
-    //       this.deployTrigger = true
-    //       this.getUnDeployedBranchList(this.curProjectInfo.id)
-    //       if (!this.deployMaster.id) {
-    //         this.getDeployMaster(this.curProjectInfo.id, this.activeName)
-    //       }
-    //     }
-    //   },
-    //   deep: true
-    // },
   },
 
   computed: {
