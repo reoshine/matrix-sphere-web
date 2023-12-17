@@ -201,7 +201,7 @@ export default {
       finishStatus: '',
 
       //触发部署流程
-      deployTrigger: false,
+      deployTrigger: true,
 
       //打开/关闭抽屉
       dialog: false,
@@ -281,7 +281,6 @@ export default {
 
     //获取部署信息
     async getDeployRecord(deployMasterId) {
-      this.deployTrigger = true
       let result
       await getDeployRecord({
         deployMasterId: deployMasterId
@@ -640,6 +639,9 @@ export default {
   },
 
   created() {
+    if (localStorage.getItem('projectId')) {
+      this.projectId = localStorage.getItem('projectId')
+    }
     this.createSseConnect()
   },
 
