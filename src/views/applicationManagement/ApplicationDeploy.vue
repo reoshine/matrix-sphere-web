@@ -52,10 +52,10 @@
     <el-divider content-position="left">部署发布</el-divider>
     <el-col>
       <el-tabs class="envTabs" v-model="activeName" type="card" @tab-click="tabClick">
-        <el-tab-pane label="开发环境" name="dev"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeDev"/></el-tab-pane>
-        <el-tab-pane label="测试环境" name="test"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeTest"/></el-tab-pane>
-        <el-tab-pane label="演示环境" name="poc"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activePoc"/></el-tab-pane>
-        <el-tab-pane label="生产环境" name="prod"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeProd"/></el-tab-pane>
+        <el-tab-pane label="开发环境" name="DEV"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeDev"/></el-tab-pane>
+        <el-tab-pane label="测试环境" name="TEST"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeTest"/></el-tab-pane>
+        <el-tab-pane label="演示环境" name="POC"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activePoc"/></el-tab-pane>
+        <el-tab-pane label="生产环境" name="PROD"><DeployByEnv :projectId="projectId" :activeName="activeName" v-if="activeProd"/></el-tab-pane>
       </el-tabs>
     </el-col>
   </div>
@@ -78,7 +78,7 @@ export default {
       deployMasterId: '',
 
       //tabs 当前激活环境
-      activeName: "dev",
+      activeName: "DEV",
       activeDev: true,
       activeTest: false,
       activePoc: false,
@@ -135,26 +135,26 @@ export default {
   },
   methods: {
     tabClick(tab) {
-      if (tab.name === 'dev') {
-        this.activeName = 'dev';
+      if (tab.name === 'DEV') {
+        this.activeName = 'DEV';
         this.activeDev = true;
         this.activeTest = false;
         this.activePoc = false;
         this.activeProd = false;
-      } else if(tab.name === 'test') {
-        this.activeName = 'test';
+      } else if(tab.name === 'TEST') {
+        this.activeName = 'TEST';
         this.activeDev = false;
         this.activeTest = true;
         this.activePoc = false;
         this.activeProd = false;
-      } else if(tab.name === 'poc') {
-        this.activeName = 'poc';
+      } else if(tab.name === 'POC') {
+        this.activeName = 'POC';
         this.activeDev = false;
         this.activeTest = false;
         this.activePoc = true;
         this.activeProd = false;
       } else {
-        this.activeName = 'prod';
+        this.activeName = 'PROD';
         this.activeDev = false;
         this.activeTest = false;
         this.activePoc = false;

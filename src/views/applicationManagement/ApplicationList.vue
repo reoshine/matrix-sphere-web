@@ -198,7 +198,7 @@ export default {
       rules: {
         projectCode: [
           { required: true, message: '请输入项目编码', trigger: 'blur' },
-          { min: 3, max: 20, message: '长度在3到20个字符', trigger: 'blur' },
+          { min: 3, max: 40, message: '长度在3到40个字符', trigger: 'blur' },
         ],
         projectName: [
           { required: true, message: '请输入项目名称', trigger: 'blur' },

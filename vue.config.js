@@ -6,7 +6,7 @@ module.exports = {
     open: false,
     proxy: {
       '/adp-sso': {
-        target: 'http://nginx:7001/adp-sso',
+        target: 'http://192.168.0.10:7001/adp-sso',
         changeOrigin: true,
         ws: true,
         pathRewrite: {
@@ -14,7 +14,7 @@ module.exports = {
         }
       },
       '/adp-matrix': {
-        target: 'http://nginx:7002/adp-matrix',
+        target: 'http://192.168.0.10:7002/adp-matrix',
         changeOrigin: true,
         ws: true,
         pathRewrite: {
@@ -22,7 +22,7 @@ module.exports = {
         }
       },
       '/adp-management': {
-        target: 'http://nginx:7004/adp-management',
+        target: 'http://192.168.0.10:7004/adp-management',
         changeOrigin: true,
         ws: true,
         pathRewrite: {

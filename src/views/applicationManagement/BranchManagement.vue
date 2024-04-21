@@ -1,35 +1,47 @@
 <template>
   <div>
+    <div>
+      <el-input
+          minlength="0"
+          maxlength="20"
+          style="width: 320px;"
+          size="medium"
+          placeholder="请输入应用编码/名称，支持模糊搜索"
+          suffix-icon="el-icon-search"
+          clearable
+          v-model="searchText"></el-input>
+      <el-button type="primary" size="small" icon="el-icon-search" @click="queryApplicationByParam">查询</el-button>
+    </div>
     <el-divider content-position="left">应用信息</el-divider>
     <div style="margin-bottom: 30px;">
       <el-descriptions class="appDeployDiv" title="" :column="2" border>
-        <el-descriptions-item>
+        <el-descriptions-item label-style="width: 150px">
           <template slot="label">
             <i class="el-icon-s-order"></i>
             应用编码
           </template>
-          <el-tag size="small">{{projectInfo.projectCode}}</el-tag>
+          <el-tag size="big" v-if="projectInfo.projectCode">{{projectInfo.projectCode}}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item>
+        <el-descriptions-item label-style="width: 150px">
           <template slot="label">
             <i class="el-icon-document"></i>
             应用名称
           </template>
-          <el-tag size="small">{{projectInfo.projectName}}</el-tag>
+          <el-tag size="small" v-if="projectInfo.projectName">{{projectInfo.projectName}}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item>
+        <el-descriptions-item label-style="width: 150px">
           <template slot="label">
             <i class="el-icon-location-outline"></i>
             应用分组
           </template>
-          <el-tag size="small">{{projectInfo.projectGroupName}}</el-tag>
+          <el-tag size="small" v-if="projectInfo.projectGroupName">{{projectInfo.projectGroupName}}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item>
+        <el-descriptions-item label-style="width: 150px">
           <template slot="label">
             <i class="el-icon-link"></i>
             git地址
           </template>
-          <el-tag size="small">{{projectInfo.gitUrl}}</el-tag>
+          <el-tag size="small" v-if="projectInfo.gitUrl">{{projectInfo.gitUrl}}</el-tag>
         </el-descriptions-item>
       </el-descriptions>
     </div>
@@ -132,12 +144,20 @@
 </template>
 
 <script>
-import { createBranch, modifyBranch, getProjectById, getUnDeployedBranchList, removeBranch } from '@/api/api'
+import {
+  createBranch,
+  modifyBranch,
+  getProjectById,
+  getUnDeployedBranchList,
+  removeBranch,
+  getProjectInfo
+} from '@/api/api'
 
 export default {
   name: 'BranchManagement',
   data() {
     return {
+      searchText: '',
       //tabs 当前激活环境
       activeName: "dev",
 
@@ -232,13 +252,47 @@ export default {
   },
 
   methods: {
-    //获取项目信息
-    getProject(projectId) {
+    //根据搜索内容获取应用
+    queryApplicationByParam() {
+      if (!this.searchText) {
+        this.$message({
+          message: '查询条件不可为空',
+          type: 'error',
+          duration: 2000,
+        });
+        return
+      }
+      getProjectInfo({
+        searchText: this.searchText
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.projectInfo = res.data.body
+          localStorage.setItem('projectId', JSON.stringify(this.projectInfo.id))
+          this.getBranchListByProjectId(this.projectInfo.id)
+        } else {
+          this.$message({
+            message: '查询应用信息失败，原因：' + err,
+            type: 'error',
+            duration: 2000,
+          });
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署信息失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+        this.loading = false
+      })
+    },
+    //根据id获取应用
+    async getProject(projectId) {
       getProjectById({
         projectId: projectId
       }).then(res => {
         if (res.data.code === 2000) {
-          this.projectInfo = res.data.body;
+          this.projectInfo = res.data.body
+          this.searchText = this.projectInfo.projectCode
           localStorage.setItem('projectId', JSON.stringify(this.projectInfo.id))
         }
       }).catch(err => {
