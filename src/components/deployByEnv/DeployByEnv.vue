@@ -110,7 +110,7 @@ import {
   build,
   deploy,
   getDepLoyLogList, getDeployMaster,
-  getDeployRecord,
+  getDeployRecord, getProjectById,
   getUnDeployedBranchList,
   sseClose,
 } from "@/api/api";
@@ -307,7 +307,7 @@ export default {
       let result
       const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.deployInfo.featureBranchList.map((item) => item.id));
       await deploy({
-        projectId: this.projectId,
+        projectId: this.curProjectInfo.id,
         branchIds: toBeDeployBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'SUBMIT_BRANCH'
@@ -342,7 +342,7 @@ export default {
       this.deployTrigger = false
       let result
       await deploy({
-        projectId: this.projectInfo.id,
+        projectId: this.curProjectInfo.id,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'WITHDRAW_BRANCH'
@@ -639,9 +639,31 @@ export default {
   },
 
   created() {
-    if (localStorage.getItem('projectId')) {
-      this.projectId = localStorage.getItem('projectId')
+    let projectId
+    if (this.projectId) {
+      projectId = this.projectId
+    } else {
+      if (localStorage.getItem('projectId')) {
+        projectId = localStorage.getItem('projectId')
+      }
     }
+    if (!projectId) {
+      return
+    }
+    getProjectById({
+      projectId: projectId
+    }).then(res => {
+      if (res.data.code === 2000) {
+        this.curProjectInfo = res.data.body
+      }
+    }).catch(err => {
+      this.$message({
+        message: '查询应用失败，原因：' + err,
+        type: 'error',
+        duration: 2000,
+      });
+      this.loading = false
+    })
     this.createSseConnect()
   },
 
