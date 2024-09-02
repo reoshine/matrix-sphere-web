@@ -36,14 +36,14 @@
             <i class="el-icon-link"></i>
             release分支
           </template>
-          <el-tag size="small" v-show="(deployedInfo.deployInfo.releaseBranchName)">{{deployedInfo.deployInfo.releaseBranchName}}</el-tag>
+          <el-tag size="small" v-show="(deployedInfo.releaseBranchName)">{{deployedInfo.releaseBranchName}}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item>
           <template slot="label">
             <i class="el-icon-link"></i>
             feature分支
           </template>
-            <el-tag v-show="deployedInfo.deployInfo.featureBranchList && deployedInfo.deployInfo.featureBranchList.length > 0" v-for="item in deployedInfo.deployInfo.featureBranchList" size="small" style="margin-right: 5px">
+            <el-tag v-show="deployedInfo.featureBranchList && deployedInfo.featureBranchList.length > 0" v-for="item in deployedInfo.featureBranchList" size="small" style="margin-right: 5px">
             {{item.branchName}}
           </el-tag>
         </el-descriptions-item>
@@ -96,15 +96,12 @@ export default {
       },
 
       deployedInfo: {
-        deployInfo: {
-          projectId: '',
-          masterId: '',
-          releaseBranchId: '',
-          releaseBranchName: '',
-          deployEnvironment: '',
-          featureBranchList: []
-        },
-        deployStepList: {}
+        projectId: '',
+        masterId: '',
+        releaseBranchId: '',
+        releaseBranchName: '',
+        deployEnvironment: '',
+        featureBranchList: []
       },
 
       deployMaster: {
@@ -180,45 +177,6 @@ export default {
         this.loading = false
       })
     },
-
-    async getDeployMaster(projectId, activeName) {
-      let result
-      await getDeployMaster({
-        projectId: projectId,
-        deployEnvironment: activeName
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.deployMaster = res.data.body
-          result = res.data.body
-        }
-      }).catch(err => {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000
-        });
-      })
-      if (result) {
-        await this.getDeployRecord(result.id)
-      }
-    },
-
-    async getDeployRecord(deployMasterId) {
-      await getDeployRecord({
-        deployMasterId: deployMasterId
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.deployRecord = res.data.body
-          this.deployedInfo = res.data.body
-        }
-      }).catch(err => {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-    }
   },
 
   mounted() {

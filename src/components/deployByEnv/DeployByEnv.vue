@@ -5,10 +5,10 @@
       :align-center="true"
       :active="deployProcessActive"
       finish-status="success">
-      <el-step title="合并" :icon="iconName1" :description="mergeErrorMessage" :status="mergeBranchStatus"></el-step>
-      <el-step title="构建" :icon="iconName2" :description="buildErrorMessage" :status="buildStatus" ></el-step>
-      <el-step title="部署" :icon="iconName3" :description="publishErrorMessage" :status="publishStatus"></el-step>
-      <el-step title="完成" :icon="iconName4" :description="finishErrorMessage" :status="finishStatus"></el-step>
+      <el-step title="合并" :icon="mergeIcon" :description="mergeErrorMessage" :status="mergeStatus"></el-step>
+      <el-step title="构建" :icon="buildIcon" :description="buildErrorMessage" :status="buildStatus" ></el-step>
+      <el-step title="部署" :icon="publishIcon" :description="publishErrorMessage" :status="publishStatus"></el-step>
+      <el-step title="完成" :icon="finishIcon" :description="finishErrorMessage" :status="finishStatus"></el-step>
     </el-steps>
     <el-divider content-position="left">已部署分支</el-divider>
     <div>
@@ -16,8 +16,8 @@
       <el-button type="primary" size="small" @click="reBuild" :disabled="isDisabled">重新部署</el-button>
       <el-button type="primary" size="small" @click="deploy">部署main分支</el-button>
       <el-button type="primary" size="small" @click="getDepLoyLogList">部署记录</el-button>
-      <el-empty v-show="!deployInfo.deployInfo || !deployInfo.deployInfo.featureBranchList || deployInfo.deployInfo.featureBranchList.length <= 0" description="无已部署分支"></el-empty>
-      <el-table v-show="deployInfo.deployInfo && deployInfo.deployInfo.featureBranchList && deployInfo.deployInfo.featureBranchList.length > 0" :data="deployInfo.deployInfo.featureBranchList" @selection-change="selectedDeployed" border>
+      <el-empty v-show="!deployInfo || !deployInfo.featureBranchList || deployInfo.featureBranchList.length <= 0" description="无已部署分支"></el-empty>
+      <el-table v-show="deployInfo && deployInfo.featureBranchList && deployInfo.featureBranchList.length > 0" :data="deployInfo.featureBranchList" @selection-change="selectedDeployed" border>
         <el-table-column type="selection"></el-table-column>
         <el-table-column prop="branchName" label="分支" width="400"></el-table-column>
         <el-table-column prop="description" label="描述" width="400"></el-table-column>
@@ -110,9 +110,8 @@ import {
   build,
   deploy,
   getDepLoyLogList, getDeployMaster,
-  getDeployRecord, getProjectById,
-  getUnDeployedBranchList,
-  sseClose,
+  getDeployRecord, getUnDeployedBranchList,
+  sseClose, getDeployStepList
 } from "@/api/api";
 import bus from "@/util/bus";
 import { EventSourcePolyfill } from 'event-source-polyfill'
@@ -135,8 +134,10 @@ export default {
       //部署按钮是否禁用
       isDisabled: true,
 
+      curProjectId: this.projectId,
+
       //应用信息
-      curProjectInfo: {
+      projectInfo: {
         id: '',
         projectCode: '',
         projectName: '',
@@ -150,22 +151,12 @@ export default {
 
       //部署信息（从父组件获取）
       deployInfo: {
-        deployInfo: {
-          projectId: '',
-          masterId: '',
-          releaseBranchId: '',
-          releaseBranchName: '',
-          deployEnvironment: '',
-          featureBranchList: []
-        },
-        deployStepList: [{
-          masterId: '',
-          stepCode: '',
-          stepName: '',
-          stepNo: '',
-          stepSerialNo: '',
-          stepStatus: 0
-        }]
+        projectId: '',
+        masterId: '',
+        releaseBranchId: '',
+        releaseBranchName: '',
+        deployEnvironment: '',
+        featureBranchList: []
       },
 
       //未部署分支
@@ -185,17 +176,17 @@ export default {
       },
 
       deployProcessActive: -1,
-      iconName1: '',
-      iconName2: '',
-      iconName3: '',
-      iconName4: '',
+      mergeIcon: '',
+      buildIcon: '',
+      publishIcon: '',
+      finishIcon: '',
 
       mergeErrorMessage: '',
       buildErrorMessage: '',
       publishErrorMessage: '',
       finishErrorMessage: '',
 
-      mergeBranchStatus: '',
+      mergeStatus: '',
       buildStatus: '',
       publishStatus: '',
       finishStatus: '',
@@ -277,6 +268,7 @@ export default {
       } else {
         await bus.$emit('deployInfo', {deployInfo: {}, featureBranchList: []})
       }
+      return result
     },
 
     //获取部署信息
@@ -307,7 +299,7 @@ export default {
       let result
       const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.deployInfo.featureBranchList.map((item) => item.id));
       await deploy({
-        projectId: this.curProjectInfo.id,
+        projectId: this.curProjectId,
         branchIds: toBeDeployBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'SUBMIT_BRANCH'
@@ -342,7 +334,7 @@ export default {
       this.deployTrigger = false
       let result
       await deploy({
-        projectId: this.curProjectInfo.id,
+        projectId: this.projectInfo.id,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'WITHDRAW_BRANCH'
@@ -373,14 +365,15 @@ export default {
 
     //重新部署
     async reBuild() {
-      this.clearDeployStatus()
+      await this.clearDeployStatus()
+      await this.createSseConnect(this.curProjectId)
       this.deployTrigger = false
       if (!this.deployedBranchIds) {
         return
       }
       let result
       await deploy({
-        projectId: this.projectId,
+        projectId: this.curProjectId,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'SUBMIT_BRANCH'
@@ -407,6 +400,8 @@ export default {
       let deployRecord = await this.getDeployRecord(result.deployMaster.id)
       await bus.$emit('deployInfo', deployRecord)
       await this.$refs.selectedStatus.clearSelection()
+
+      // localStorage.setItem('deployStepList', JSON.stringify(this.deployInfo.deployStepList))
     },
 
     //未部署分支选择器
@@ -422,32 +417,93 @@ export default {
 
     listenDeployStepMessage() {
       this.eventSource.onmessage = (res => {
-        this.deployState = JSON.parse(res.data)
-        if (this.deployState.deployStep === 'merge') {
-          this.iconName1 = 'el-icon-loading'
-          this.deployProcessActive = 0
-          this.next()
+        console.log(res.data, 111)
+        const item = JSON.parse(res.data)
+        // if (this.deployState.deployStep === 'merge') {
+        //   this.iconName1 = 'el-icon-loading'
+        //   this.deployProcessActive = 0
+        //   this.next()
+        // }
+        if (item.stepCode === 'merge') {
+          if (item.stepStatus === 0) {
+            this.deployProcessActive = 0
+          }
+          if (item.stepStatus === 1) {
+            this.mergeIcon = 'el-icon-loading'
+            this.deployProcessActive = 0
+          }
+          if (item.stepStatus === 2) {
+            this.mergeIcon = null
+            this.deployProcessActive = 1
+          }
+          if (item.stepStatus === 3) {
+            this.mergeIcon = null
+            this.deployProcessActive = 1
+            this.mergeStatus = 'error'
+            this.mergeIcon = null
+            this.finishErrorMessage = item.errorMessage
+          }
         }
-        if (this.deployState.deployStep === 'build') {
-          this.iconName2 = 'el-icon-loading'
-          this.deployProcessActive = 1
-          this.iconName1 = null
-          this.next()
+
+        if (item.stepCode === 'build') {
+          if (item.stepStatus === 0) {
+            this.deployProcessActive = 1
+          }
+          if (item.stepStatus === 1) {
+            this.buildIcon = 'el-icon-loading'
+            this.deployProcessActive = 1
+          }
+          if (item.stepStatus === 2) {
+            this.buildIcon = null
+            this.deployProcessActive = 2
+          }
+          if (item.stepStatus === 3) {
+            this.buildIcon = null
+            this.deployProcessActive = 2
+            this.buildStatus = 'error'
+            this.buildErrorMessage = item.errorMessage
+          }
         }
-        if (this.deployState.deployStep === 'publish') {
-          this.iconName3 = 'el-icon-loading'
-          this.deployProcessActive = 2
-          this.iconName2 = null
-          this.next()
+
+        if (item.stepCode === 'publish') {
+          if (item.stepStatus === 0) {
+            this.deployProcessActive = 2
+          }
+          if (item.stepStatus === 1) {
+            this.publishIcon = 'el-icon-loading'
+            this.deployProcessActive = 2
+          }
+          if (item.stepStatus === 2) {
+            this.publishIcon = null
+            this.deployProcessActive = 3
+          }
+          if (item.stepStatus === 3) {
+            this.publishIcon = null
+            this.deployProcessActive = 3
+            this.publishStatus = 'error'
+            this.publishErrorMessage = item.errorMessage
+          }
         }
-        if (this.deployState.deployStep === 'finish') {
-          this.iconName4 = 'el-icon-loading'
-          this.deployProcessActive = 3
-          this.iconName3 = null
-          this.next()
-          if (this.finishStatus === 'success') {
-            this.iconName4 = null
+
+        if (item.stepCode === 'finish') {
+          if (item.stepStatus === 0) {
+            this.deployProcessActive = 3
+          }
+          if (item.stepStatus === 1) {
+            this.finishIcon = 'el-icon-loading'
+            this.deployProcessActive = 3
+          }
+          if (item.stepStatus === 2) {
+            this.finishIcon = null
             this.deployProcessActive = 4
+            this.sseClose(this.curProjectId)
+          }
+          if (item.stepStatus === 3) {
+            this.finishIcon = null
+            this.deployProcessActive = 4
+            this.finishStatus = 'error'
+            this.finishErrorMessage = item.errorMessage
+            this.sseClose(this.curProjectId)
           }
         }
       })
@@ -456,10 +512,10 @@ export default {
     next() {
       if (this.deployProcessActive === 0) {
         if (this.deployState.deployStatusCode === 2) {
-          this.mergeBranchStatus = 'success'
+          this.mergeStatus = 'success'
         } else if (this.deployState.deployStatusCode === 3) {
-          this.mergeBranchStatus = 'error'
-          this.iconName1 = null
+          this.mergeStatus = 'error'
+          this.mergeIcon = null
           this.mergeErrorMessage = this.deployState.errorMessage
         }
       }
@@ -468,7 +524,7 @@ export default {
           this.buildStatus = 'success'
         } else if (this.deployState.deployStatusCode === 3) {
           this.buildStatus = 'error'
-          this.iconName2 = null
+          this.buildIcon = null
           this.buildErrorMessage = this.deployState.errorMessage
         }
       }
@@ -477,7 +533,7 @@ export default {
           this.publishStatus = 'success'
         } else if (this.deployState.deployStatusCode === 3) {
           this.publishStatus = 'error'
-          this.iconName3 = null
+          this.publishIcon = null
           this.publishErrorMessage = this.deployState.errorMessage
         }
       }
@@ -486,7 +542,7 @@ export default {
           this.finishStatus = 'success'
         } else if (this.deployState.deployStatusCode === 3) {
           this.finishStatus = 'error'
-          this.iconName4 = null
+          this.finishIcon = null
           this.finishErrorMessage = this.deployState.errorMessage
         }
       }
@@ -495,7 +551,7 @@ export default {
     getDepLoyLogList() {
       this.dialog = true
       getDepLoyLogList({
-        projectId: this.projectId,
+        projectId: this.curProjectId,
         deployEnvironment: this.deployEnvironment,
       }).then(res => {
         if (res.data.code === 2000) {
@@ -510,9 +566,79 @@ export default {
       })
     },
 
+    getDeployStepList() {
+      getDeployStepList({
+        projectId: this.curProjectId,
+        deployEnvironment: this.deployEnvironment
+      }).then(res => {
+        if (res.data.code === 2000) {
+          const mergeStep = res.data.body.find(item => item.stepCode === 'merge')
+          const buildStep = res.data.body.find(item => item.stepCode === 'build')
+          const publishStep = res.data.body.find(item => item.stepCode === 'publish')
+          const finishStep = res.data.body.find(item => item.stepCode === 'finish')
+
+          if (finishStep.stepStatus === 1) {
+            this.deployProcessActive = 4
+            this.finishIcon = 'el-icon-loading'
+          } else if (finishStep.stepStatus === 2) {
+            this.deployProcessActive = 4
+            return;
+          } else if (finishStep.stepStatus === 3) {
+            this.deployProcessActive = 3
+            this.finishStatus = 'error'
+            this.finishErrorMessage = finishStep.errorMessage
+            return;
+          }
+
+          if (publishStep.stepStatus === 1) {
+            this.deployProcessActive = 3
+            this.publishIcon = 'el-icon-loading'
+          } else if (publishStep.stepStatus === 2) {
+            this.deployProcessActive = 3
+            return;
+          } else if (publishStep.stepStatus === 3) {
+            this.deployProcessActive = 2
+            this.publishStatus = 'error'
+            this.publishErrorMessage = publishStep.errorMessage
+            return;
+          }
+
+          if (buildStep.stepStatus === 1) {
+            this.deployProcessActive = 2
+            this.buildIcon = 'el-icon-loading'
+          } else if (buildStep.stepStatus === 2) {
+            this.deployProcessActive = 2
+            return;
+          } else if (buildStep.stepStatus === 3) {
+            this.deployProcessActive = 1
+            this.buildStatus = 'error'
+            this.buildErrorMessage = buildStep.errorMessage
+            return;
+          }
+
+          if (mergeStep.stepStatus === 1) {
+            this.deployProcessActive = 1
+            this.mergeIcon = 'el-icon-loading'
+          } else if (mergeStep.stepStatus === 2) {
+            this.deployProcessActive = 1
+          } else if (mergeStep.stepStatus === 3) {
+            this.deployProcessActive = 0
+            this.mergeStatus = 'error'
+            this.mergeErrorMessage = mergeStep.errorMessage
+          }
+        }
+      }).catch(err => {
+        this.$message({
+          message: '查询部署步骤失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+      })
+    },
+
     clearDeployStatus() {
       this.deployProcessActive = -1
-      this.mergeBranchStatus = ''
+      this.mergeStatus = ''
       this.buildStatus = ''
       this.publishStatus = ''
       this.finishStatus = ''
@@ -522,21 +648,8 @@ export default {
       this.finishErrorMessage = ''
     },
 
-    //关闭抽屉时间
-    handleClose(done) {
-      if (this.loading) {
-        return;
-      }
-      this.$confirm('确认关闭吗？')
-          .then(_ => {
-            done();
-          })
-          .catch(_ => {
-          });
-    },
-
-    createSseConnect() {
-      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/adp-matrix/sse/connect/1`, {
+    createSseConnect(projectId) {
+      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/adp-matrix/sse/connect/${projectId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
           heartbeatTimeout: 10000000
@@ -545,12 +658,13 @@ export default {
       this.eventSource.onopen = (res => {
         console.log('已建立长连接 ==> ');
       })
-
-
     },
 
-    sseClose() {
-      sseClose(1)
+    sseClose(projectId) {
+      this.eventSource.onerror = (err) => {
+        this.eventSource.close()
+      }
+      sseClose(projectId)
       console.log('连接已关闭')
     }
   },
@@ -563,114 +677,26 @@ export default {
   },
 
   mounted() {
-    this.getUnDeployedBranchList(this.projectId)
-    this.getDeployMaster(this.projectId, this.activeName)
-  },
-
-  updated() {
-    if (this.deployTrigger) {
-      if (this.deployInfo.deployInfo.masterId) {
-        this.deployProcessActive = this.deployInfo.deployStepList.filter(item => item.stepStatus === 2).length
-        this.deployInfo.deployStepList.forEach(item => {
-          if (item.stepCode === 'merge') {
-            if (item.stepStatus === 0) {
-              this.mergeBranchStatus = 'wait'
-              this.iconName1 = null
-            } else if (item.stepStatus === 1) {
-              this.mergeBranchStatus = 'process'
-              this.iconName1 = null
-            } else if (item.stepStatus === 2) {
-              this.mergeBranchStatus = 'success'
-              this.iconName1 = null
-            } else {
-              this.mergeBranchStatus = 'error'
-              this.mergeErrorMessage = item.errorMessage
-              this.iconName1 = null
-            }
-          } else if (item.stepCode === 'build') {
-            if (item.stepStatus === 0) {
-              this.buildStatus = 'wait'
-              this.iconName2 = null
-            } else if (item.stepStatus === 1) {
-              this.buildStatus = 'process'
-              this.iconName2 = null
-            } else if (item.stepStatus === 2) {
-              this.buildStatus = 'success'
-              this.iconName2 = null
-            } else {
-              this.buildStatus = 'error'
-              this.buildErrorMessage = item.errorMessage
-              this.iconName2 = null
-            }
-          } else if (item.stepCode === 'publish') {
-            if (item.stepStatus === 0) {
-              this.publishStatus = 'wait'
-              this.iconName3 = null
-            } else if (item.stepStatus === 1) {
-              this.publishStatus = 'process'
-              this.iconName3 = null
-            } else if (item.stepStatus === 2) {
-              this.publishStatus = 'success'
-              this.iconName3 = null
-            } else {
-              this.publishStatus = 'error'
-              this.publishErrorMessage = item.errorMessage
-              this.iconName3 = null
-            }
-          } else if (item.stepCode === 'finish') {
-            if (item.stepStatus === 0) {
-              this.finishStatus = 'wait'
-              this.iconName4 = null
-            } else if (item.stepStatus === 1) {
-              this.finishStatus = 'process'
-              this.iconName4 = null
-            } else if (item.stepStatus === 2) {
-              this.finishStatus = 'success'
-              this.iconName4 = null
-            } else {
-              this.finishStatus = 'error'
-              this.finishErrorMessage = item.errorMessage
-              this.iconName4 = null
-            }
-          }
-        })
+    this.getUnDeployedBranchList(this.curProjectId)
+    this.getDeployMaster(this.curProjectId, this.activeName).then(data => {
+      if (this.deployMaster.deployStatus === 0) {
+        this.createSseConnect(this.curProjectId)
+        this.listenDeployStepMessage()
       }
-    }
+    })
   },
 
   created() {
-    let projectId
-    if (this.projectId) {
-      projectId = this.projectId
-    } else {
-      if (localStorage.getItem('projectId')) {
-        projectId = localStorage.getItem('projectId')
-      }
+    if (localStorage.getItem('projectId')) {
+      this.curProjectId = localStorage.getItem('projectId')
     }
-    if (!projectId) {
-      return
-    }
-    getProjectById({
-      projectId: projectId
-    }).then(res => {
-      if (res.data.code === 2000) {
-        this.curProjectInfo = res.data.body
-      }
-    }).catch(err => {
-      this.$message({
-        message: '查询应用失败，原因：' + err,
-        type: 'error',
-        duration: 2000,
-      });
-      this.loading = false
-    })
-    this.createSseConnect()
+    this.getDeployStepList()
   },
 
   beforeDestroy() {
     if(this.eventSource) {
       this.eventSource.close()
-      this.sseClose();
+      this.sseClose(this.curProjectId);
     }
   },
 };

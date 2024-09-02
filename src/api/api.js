@@ -108,8 +108,8 @@ export function getDepLoyLogList(data) {
   return axios.post('/adp-matrix/deploy/getDepLoyLogList', data)
 }
 
-export function sseConnect(data) {
-  return axios.get(`/adp-matrix/sse/connect/${data}`)
+export function getDeployStepList(data) {
+  return axios.post('/adp-matrix/deployStep/getDeployStepList', data)
 }
 
 export function sseClose(data) {
