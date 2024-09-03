@@ -191,9 +191,6 @@ export default {
       publishStatus: '',
       finishStatus: '',
 
-      //触发部署流程
-      deployTrigger: true,
-
       //打开/关闭抽屉
       dialog: false,
       loading: false,
@@ -294,10 +291,10 @@ export default {
 
     //部署分支
     async deploy() {
-      this.clearDeployStatus()
-      this.deployTrigger = false
+      await this.clearDeployStatus()
+      await this.createSseConnect(this.curProjectId)
       let result
-      const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.deployInfo.featureBranchList.map((item) => item.id));
+      const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.featureBranchList.map((item) => item.id));
       await deploy({
         projectId: this.curProjectId,
         branchIds: toBeDeployBranchIds,
@@ -330,11 +327,11 @@ export default {
 
     //退出分支
     async withdrawBranch() {
-      this.clearDeployStatus()
-      this.deployTrigger = false
+      await this.clearDeployStatus()
+      await this.createSseConnect(this.curProjectId)
       let result
       await deploy({
-        projectId: this.projectInfo.id,
+        projectId: this.curProjectId,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
         deployType: 'WITHDRAW_BRANCH'
@@ -367,7 +364,6 @@ export default {
     async reBuild() {
       await this.clearDeployStatus()
       await this.createSseConnect(this.curProjectId)
-      this.deployTrigger = false
       if (!this.deployedBranchIds) {
         return
       }
@@ -400,8 +396,6 @@ export default {
       let deployRecord = await this.getDeployRecord(result.deployMaster.id)
       await bus.$emit('deployInfo', deployRecord)
       await this.$refs.selectedStatus.clearSelection()
-
-      // localStorage.setItem('deployStepList', JSON.stringify(this.deployInfo.deployStepList))
     },
 
     //未部署分支选择器
