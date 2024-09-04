@@ -29,7 +29,7 @@
     <el-divider content-position="left">未部署分支</el-divider>
     <el-empty v-show="unDeployedBranchList.length <= 0" description="无未部署分支"></el-empty>
     <div v-show="unDeployedBranchList.length > 0">
-      <el-button type="primary" size="small" @click="deploy">部署分支</el-button>
+      <el-button type="primary" size="small" @click="deploy" :disabled="deployBranchBtnIsDisabled">部署分支</el-button>
       <el-table :data="unDeployedBranchList" @selection-change="getUnDeployBranchIds" ref="selectedStatus" border>
         <el-table-column type="selection"></el-table-column>
         <el-table-column prop="branchName" label="分支" width="400"></el-table-column>
@@ -133,6 +133,7 @@ export default {
 
       //部署按钮是否禁用
       isDisabled: true,
+      deployBranchBtnIsDisabled: true,
 
       curProjectId: this.projectId,
 
@@ -327,7 +328,7 @@ export default {
 
     //退出分支
     async withdrawBranch() {
-      await this.clearDeployStatus()
+      // await this.clearDeployStatus()
       await this.createSseConnect(this.curProjectId)
       let result
       await deploy({
@@ -401,6 +402,7 @@ export default {
     //未部署分支选择器
     getUnDeployBranchIds(val) {
       this.unDeployedBranchIds = val.map((item) => item.id);
+      this.deployBranchBtnIsDisabled = this.unDeployedBranchIds.length <= 0
     },
 
     //选择需要部署的分支
