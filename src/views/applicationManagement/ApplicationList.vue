@@ -108,9 +108,9 @@
             <el-select size="medium" v-model="saveProjectForm.projectGroupId" placeholder="请选择">
               <el-option
                 v-for="item in projectGroupList"
-                :key="item.projectGroupId"
+                :key="item.id"
                 :label="item.projectGroupCode"
-                :value="item.projectGroupId">
+                :value="item.id">
               </el-option>
             </el-select>
           </el-form-item>
@@ -142,7 +142,7 @@
 <script>
 import {
   enableChange,
-  getProjectInfo,
+  getProjectInfo, queryList,
   queryProjectPage,
   removeProject,
   saveProject
@@ -167,20 +167,9 @@ export default {
         }
       ],
 
-
       //项目分组选择器
       projectGroupId: '',
-      projectGroupList: [
-        {
-          projectGroupId: 1,
-          projectGroupCode: 'adp',
-
-        },
-        {
-          projectGroupId: 2,
-          projectGroupCode: 'deployment',
-        }
-      ],
+      projectGroupList: [],
 
       //编辑抽屉内容
       dialog: false,
@@ -202,7 +191,7 @@ export default {
         ],
         projectName: [
           { required: true, message: '请输入项目名称', trigger: 'blur' },
-          { min: 3, max: 15, message: '长度在3到15个字符', trigger: 'blur' },
+          { min: 3, max: 30, message: '长度在3到30个字符', trigger: 'blur' },
         ],
         projectGroupId: [
           { required: true, message: '请选择项目分组', trigger: 'blur' },
@@ -242,6 +231,17 @@ export default {
     };
   },
   methods: {
+    getGroupList() {
+      queryList({
+        searchText: '',
+        enableStatus: 1
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.projectGroupList = res.data.body;
+        }
+      })
+    },
+
     //每页展示数改变事件
     handleSizeChange(val) {
       this.pageCount = val;
@@ -279,6 +279,7 @@ export default {
 
     // 编辑应用
     modifyApplicationInfo(projectId) {
+      this.getGroupList()
       this.dialog = true
       getProjectInfo({
         projectId: projectId
@@ -347,8 +348,9 @@ export default {
     },
 
     //新增按钮绑定事件
-    addProject() {
+    async addProject() {
       this.saveProjectForm = {}
+      await this.getGroupList()
       this.dialog = true
     },
 

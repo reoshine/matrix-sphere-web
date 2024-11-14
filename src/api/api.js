@@ -21,6 +21,10 @@ export function getMenuList(data) {
 }
 
 // ====================================== 应用分组 ======================================
+export function queryList(data) {
+  return axios.post('/adp-matrix/projectGroup/queryList', data)
+}
+
 export function queryPage(data) {
   return axios.post('/adp-matrix/projectGroup/queryPage', data)
 }
