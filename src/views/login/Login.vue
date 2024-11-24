@@ -55,8 +55,8 @@ export default {
       },
 
       auth: {
-        username: 'adp-matrix',
-        password: 'adp-matrix-secret',
+        username: 'matrix-sphere',
+        password: 'matrix-sphere-secret',
       },
 
       rules: {

@@ -16,9 +16,9 @@
         <el-select clearable size="medium" v-model="enableStatus" placeholder="请选择">
           <el-option
             v-for="item in enableStatusList"
-            :key="item.enableStatus"
-            :label="item.enableStatusName"
-            :value="item.enableStatus">
+            :key="item"
+            :label="item"
+            :value="item">
           </el-option>
         </el-select>
 
@@ -33,7 +33,32 @@
         </el-select>
 
         <el-button type="primary" size="small" icon="el-icon-search" @click="queryApplicationPage">查询</el-button>
-        <el-button type="primary" size="small" icon="el-icon-plus" @click="addProject()">新增</el-button>
+        <el-button type="primary" size="small" icon="el-icon-plus" @click="addProject">新增</el-button>
+        <el-upload
+            class="upload-demo"
+            action="https://jsonplaceholder.typicode.com/posts/"
+            :http-request="upload"
+            :on-preview="handlePreview"
+            :on-exceed="handleExceed"
+            :accept="uploadFileType"
+            :show-file-list="false"
+            :file-list="fileList">
+          <el-button size="small" type="primary">导入文件</el-button>
+        </el-upload>
+
+        <el-upload
+            class="upload-demo"
+            action="https://jsonplaceholder.typicode.com/posts/"
+            :on-preview="handlePreview"
+            :on-remove="handleRemove"
+            :before-remove="beforeRemove"
+            :limit="3"
+            :on-exceed="handleExceed"
+            :file-list="fileList">
+          <el-button size="small" type="primary">模版下载</el-button>
+        </el-upload>
+
+
       </div>
     </div>
     <el-divider content-position="left">应用列表</el-divider>
@@ -46,8 +71,8 @@
               <span style="float: right; margin-right: -23px;" @click.stop="project.enableStatus === 1 ? 0 : 1">
                 <el-switch
                   style="padding: 0 10px"
-                  :active-value="1"
-                  :inactive-value="0"
+                  :active-value="'启用'"
+                  :inactive-value="'停用'"
                   v-model="project.enableStatus"
                   @change="enableChange($event, project)"
                   active-color="#13ce66"
@@ -104,8 +129,8 @@
           <el-form-item prop="projectName" label="项目名称" label-width="100px">
             <el-input style="width: 80%" v-model="saveProjectForm.projectName" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item prop="projectGroupId" label="分组名称" label-width="100px">
-            <el-select size="medium" v-model="saveProjectForm.projectGroupId" placeholder="请选择">
+          <el-form-item prop="projectGroupCode" label="分组名称" label-width="100px">
+            <el-select size="medium" v-model="saveProjectForm.projectGroupCode" placeholder="请选择">
               <el-option
                 v-for="item in projectGroupList"
                 :key="item.id"
@@ -121,9 +146,9 @@
             <el-select size="medium" v-model="saveProjectForm.enableStatus" placeholder="请选择">
               <el-option
                 v-for="item in enableStatusList"
-                :key="item.enableStatus"
-                :label="item.enableStatusName"
-                :value="item.enableStatus">
+                :key="item"
+                :label="item"
+                :value="item">
               </el-option>
             </el-select>
           </el-form-item>
@@ -142,7 +167,7 @@
 <script>
 import {
   enableChange,
-  getProjectInfo, queryList,
+  getProjectInfo, importFile, queryList,
   queryProjectPage,
   removeProject,
   saveProject
@@ -152,20 +177,14 @@ export default {
   name: "ApplicationList.vue",
   data() {
     return {
+      uploadFileType: '.xlsx, .xls',
+      fileList: [],
+
       searchText: '',
 
       //启用状态选择器
-      enableStatus: 1,
-      enableStatusList: [
-        {
-          enableStatus: 1,
-          enableStatusName: '启用',
-        },
-        {
-          enableStatus: 0,
-          enableStatusName: '停用',
-        }
-      ],
+      enableStatus: '启用',
+      enableStatusList: ['启用', '停用'],
 
       //项目分组选择器
       projectGroupId: '',
@@ -178,7 +197,7 @@ export default {
         projectCode: '',
         projectName: '',
         projectGroupId: '',
-        projectGroupName: '',
+        projectGroupCode: '',
         gitUrl: '',
         enableStatus: ''
       },
@@ -231,10 +250,22 @@ export default {
     };
   },
   methods: {
+    handleRemove(file, fileList) {
+      console.log(file, fileList);
+    },
+    handlePreview(file) {
+      console.log(file);
+    },
+    handleExceed(files, fileList) {
+      this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+    },
+    beforeRemove(file, fileList) {
+      return this.$confirm(`确定移除 ${ file.name }？`);
+    },
     getGroupList() {
       queryList({
         searchText: '',
-        enableStatus: 1
+        enableStatus: '启用'
       }).then(res => {
         if (res.data.code === 2000) {
           this.projectGroupList = res.data.body;
@@ -410,6 +441,32 @@ export default {
       });
     },
 
+    upload(content) {
+      console.log(content)
+      importFile({
+        file: content.file,
+      }, {
+        headers: {'Content-Type':'multipart/form-data'}
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.$message({
+            message: '导入项目成功！',
+            type: 'success',
+            duration: 1500,
+            onClose: () => {
+              this.queryApplicationPage()
+            }
+          });
+        } else {
+          this.$message({
+            message: res.data.message,
+            type: 'error',
+            duration: 3000,
+          });
+        }
+      })
+    },
+
     //
     handleClose(done) {
       if (this.loading) {
@@ -443,10 +500,6 @@ export default {
   margin-right: 10px;
   margin-bottom: 10px;
 }
-
-//.el-divider__text {
-//  background-color: #f0f0f0;
-//}
 
 .el-select {
   width: 190px;
@@ -483,5 +536,10 @@ export default {
 .pagination {
   display: flex;
   float: right;
+}
+
+.upload-demo {
+  display: inline-block;
+  margin-left: 10px;
 }
 </style>

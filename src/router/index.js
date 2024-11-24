@@ -3,7 +3,7 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
-const windows_default_suffix = ' | adp-matrix';
+const windows_default_suffix = ' | matrix-sphere';
 
 const router = new Router({
   routes: [
@@ -11,14 +11,14 @@ const router = new Router({
       path: '/login',
       component: () => import('@/views/login/Login.vue'),
       meta: {
-        title: '登录adp-matrix运维部署平台'
+        title: '登录matrix-sphere运维部署平台'
       }
     },
     {
       path: '/',
       component: resolve => require(['@/components/common/Home.vue'], resolve),
       meta: {
-        title: 'adp-matrix运维部署平台'
+        title: 'matrix-sphere运维部署平台'
       },
       children: [
         {

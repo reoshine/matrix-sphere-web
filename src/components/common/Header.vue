@@ -5,7 +5,7 @@
       <i v-if="!collapse" class="el-icon-s-fold"></i>
       <i v-else class="el-icon-s-unfold"></i>
     </div>
-    <div class="logo">adp-matrix 运维部署平台</div>
+    <div class="logo">matrix-sphere 运维部署平台</div>
     <div class="header-right">
       <div class="header-user-con">
         <!-- 全屏显示 -->
@@ -88,11 +88,11 @@ export default {
             showCancelButton: false,
           }).then(() => {
             localStorage.removeItem("adpSsoToken")
-            window.location.href = '/adp-matrix/client/login';
+            window.location.href = '/matrix-sphere/client/login';
           });
         }).catch(err => {
           localStorage.removeItem("adpSsoToken")
-          window.location.href = '/adp-matrix/client/login';
+          window.location.href = '/matrix-sphere/client/login';
         })
       }
     },

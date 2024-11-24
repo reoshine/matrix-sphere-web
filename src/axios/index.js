@@ -22,7 +22,7 @@ axios.interceptors.response.use(res => {
     }).then(() => {
       localStorage.removeItem('adpSsoToken')
       localStorage.removeItem('adpSsoRefreshToken')
-      window.location.href = '/adp-matrix/client/login'
+      window.location.href = '/matrix-sphere/client/login'
     })
   }
   return res

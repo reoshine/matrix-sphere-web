@@ -5,30 +5,30 @@ module.exports = {
     port: 8081,
     open: false,
     proxy: {
-      '/adp-sso': {
-        target: 'http://192.168.0.10:7001/adp-sso',
+      '/matrix-sphere-sso': {
+        target: 'http://192.168.0.10:7001/matrix-sphere-sso',
         changeOrigin: true,
         ws: true,
         pathRewrite: {
-          '^/adp-sso': ''
+          '^/matrix-sphere-sso': ''
         }
       },
-      '/adp-matrix': {
-        target: 'http://192.168.0.10:7002/adp-matrix',
+      '/matrix-sphere-management': {
+        target: 'http://192.168.0.10:7004/matrix-sphere-management',
         changeOrigin: true,
         ws: true,
         pathRewrite: {
-          '^/adp-matrix': ''
+          '^/matrix-sphere-management': ''
         }
       },
-      '/adp-management': {
-        target: 'http://192.168.0.10:7004/adp-management',
+      '/matrix-sphere': {
+        target: 'http://192.168.0.10:7002/matrix-sphere',
         changeOrigin: true,
         ws: true,
         pathRewrite: {
-          '^/adp-management': ''
+          '^/matrix-sphere': ''
         }
-      }
+      },
     }
   }
 }

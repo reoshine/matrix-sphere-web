@@ -645,7 +645,7 @@ export default {
     },
 
     createSseConnect(projectId) {
-      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/adp-matrix/sse/connect/${projectId}`, {
+      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${projectId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
           heartbeatTimeout: 10000000
