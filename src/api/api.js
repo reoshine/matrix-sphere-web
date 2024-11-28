@@ -46,6 +46,13 @@ export function queryProjectPage(data) {
   return axios.post('/matrix-sphere/project/queryListPage', data)
 }
 
+export function exportProjectTemplate() {
+  return axios.get('/matrix-sphere/project/exportProjectTemplate', {
+    params: {},
+    responseType: 'blob'
+  })
+}
+
 export function saveProject(data) {
   return axios.post('/matrix-sphere/project/saveProject', data)
 }

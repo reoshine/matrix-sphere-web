@@ -34,6 +34,7 @@
 
         <el-button type="primary" size="small" icon="el-icon-search" @click="queryApplicationPage">查询</el-button>
         <el-button type="primary" size="small" icon="el-icon-plus" @click="addProject">新增</el-button>
+        <el-button type="primary" size="small" icon="el-icon-download" @click="exportProjectTemplate">模板下载</el-button>
         <el-upload
             class="upload-demo"
             action="https://jsonplaceholder.typicode.com/posts/"
@@ -43,22 +44,8 @@
             :accept="uploadFileType"
             :show-file-list="false"
             :file-list="fileList">
-          <el-button size="small" type="primary">导入文件</el-button>
+          <el-button size="small" type="primary" icon="el-icon-upload">导入文件</el-button>
         </el-upload>
-
-        <el-upload
-            class="upload-demo"
-            action="https://jsonplaceholder.typicode.com/posts/"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            :limit="3"
-            :on-exceed="handleExceed"
-            :file-list="fileList">
-          <el-button size="small" type="primary">模版下载</el-button>
-        </el-upload>
-
-
       </div>
     </div>
     <el-divider content-position="left">应用列表</el-divider>
@@ -166,7 +153,7 @@
 
 <script>
 import {
-  enableChange,
+  enableChange, exportProjectTemplate,
   getProjectInfo, importFile, queryList,
   queryProjectPage,
   removeProject,
@@ -419,6 +406,32 @@ export default {
           })
         }
       });
+    },
+
+    exportProjectTemplate() {
+      exportProjectTemplate().then(res => {
+        let blob = new Blob([res.data], {
+          type: 'application/vnd.ms-excel;charset=utf-8'
+        })
+        let contentDisposition = res.headers['content-disposition']
+        let pattern = new RegExp('filename=([^;]+\\.[^.;]+);*')
+        let result = pattern.exec(contentDisposition)
+        let fileName = decodeURI(result[1])
+        let downloadElement = document.createElement('a')
+        //创建下载的链接
+        let href = window.URL.createObjectURL(blob)
+        downloadElement.style.display = 'none'
+        downloadElement.href = href
+        //下载后文件名
+        downloadElement.download = fileName
+        document.body.appendChild(downloadElement)
+        //点击下载
+        downloadElement.click()
+        //下载完成移除元素
+        document.body.removeChild(downloadElement)
+        //释放掉blob对象
+        window.URL.revokeObjectURL(href)
+      })
     },
 
     toBranchManagement(projectId) {
