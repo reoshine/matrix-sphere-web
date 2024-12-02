@@ -12,12 +12,12 @@
           v-model="searchText"></el-input>
 
       <label style="margin-left:20px" for="enableStatus">启用状态：</label>
-      <el-select clearable size="medium" v-model="projectGroupInfo.enableStatus" placeholder="请选择">
+      <el-select clearable size="medium" v-model="enableStatus" placeholder="请选择">
         <el-option
             v-for="item in enableStatusList"
-            :key="item.enableStatus"
-            :label="item.enableStatusName"
-            :value="item.enableStatus">
+            :key="item"
+            :label="item"
+            :value="item">
         </el-option>
       </el-select>
       <el-button type="primary" size="small" icon="el-icon-search" @click="queryPage">查询</el-button>
@@ -35,8 +35,8 @@
         <template slot-scope="scope">
           <el-switch
               style="padding: 0 10px"
-              :active-value="1"
-              :inactive-value="0"
+              :active-value="'启用'"
+              :inactive-value="'停用'"
               v-model="scope.row.enableStatus"
               @change="enableChange($event, scope.row)">
           </el-switch>
@@ -132,16 +132,8 @@ export default {
       projectGroupList: [],
 
       //启用状态列表
-      enableStatusList: [
-        {
-          enableStatus: 1,
-          enableStatusName: '启用',
-        },
-        {
-          enableStatus: 0,
-          enableStatusName: '停用',
-        }
-      ],
+      enableStatus: '启用',
+      enableStatusList: ['启用', '停用'],
 
       modifyProjectGroupRules: {
         projectGroupCode: [
@@ -174,7 +166,7 @@ export default {
         pageNum: this.pageNum,
         pageCount: this.pageCount,
         searchText: '',
-        enableStatus: this.projectGroupInfo.enableStatus
+        enableStatus: this.enableStatus
       }).then(res => {
         if (res.data.code === 2000) {
           const result = res.data.body;
@@ -203,7 +195,7 @@ export default {
           add({
             projectGroupCode: this.editProjectGroupForm.projectGroupCode,
             projectGroupName: this.editProjectGroupForm.projectGroupName,
-            enableStatus: 1
+            enableStatus: '启用'
           }).then(res => {
             if (res.data.code === 2000) {
               this.$message({

@@ -1,4 +1,5 @@
 import axios from 'axios'
+// import {urlPrefix} from '@/axios/Global'
 
 // 登录
 export function login() {

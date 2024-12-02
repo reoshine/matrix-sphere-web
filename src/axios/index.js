@@ -1,5 +1,6 @@
 import axios from 'axios'
 import swal from 'sweetalert2'
+// import { BASE_URL } from '@/axios/Global'
 
 // 设置post请求参数格式为json
 axios.defaults.headers.post['Content-Type'] = 'application/json;charset=UTF-8'
@@ -30,4 +31,5 @@ axios.interceptors.response.use(res => {
   return Promise.reject(error)
 })
 
+// axios.defaults.baseURL = BASE_URL
 export default axios
