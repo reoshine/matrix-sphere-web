@@ -22,7 +22,7 @@
             <i class="el-icon-location-outline"></i>
             应用分组
           </template>
-          <el-tag size="small" v-show="(projectInfo.projectGroupName)">{{projectInfo.projectGroupName}}</el-tag>
+          <el-tag size="small" v-show="(projectInfo.projectGroupCode)">{{projectInfo.projectGroupCode}}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item>
           <template slot="label">
@@ -90,7 +90,7 @@ export default {
         projectCode: '',
         projectName: '',
         projectGroupId: '',
-        projectGroupName: '',
+        projectGroupCode: '',
         gitUrl: '',
         enableStatus: ''
       },

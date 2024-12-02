@@ -34,7 +34,7 @@
             <i class="el-icon-location-outline"></i>
             应用分组
           </template>
-          <el-tag size="small" v-if="projectInfo.projectGroupName">{{projectInfo.projectGroupName}}</el-tag>
+          <el-tag size="small" v-if="projectInfo.projectGroupCode">{{projectInfo.projectGroupCode}}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label-style="width: 150px">
           <template slot="label">
@@ -169,7 +169,7 @@ export default {
         projectCode: '',
         projectName: '',
         projectGroupId: '',
-        projectGroupName: '',
+        projectGroupCode: '',
         gitUrl: '',
         enableStatus: ''
       },
@@ -271,7 +271,7 @@ export default {
           this.getBranchListByProjectId(this.projectInfo.id)
         } else {
           this.$message({
-            message: '查询应用信息失败，原因：' + err,
+            message: '查询应用信息失败，原因：' + res.data.message,
             type: 'error',
             duration: 2000,
           });

@@ -14,7 +14,7 @@
     <div>
       <el-button type="warning" size="small" @click="withdrawBranch" :disabled="isDisabled">退出分支</el-button>
       <el-button type="primary" size="small" @click="reBuild" :disabled="isDisabled">重新部署</el-button>
-      <el-button type="primary" size="small" @click="deploy">部署main分支</el-button>
+      <el-button type="primary" size="small" @click="deployMain">部署main分支</el-button>
       <el-button type="primary" size="small" @click="getDepLoyLogList">部署记录</el-button>
       <el-empty v-show="!deployInfo || !deployInfo.featureBranchList || deployInfo.featureBranchList.length <= 0" description="无已部署分支"></el-empty>
       <el-table v-show="deployInfo && deployInfo.featureBranchList && deployInfo.featureBranchList.length > 0" :data="deployInfo.featureBranchList" @selection-change="selectedDeployed" border>
@@ -115,6 +115,9 @@ import {
 } from "@/api/api";
 import bus from "@/util/bus";
 import { EventSourcePolyfill } from 'event-source-polyfill'
+import * as CollUtils from '@/util/CollUtils'
+import { BASE_URL, urlPrefix } from '@/axios/Global'
+import {isNotEmpty} from "@/util/CollUtils";
 
 export default {
   name: "DeployByEnv",
@@ -399,6 +402,42 @@ export default {
       await this.$refs.selectedStatus.clearSelection()
     },
 
+    //部署main分支
+    async deployMain() {
+      await this.clearDeployStatus()
+      await this.createSseConnect(this.curProjectId)
+      let result
+      await deploy({
+        projectId: this.curProjectId,
+        branchIds: [],
+        deployEnvironment: this.deployEnvironment,
+        deployType: 'MAIN_BRANCH'
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployResult = res.data.body
+          result = res.data.body
+          this.listenDeployStepMessage()
+        } else {
+          this.$message({
+            message: res.data.message,
+            type: 'error',
+            duration: 2000,
+          });
+        }
+      }).catch(err => {
+        this.$message({
+          message: '获取分支列表失败，原因：' + err,
+          type: 'error',
+          duration: 2000,
+        });
+        this.sseClose(this.curProjectId)
+      })
+      await this.getUnDeployedBranchList(result.project.id)
+      let deployRecord = await this.getDeployRecord(result.deployMaster.id)
+      await bus.$emit('deployInfo', deployRecord)
+      await this.$refs.selectedStatus.clearSelection()
+    },
+
     //未部署分支选择器
     getUnDeployBranchIds(val) {
       this.unDeployedBranchIds = val.map((item) => item.id);
@@ -567,7 +606,7 @@ export default {
         projectId: this.curProjectId,
         deployEnvironment: this.deployEnvironment
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.data.code === 2000 && CollUtils.isNotEmpty(res.data.body)) {
           const mergeStep = res.data.body.find(item => item.stepCode === 'merge')
           const buildStep = res.data.body.find(item => item.stepCode === 'build')
           const publishStep = res.data.body.find(item => item.stepCode === 'publish')
@@ -645,7 +684,7 @@ export default {
     },
 
     createSseConnect(projectId) {
-      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${projectId}`, {
+      this.eventSource = new EventSourcePolyfill(`${BASE_URL}/${urlPrefix}/sse/connect/${projectId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
           heartbeatTimeout: 10000000
@@ -675,7 +714,7 @@ export default {
   mounted() {
     this.getUnDeployedBranchList(this.curProjectId)
     this.getDeployMaster(this.curProjectId, this.activeName).then(data => {
-      if (this.deployMaster.deployStatus === 0) {
+      if (this.deployMaster && this.deployMaster.deployStatus === 0) {
         this.createSseConnect(this.curProjectId)
         this.listenDeployStepMessage()
       }

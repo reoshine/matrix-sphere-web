@@ -22,25 +22,26 @@
           </el-option>
         </el-select>
 
-        <label style="margin-left:20px" for="projectGroupId">项目分组：</label>
-        <el-select clearable size="medium" v-model="projectGroupId" placeholder="请选择" @change="queryApplicationPage">
+        <label style="margin-left:20px" for="projectGroupCode">项目分组：</label>
+        <el-select clearable size="medium" v-model="projectGroupCode" placeholder="请选择" @change="queryApplicationPage">
           <el-option
-            v-for="item in projectGroupList"
-            :key="item.projectGroupId"
+            v-for="item in projectGroupCodeList"
+            :key="item.projectGroupCode"
             :label="item.projectGroupCode"
-            :value="item.projectGroupId">
+            :value="item.projectGroupCode">
           </el-option>
         </el-select>
 
         <el-button type="primary" size="small" icon="el-icon-search" @click="queryApplicationPage">查询</el-button>
         <el-button type="primary" size="small" icon="el-icon-plus" @click="addProject">新增</el-button>
         <el-button type="primary" size="small" icon="el-icon-download" @click="exportProjectTemplate">模板下载</el-button>
+        <el-button type="primary" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitee同步</el-button>
+        <el-button type="primary" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitlab同步</el-button>
+
         <el-upload
             class="upload-demo"
             action="https://jsonplaceholder.typicode.com/posts/"
             :http-request="upload"
-            :on-preview="handlePreview"
-            :on-exceed="handleExceed"
             :accept="uploadFileType"
             :show-file-list="false"
             :file-list="fileList">
@@ -119,7 +120,7 @@
           <el-form-item prop="projectGroupCode" label="分组名称" label-width="100px">
             <el-select size="medium" v-model="saveProjectForm.projectGroupCode" placeholder="请选择">
               <el-option
-                v-for="item in projectGroupList"
+                v-for="item in projectGroupCodeList"
                 :key="item.id"
                 :label="item.projectGroupCode"
                 :value="item.id">
@@ -174,8 +175,8 @@ export default {
       enableStatusList: ['启用', '停用'],
 
       //项目分组选择器
-      projectGroupId: '',
-      projectGroupList: [],
+      projectGroupCode: 'matrix-sphere',
+      projectGroupCodeList: [],
 
       //编辑抽屉内容
       dialog: false,
@@ -199,7 +200,7 @@ export default {
           { required: true, message: '请输入项目名称', trigger: 'blur' },
           { min: 3, max: 30, message: '长度在3到30个字符', trigger: 'blur' },
         ],
-        projectGroupId: [
+        projectGroupCode: [
           { required: true, message: '请选择项目分组', trigger: 'blur' },
         ],
         gitUrl: [
@@ -217,7 +218,7 @@ export default {
           id: '',
           projectCode: '',
           projectName: '',
-          projectGroupId: '',
+          projectGroupCode: '',
           projectGroupName: '',
           gitProjectId: '',
           gitUrl: '',
@@ -237,25 +238,13 @@ export default {
     };
   },
   methods: {
-    handleRemove(file, fileList) {
-      console.log(file, fileList);
-    },
-    handlePreview(file) {
-      console.log(file);
-    },
-    handleExceed(files, fileList) {
-      this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
-    },
-    beforeRemove(file, fileList) {
-      return this.$confirm(`确定移除 ${ file.name }？`);
-    },
     getGroupList() {
       queryList({
         searchText: '',
         enableStatus: '启用'
       }).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupList = res.data.body;
+          this.projectGroupCodeList = res.data.body;
         }
       })
     },
@@ -279,7 +268,7 @@ export default {
         pageCount: this.pageCount,
         searchText: this.searchText,
         enableStatus: this.enableStatus,
-        projectGroupId: this.projectGroupId
+        projectGroupCode: this.projectGroupCode
       }).then(res => {
         if (res.data.code === 2000) {
           const result = res.data.body;
@@ -502,6 +491,7 @@ export default {
 
   },
   created() {
+    this.getGroupList()
     this.queryApplicationPage(1, 10);
   },
 };
