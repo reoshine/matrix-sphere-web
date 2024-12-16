@@ -58,6 +58,10 @@ export function saveProject(data) {
   return axios.post('/matrix-sphere/project/saveProject', data)
 }
 
+export function modifyProject(data) {
+  return axios.post('/matrix-sphere/project/modifyProject', data)
+}
+
 export function getProjectInfo(data) {
   return axios.post('/matrix-sphere/project/getProjectInfo', data)
 }

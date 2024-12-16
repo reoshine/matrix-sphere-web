@@ -22,7 +22,9 @@
             <i class="el-icon-location-outline"></i>
             应用分组
           </template>
-          <el-tag size="small" v-show="(projectInfo.projectGroupCode)">{{projectInfo.projectGroupCode}}</el-tag>
+          <el-tag size="small" v-show="(projectInfo.projectGroupId)">
+            {{getProjectGroupCode(projectInfo.projectGroupId)}}
+          </el-tag>
         </el-descriptions-item>
         <el-descriptions-item>
           <template slot="label">
@@ -63,7 +65,7 @@
 
 <script>
 import DeployByEnv  from "@/components/deployByEnv/DeployByEnv.vue";
-import {getDeployMaster, getDeployRecord, getProjectById} from "@/api/api";
+import {getDeployMaster, getDeployRecord, getProjectById, queryList} from "@/api/api";
 import bus from "@/util/bus";
 
 export default {
@@ -84,46 +86,17 @@ export default {
       activePoc: false,
       activeProd: false,
 
+      //应用分组
+      projectGroupList: [],
+
       //应用信息
-      projectInfo: {
-        id: '',
-        projectCode: '',
-        projectName: '',
-        projectGroupId: '',
-        projectGroupCode: '',
-        gitUrl: '',
-        enableStatus: ''
-      },
+      projectInfo: {},
 
-      deployedInfo: {
-        projectId: '',
-        masterId: '',
-        releaseBranchId: '',
-        releaseBranchName: '',
-        deployEnvironment: '',
-        featureBranchList: []
-      },
+      deployedInfo: {},
 
-      deployMaster: {
-        id: '',
-        deploySerialNo: '',
-        projectId: '',
-        deployStatus: '',
-        deployEnvironment: '',
-        isDeleted: ''
-      },
+      deployMaster: {},
 
-      deployRecord: {
-        deployInfo: {
-          projectId: '',
-          masterId: '',
-          releaseBranchId: '',
-          releaseBranchName: '',
-          deployEnvironment: '',
-          featureBranchList: []
-        },
-        deployStepList: {}
-      },
+      deployRecord: {},
 
       //已合并分支列表
       featureBranchList: [],
@@ -177,6 +150,22 @@ export default {
         this.loading = false
       })
     },
+
+    getGroupList() {
+      queryList({
+        searchText: '',
+        enableStatus: '启用'
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.projectGroupList = res.data.body
+        }
+      })
+    },
+
+    getProjectGroupCode(id) {
+      const obj = this.projectGroupList.find(item => item.id === id)
+      return obj === undefined ? '' : obj.projectGroupCode
+    }
   },
 
   mounted() {
@@ -191,11 +180,13 @@ export default {
     if (localStorage.getItem('projectId')) {
       const projectId = JSON.parse(localStorage.getItem('projectId'))
       this.getProject(projectId)
+      this.getGroupList()
       return
     }
     if (this.$route.params.projectId) {
       this.projectId = this.$route.params.projectId;
       this.getProject(this.projectId)
+      this.getGroupList()
     }
   },
 

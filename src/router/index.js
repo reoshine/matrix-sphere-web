@@ -32,7 +32,7 @@ const router = new Router({
           path: '/applicationManagement/applicationGroup',
           component: resolve => require(['@/views/applicationManagement/ApplicationGroup.vue'], resolve),
           meta: {
-            title: '应用列表'
+            title: '应用分组'
           }
         },
         {
@@ -56,6 +56,16 @@ const router = new Router({
           component: (resolve) => require(['@/views/applicationManagement/ApplicationDeploy.vue'], resolve),
           meta: {
             title: '应用部署'
+          },
+        },
+        {
+          path: '/applicationManagement/applicationEdit',
+          name: 'ApplicationEdit',
+          component: (resolve) => require(['@/views/applicationManagement/ApplicationEdit.vue'], resolve),
+          meta: {
+            title: '应用编辑',
+            guidePath: true,
+            jumpPath: '/applicationManagement/applicationList',
           },
         },
         {

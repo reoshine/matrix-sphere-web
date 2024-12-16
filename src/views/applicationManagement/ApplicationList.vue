@@ -79,11 +79,15 @@
                      size="small" type="primary" icon="el-icon-aim">
             去部署
           </el-button>
+          <el-button @click.stop="applicationEdit(project.id)" style="float: left; margin-left: 10px;"
+                     size="small" type="primary" icon="el-icon-aim">
+            Jenkins Job配置
+          </el-button>
           <el-button @click.stop="removeApplication(project.id)" style="float: right;"
                      size="small" icon="el-icon-delete">
             删除
           </el-button>
-          <el-button @click.stop="modifyApplicationInfo(project.id)" style="float: right; margin-right: 10px;"
+          <el-button @click.stop="applicationEdit(project.id)" style="float: right; margin-right: 10px;"
                      size="small" type="primary" plain icon="el-icon-edit">
             编辑
           </el-button>
@@ -437,6 +441,16 @@ export default {
       this.$router.push({
         name: 'ApplicationDeploy',
         path: "/matrix/applicationDeploy",
+        params: {
+          projectId: projectId
+        }
+      });
+    },
+
+    applicationEdit(projectId) {
+      this.$router.push({
+        name: 'ApplicationEdit',
+        path: "/matrix/applicationEdit",
         params: {
           projectId: projectId
         }

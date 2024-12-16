@@ -2,7 +2,7 @@
   <div class="sidebar">
     <el-menu
         class="sidebar-el-menu"
-        :default-active="$route.path"
+        :default-active="routePath"
         :collapse="collapse"
         background-color="#324157"
         text-color="#bfcbd9"
@@ -98,7 +98,9 @@ export default {
   },
 
   computed: {
-
+    routePath() {
+      return this.$route.meta.guidePath ? this.$route.meta.jumpPath : this.$route.path
+    }
   },
   created() {
     // 通过 Event Bus 进行组件间通信，来折叠侧边栏
@@ -108,6 +110,7 @@ export default {
     });
     this.getMenuAndSubMenuList()
   },
+
   mounted() {
   },
 
