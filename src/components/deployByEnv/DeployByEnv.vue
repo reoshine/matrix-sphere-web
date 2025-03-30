@@ -13,7 +13,7 @@
     <el-divider content-position="left">已部署分支</el-divider>
     <div>
       <el-button type="warning" size="small" @click="withdrawBranch" :disabled="isDisabled">退出分支</el-button>
-      <el-button type="primary" size="small" @click="reBuild" :disabled="isDisabled">重新部署</el-button>
+      <el-button type="primary" size="small" @click="reDeploy" :disabled="isDisabled">重新部署</el-button>
       <el-button type="primary" size="small" @click="deployMain">部署main分支</el-button>
       <el-button type="primary" size="small" @click="getDepLoyLogList">部署记录</el-button>
       <el-empty v-show="!deployInfo || !deployInfo.featureBranchList || deployInfo.featureBranchList.length <= 0" description="无已部署分支"></el-empty>
@@ -52,7 +52,7 @@
             <span>{{ deployLog.projectName }} 最新10次部署记录</span>
           </div>
 
-          <el-descriptions :labelStyle="{width:'100px'}" :size="'mini'" :column="2" border>
+          <el-descriptions :labelStyle="{width:'100px'}" :size="'mini'" :column="3" border>
             <el-descriptions-item>
               <template slot="label">
                 部署人
@@ -65,25 +65,31 @@
               </template>
               <el-tag size="small" type="primary">{{ deployLog.deployEnvironment }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item :span="2">
+            <el-descriptions-item>
+              <template slot="label">
+                部署类型
+              </template>
+              <el-tag size="small" type="primary">{{ deployLog.deployType }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item :span="3">
               <template slot="label">
                 feature分支
               </template>
               <el-tag size="small" type="primary" v-for="item in deployLog.featureBranchNameList">{{ item }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item :span="2">
+            <el-descriptions-item :span="3">
               <template slot="label">
                 release分支
               </template>
-              <el-tag size="small" type="primary">{{ deployLog.releaseBranchName }}</el-tag>
+              <el-tag size="small" type="primary" v-if="deployLog.releaseBranchName">{{ deployLog.releaseBranchName }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item :span="2">
+            <el-descriptions-item :span="3">
               <template slot="label">
                 部署时间
               </template>
               <el-tag size="small" type="primary">{{ deployLog.deployTime }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item :span="2">
+            <el-descriptions-item :span="3">
               <template slot="label">
                 部署状态
               </template>
@@ -116,24 +122,19 @@ import {
 import bus from "@/util/bus";
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import * as CollUtils from '@/util/CollUtils'
-import { BASE_URL, urlPrefix } from '@/axios/Global'
 import {isNotEmpty} from "@/util/CollUtils";
 
 export default {
   name: "DeployByEnv",
   props : {
-    activeName: {
-      type: String,
-      default:'dev'
-    },
-
-    projectId: ''
+    env: String,
+    projectId: {
+      type: [String, Number],
+      required: true
+    }
   },
   data() {
     return {
-      //部署环境
-      deployEnvironment: this.activeName,
-
       //部署按钮是否禁用
       isDisabled: true,
       deployBranchBtnIsDisabled: true,
@@ -212,6 +213,7 @@ export default {
           {
             projectId: '',
             projectName: '',
+            deployType: '',
             featureBranchNameList: [],
             releaseBranchName: '',
             deployTime: '',
@@ -303,7 +305,7 @@ export default {
         projectId: this.curProjectId,
         branchIds: toBeDeployBranchIds,
         deployEnvironment: this.deployEnvironment,
-        deployType: 'SUBMIT_BRANCH'
+        deployType: '提交分支部署'
       }).then(res => {
         if (res.data.code === 2000) {
           this.deployResult = res.data.body
@@ -331,14 +333,14 @@ export default {
 
     //退出分支
     async withdrawBranch() {
-      // await this.clearDeployStatus()
+      await this.clearDeployStatus()
       await this.createSseConnect(this.curProjectId)
       let result
       await deploy({
         projectId: this.curProjectId,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
-        deployType: 'WITHDRAW_BRANCH'
+        deployType: '退出分支部署'
       }).then(res => {
         if (res.data.code === 2000) {
           this.deployResult = res.data.body
@@ -365,7 +367,7 @@ export default {
     },
 
     //重新部署
-    async reBuild() {
+    async reDeploy() {
       await this.clearDeployStatus()
       await this.createSseConnect(this.curProjectId)
       if (!this.deployedBranchIds) {
@@ -376,7 +378,7 @@ export default {
         projectId: this.curProjectId,
         branchIds: this.deployedBranchIds,
         deployEnvironment: this.deployEnvironment,
-        deployType: 'SUBMIT_BRANCH'
+        deployType: '重新部署'
       }).then(res => {
         if (res.data.code === 2000) {
           this.deployResult = res.data.body
@@ -411,7 +413,7 @@ export default {
         projectId: this.curProjectId,
         branchIds: [],
         deployEnvironment: this.deployEnvironment,
-        deployType: 'MAIN_BRANCH'
+        deployType: 'main分支部署'
       }).then(res => {
         if (res.data.code === 2000) {
           this.deployResult = res.data.body
@@ -452,7 +454,6 @@ export default {
 
     listenDeployStepMessage() {
       this.eventSource.onmessage = (res => {
-        console.log(res.data, 111)
         const item = JSON.parse(res.data)
         // if (this.deployState.deployStep === 'merge') {
         //   this.iconName1 = 'el-icon-loading'
@@ -476,7 +477,7 @@ export default {
             this.deployProcessActive = 1
             this.mergeStatus = 'error'
             this.mergeIcon = null
-            this.finishErrorMessage = item.errorMessage
+            this.mergeErrorMessage = item.errorMessage
           }
         }
 
@@ -684,7 +685,7 @@ export default {
     },
 
     createSseConnect(projectId) {
-      this.eventSource = new EventSourcePolyfill(`${BASE_URL}/${urlPrefix}/sse/connect/${projectId}`, {
+      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${projectId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
           heartbeatTimeout: 10000000
@@ -704,16 +705,15 @@ export default {
     }
   },
 
-  watch: {
-  },
-
   computed: {
-
+    deployEnvironment() {
+      return this.env
+    }
   },
 
   mounted() {
     this.getUnDeployedBranchList(this.curProjectId)
-    this.getDeployMaster(this.curProjectId, this.activeName).then(data => {
+    this.getDeployMaster(this.curProjectId, this.deployEnvironment).then(data => {
       if (this.deployMaster && this.deployMaster.deployStatus === 0) {
         this.createSseConnect(this.curProjectId)
         this.listenDeployStepMessage()
@@ -752,5 +752,8 @@ export default {
 }
 .deployLogDrawer {
   //width: 200px;
+}
+.el-button {
+  margin-bottom: 15px
 }
 </style>

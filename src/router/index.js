@@ -47,7 +47,9 @@ const router = new Router({
           name: 'BranchManagement',
           component: (resolve) => require(['@/views/applicationManagement/BranchManagement'], resolve),
           meta: {
-            title: '分支管理'
+            title: '分支管理',
+            guidePath: true,
+            jumpPath: '/applicationManagement/applicationList',
           },
         },
         {
@@ -55,7 +57,9 @@ const router = new Router({
           name: 'ApplicationDeploy',
           component: (resolve) => require(['@/views/applicationManagement/ApplicationDeploy.vue'], resolve),
           meta: {
-            title: '应用部署'
+            title: '应用部署',
+            guidePath: true,
+            jumpPath: '/applicationManagement/applicationList',
           },
         },
         {

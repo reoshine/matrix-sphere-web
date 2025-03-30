@@ -35,9 +35,8 @@
         <el-button type="primary" size="small" icon="el-icon-search" @click="queryApplicationPage">查询</el-button>
         <el-button type="primary" size="small" icon="el-icon-plus" @click="addProject">新增</el-button>
         <el-button type="primary" size="small" icon="el-icon-download" @click="exportProjectTemplate">模板下载</el-button>
-        <el-button type="primary" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitee同步</el-button>
-        <el-button type="primary" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitlab同步</el-button>
-
+        <el-button type="warning" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitee同步</el-button>
+        <el-button type="warning" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitlab同步</el-button>
         <el-upload
             class="upload-demo"
             action="https://jsonplaceholder.typicode.com/posts/"
@@ -45,7 +44,7 @@
             :accept="uploadFileType"
             :show-file-list="false"
             :file-list="fileList">
-          <el-button size="small" type="primary" icon="el-icon-upload">导入文件</el-button>
+          <el-button size="small" type="warning" icon="el-icon-upload">导入文件</el-button>
         </el-upload>
       </div>
     </div>
@@ -53,24 +52,24 @@
     <el-empty v-show="projectList.length <= 0" description="无应用信息"></el-empty>
     <el-row v-show="projectList.length > 0" :gutter="20">
       <el-col v-for="project in projectList" :key="project.id" :span="6">
-        <el-card shadow="hover" :body-style="{ padding: '0px' }" @click.native="toBranchManagement(project.id)">
+        <el-card shadow="hover" :body-style="{ padding: '0px' }">
           <div style="padding: 10px">
-            <div style="color: #2b4b6b; font-weight: bold">{{ project.projectCode }}
+            <svg style="float: right" class="icon" aria-hidden="true">
+              <use xlink:href="#icon-gitlab"></use>
+            </svg>
+            <div style="color: #2b4b6b; font-weight: bold">{{ project.projectCode }}</div>
+            <div>
               <span style="float: right; margin-right: -23px;" @click.stop="project.enableStatus === 1 ? 0 : 1">
                 <el-switch
-                  style="padding: 0 10px"
-                  :active-value="'启用'"
-                  :inactive-value="'停用'"
-                  v-model="project.enableStatus"
-                  @change="enableChange($event, project)"
-                  active-color="#13ce66"
-                  inactive-color="#dcdfe6">
+                    style="padding: 0 10px"
+                    :active-value="'启用'"
+                    :inactive-value="'停用'"
+                    v-model="project.enableStatus"
+                    @change="enableChange($event, project)">
                 </el-switch>
               </span>
-            </div>
-            <div>
               <el-tag style="color: #324157" type="" size="small">{{ project.projectName }}</el-tag>
-              <el-tag style="color: #324157; float: right; margin-right: -13px" type="" size="small">
+              <el-tag style="color: #324157; float: right" type="" size="small">
                 git仓库项目ID：{{project.gitProjectId}}
               </el-tag>
             </div>
@@ -79,9 +78,9 @@
                      size="small" type="primary" icon="el-icon-aim">
             去部署
           </el-button>
-          <el-button @click.stop="applicationEdit(project.id)" style="float: left; margin-left: 10px;"
-                     size="small" type="primary" icon="el-icon-aim">
-            Jenkins Job配置
+          <el-button @click.native="toBranchManagement(project.id)" style="float: left; margin-left: 10px;"
+                     size="small" type="primary" icon="el-icon-s-help">
+            分支管理
           </el-button>
           <el-button @click.stop="removeApplication(project.id)" style="float: right;"
                      size="small" icon="el-icon-delete">
@@ -122,7 +121,7 @@
             <el-input style="width: 80%" v-model="saveProjectForm.projectName" autocomplete="off"></el-input>
           </el-form-item>
           <el-form-item prop="projectGroupCode" label="分组名称" label-width="100px">
-            <el-select size="medium" v-model="saveProjectForm.projectGroupCode" placeholder="请选择">
+            <el-select size="medium" v-model="saveProjectForm.projectGroupId" placeholder="请选择">
               <el-option
                 v-for="item in projectGroupCodeList"
                 :key="item.id"
@@ -204,7 +203,7 @@ export default {
           { required: true, message: '请输入项目名称', trigger: 'blur' },
           { min: 3, max: 30, message: '长度在3到30个字符', trigger: 'blur' },
         ],
-        projectGroupCode: [
+        projectGroupId: [
           { required: true, message: '请选择项目分组', trigger: 'blur' },
         ],
         gitUrl: [
@@ -248,7 +247,7 @@ export default {
         enableStatus: '启用'
       }).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupCodeList = res.data.body;
+          this.projectGroupCodeList = res.data.body
         }
       })
     },
@@ -370,7 +369,8 @@ export default {
       this.$refs.saveProjectFormRef.validate((valid) => {
         if (valid) {
           saveProject({
-            ...this.saveProjectForm
+            ...this.saveProjectForm,
+            shouldAddJenkinsJob: true
           }).then(res => {
             if (res.data.code === 2000) {
               this.$message({

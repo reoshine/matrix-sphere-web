@@ -1,10 +1,24 @@
 {
   "id": "3991153",
-  "name": "matrix-sphere",
+  "name": "adp-matrix",
   "font_family": "iconfont",
   "css_prefix_text": "icon-",
   "description": "",
   "glyphs": [
+    {
+      "icon_id": "37273854",
+      "name": "gitee",
+      "font_class": "gitee",
+      "unicode": "e6a8",
+      "unicode_decimal": 59048
+    },
+    {
+      "icon_id": "13303504",
+      "name": "gitlab",
+      "font_class": "gitlab",
+      "unicode": "e65c",
+      "unicode_decimal": 58972
+    },
     {
       "icon_id": "22806232",
       "name": "服务器管理",

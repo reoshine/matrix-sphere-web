@@ -116,11 +116,16 @@ export default {
       if (params[1] === undefined) {
         this.authorize()
       } else {
-        let tokenStr = params[1].split('=')
-        if (tokenStr[0] === 'accessToken') {
-          localStorage.setItem("adpSsoToken", tokenStr[1]);
-          this.$router.replace("/applicationManagement/applicationList");
+        let tokenStr = params[1].split('&')
+        let accessTokenStr = tokenStr[0].split('=')
+        if (accessTokenStr[0] === 'accessToken') {
+          localStorage.setItem("adpSsoToken", accessTokenStr[1]);
         }
+        let refreshTokenStr = tokenStr[1].split('=')
+        if (refreshTokenStr[0] === 'refreshToken') {
+          localStorage.setItem("adpSsoRefreshToken", refreshTokenStr[1]);
+        }
+        this.$router.replace("/applicationManagement/applicationList");
       }
     }
   }
@@ -131,6 +136,7 @@ export default {
 .login_container {
   background-color: #2b4b6b;
   height: 100%;
+  width: 100%;
 }
 
 .login_box {

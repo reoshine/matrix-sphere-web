@@ -34,7 +34,7 @@
             <i class="el-icon-location-outline"></i>
             应用分组
           </template>
-          <el-tag size="small" v-if="projectInfo.projectGroupCode">{{projectInfo.projectGroupCode}}</el-tag>
+          <el-tag size="small" v-if="projectInfo.projectGroupId">{{getProjectGroupCode(projectInfo.projectGroupId)}}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label-style="width: 150px">
           <template slot="label">
@@ -150,7 +150,7 @@ import {
   getProjectById,
   getUnDeployedBranchList,
   removeBranch,
-  getProjectInfo
+  getProjectInfo, queryList
 } from '@/api/api'
 
 export default {
@@ -164,45 +164,19 @@ export default {
       projectId: '',
 
       //应用信息
-      projectInfo: {
-        id: '',
-        projectCode: '',
-        projectName: '',
-        projectGroupId: '',
-        projectGroupCode: '',
-        gitUrl: '',
-        enableStatus: ''
-      },
+      projectInfo: {},
+
+      projectGroupList: [],
 
       modifyBranchDialogVisible: false,
       modifyBranchFormVisible: false,
 
       // 编辑弹窗表单对象
-      editBranchForm: {
-        id: '',
-        projectId: '',
-        branchName: '',
-        description: '',
-        canPush: false,
-        isProtected: false,
-        gmtCreate: '',
-        createBy: '',
-        createByName: ''
-      },
+      editBranchForm: {},
 
       branchList: [],
 
-      branchInfo: {
-        id: '',
-        projectId: '',
-        branchName: '',
-        description: '',
-        canPush: false,
-        isProtected: false,
-        gmtCreate: '',
-        createBy: '',
-        createByName: ''
-      },
+      branchInfo: {},
 
       canPushList: [
         {
@@ -430,17 +404,30 @@ export default {
           message: '已取消删除'
         });
       });
+    },
+
+    getGroupList() {
+      queryList({
+        searchText: '',
+        enableStatus: '启用'
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.projectGroupList = res.data.body
+        }
+      })
+    },
+
+    getProjectGroupCode(id) {
+      const obj = this.projectGroupList.find(item => item.id === id)
+      return obj === undefined ? '' : obj.projectGroupCode
     }
   },
 
   mounted() {
-    if (this.projectId) {
-      this.getProject(this.projectId)
-      this.getBranchListByProjectId(this.projectId)
-    }
   },
 
   created() {
+    this.getGroupList()
     if (localStorage.getItem('projectId')) {
       const projectId = JSON.parse(localStorage.getItem('projectId'))
       this.getProject(projectId)
