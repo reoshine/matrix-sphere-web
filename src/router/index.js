@@ -96,6 +96,64 @@ const router = new Router({
             title: '容器监控'
           },
         },
+        {
+          path: '/credentialManagement/credentialList',
+          component: (resolve) => require(['@/views/credentialManagement/CredentialList.vue'], resolve),
+          meta: {
+            title: '凭据列表'
+          },
+        },
+
+
+
+        {
+          path: '/accountManagement/accountList',
+          name: 'Account',
+          component: (resolve) => require(['@/views/account/Account.vue'], resolve),
+          meta: {
+            title: '用户管理'
+          },
+        },
+        {
+          path: '/accountManagement/authorityManagement',
+          name: 'Authority',
+          component: (resolve) => require(['@/views/authority/Authority.vue'], resolve),
+          meta: {
+            title: '权限管理'
+          },
+        },
+        {
+          path: '/accountManagement/roleManagement',
+          name: 'Role',
+          component: (resolve) => require(['@/views/role/Role.vue'], resolve),
+          meta: {
+            title: '角色管理'
+          },
+        },
+        {
+          path: '/accountManagement/roleAuthority',
+          name: 'RoleAuthority',
+          component: (resolve) => require(['@/views/role/RoleAuthority.vue'], resolve),
+          meta: {
+            title: '角色管理'
+          },
+        },
+        {
+          path: '/projectManagement/projectList',
+          name: 'ProjectList',
+          component: (resolve) => require(['@/views/projectManagement/ProjectList.vue'], resolve),
+          meta: {
+            title: '应用管理'
+          },
+        },
+        {
+          path: '/systemManagement/systemParamManagement',
+          name: 'SystemParamManagement',
+          component: (resolve) => require(['@/views/systemManagement/SystemParamManagement.vue'], resolve),
+          meta: {
+            title: '系统参数管理'
+          },
+        },
       ]
     }
   ],

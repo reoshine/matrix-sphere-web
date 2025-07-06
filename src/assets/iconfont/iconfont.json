@@ -6,6 +6,97 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "15652748",
+      "name": "参数管理",
+      "font_class": "canshuguanli",
+      "unicode": "e60c",
+      "unicode_decimal": 58892
+    },
+    {
+      "icon_id": "1302451",
+      "name": "user-manage",
+      "font_class": "user-manage",
+      "unicode": "e607",
+      "unicode_decimal": 58887
+    },
+    {
+      "icon_id": "8197805",
+      "name": "用户管理",
+      "font_class": "yonghuguanli",
+      "unicode": "e662",
+      "unicode_decimal": 58978
+    },
+    {
+      "icon_id": "12331680",
+      "name": "系统管理",
+      "font_class": "xitongguanli",
+      "unicode": "e66a",
+      "unicode_decimal": 58986
+    },
+    {
+      "icon_id": "1221318",
+      "name": "应用",
+      "font_class": "applications",
+      "unicode": "e60a",
+      "unicode_decimal": 58890
+    },
+    {
+      "icon_id": "7845359",
+      "name": "被保人",
+      "font_class": "beibaoren",
+      "unicode": "ea0f",
+      "unicode_decimal": 59919
+    },
+    {
+      "icon_id": "12316640",
+      "name": "权限管理",
+      "font_class": "quanxianguanli",
+      "unicode": "e61a",
+      "unicode_decimal": 58906
+    },
+    {
+      "icon_id": "32243103",
+      "name": "角色管理",
+      "font_class": "jiaoseguanli",
+      "unicode": "e694",
+      "unicode_decimal": 59028
+    },
+    {
+      "icon_id": "16220419",
+      "name": "应用列表",
+      "font_class": "yingyongliebiao",
+      "unicode": "e615",
+      "unicode_decimal": 58901
+    },
+    {
+      "icon_id": "5779956",
+      "name": "zcpt-微信菜单管理",
+      "font_class": "zcpt-weixincaidanguanli",
+      "unicode": "e6b5",
+      "unicode_decimal": 59061
+    },
+    {
+      "icon_id": "8286865",
+      "name": "菜单管理",
+      "font_class": "caidanguanli",
+      "unicode": "e686",
+      "unicode_decimal": 59014
+    },
+    {
+      "icon_id": "3295948",
+      "name": "访问凭据",
+      "font_class": "fangwenpingju",
+      "unicode": "e635",
+      "unicode_decimal": 58933
+    },
+    {
+      "icon_id": "10515087",
+      "name": "凭据",
+      "font_class": "pingju",
+      "unicode": "e69f",
+      "unicode_decimal": 59039
+    },
+    {
       "icon_id": "37273854",
       "name": "gitee",
       "font_class": "gitee",

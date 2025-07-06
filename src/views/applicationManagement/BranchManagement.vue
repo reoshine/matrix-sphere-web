@@ -103,7 +103,7 @@
                :visible.sync="modifyBranchFormVisible"
                v-if="modifyBranchDialogVisible"
                width="617px">
-      <el-form class="modifyBranch"
+      <el-form class="modifyCredential"
                :model="editBranchForm"
                :rules="modifyBranchRules"
                ref="modifyBranchRef"
@@ -497,7 +497,7 @@ export default {
   margin-top: 30px;
 }
 
-.modifyBranch {
+.modifyCredential {
   .el-form-item {
     margin-bottom: 20px;
   }

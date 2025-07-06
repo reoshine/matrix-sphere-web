@@ -1,114 +1,115 @@
 import axios from 'axios'
 import swal from 'sweetalert2'
-import router from "@/router";
+import router from "@/router"
 
-//axios实例对象
-const request = axios.create({
-  timeout: 5000,
-  headers: {
-    "Content-Type": "application/json;charset=utf-8",
-  },
-});
-
-const baseURL = '/matrix-sphere-sso';
-let isRefreshing = false
-let requests = []
-
-// 设置post请求参数格式为json
-// request.defaults.headers.post['Content-Type'] = 'application/json;charset=UTF-8'
-
-request.setToken = (accessToken, refreshToken) => {
-  request.defaults.headers['Authorization'] = `Bearer ${accessToken}`
-  window.localStorage.setItem('adpSsoToken', accessToken)
-  window.localStorage.setItem('adpSsoRefreshToken', refreshToken)
-}
-
-function refreshToken () {
-  const refresh_token = localStorage.getItem("adpSsoRefreshToken")
-  if (refresh_token) {
-    return request({method:'post', url: `${baseURL}/oauth2/token`,
-      data: {
-        grant_type: 'refresh_token',
-        refresh_token: refresh_token,
-      },
-      headers: {
-        "Content-Type": 'multipart/form-data',
-        "Authorization": 'Basic ' + btoa('matrix-sphere:matrix-sphere-secret')
-      }})
-  } else {
-    toLogin()
-  }
-}
-
-function removeToken() {
-  localStorage.removeItem('adpSsoToken')
-  localStorage.removeItem('adpSsoRefreshToken')
-}
-
-
-// 发送请求携带请求头
-request.interceptors.request.use(config => {
-  if (config.url === `${baseURL}/oauth2/token`) {
-    config.headers["Content-Type"] = 'multipart/form-data'
-  } else {
-    config.headers.Authorization = localStorage.getItem('adpSsoToken') === null ? null : `Bearer ${localStorage.getItem('adpSsoToken')}`
-  }
-  return config
-})
-
-// 返回值如果是4003需要登录
-request.interceptors.response.use(response => {
-  if (response.data.code === 4003) {
-    const config = response.config
-    if (!isRefreshing) {
-      isRefreshing = true
-      return refreshToken().then(refreshRes => {
-        if (refreshRes.status === 200) {
-          const { access_token, refresh_token } = refreshRes.data
-          request.setToken(access_token, refresh_token)
-          config.headers['Authorization'] = `Bearer ${access_token}`
-          requests.forEach(cb => cb(access_token))
-          requests = []
-          return request(config)
-        } else {
-          removeToken()
+// 创建实例工厂函数
+const createRequest = (baseURL = '/') => {
+    const instance = axios.create({
+        baseURL,
+        timeout: 15000,
+        headers: {
+            'Content-Type': 'application/json'
         }
-      }).catch(err => {
-        console.log(err, 222222222)
-        removeToken()
-      }).finally(() => {
-        isRefreshing = false
-      })
-    } else {
-      // 正在刷新token，将返回一个未执行resolve的promise
-      // 保存函数 等待执行
-      // 吧请求都保存起来 等刷新完成后再一个一个调用
-      return new Promise((resolve) => {
-        // 将resolve放进队列，用一个函数形式来保存，等token刷新后直接执行
-        requests.push((access_token) => {
-          config.headers['Authorization'] = `Bearer ${access_token}`
-          resolve(request(config))
-        })
-      })
-    }
-  }
-  return response
-}, error => {
-  return Promise.reject(error)
-})
+    })
 
-function toLogin()  {
-  swal({
-    title: '登录已失效，请重新登录！',
-    type: 'error',
-    timer: '2500',
-    confirmButtonText: '确定',
-    showCancelButton: false
-  }).then(() => {
-    router.push({path: '/matrix-sphere/client/login'})
-    // window.location.href = '/matrix-sphere/client/login'
-  })
+    // 请求拦截器
+    instance.interceptors.request.use(config => {
+        const token = localStorage.getItem('adpSsoToken')
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`
+        }
+        return config
+    })
+
+    // 响应拦截器（关键修正点）
+    instance.interceptors.response.use(
+        response => {
+            if (response.config.url === '/client/login') {
+                services.sphere.get('/client/login')
+                return response
+            }
+            if (response?.data?.code === 4003) {
+                removeToken()
+                return refreshToken(response.config, instance)
+            }
+            return response
+        }
+    )
+
+    return instance
 }
 
-// axios.defaults.baseURL = BASE_URL
-export default request
+// 创建各业务模块实例
+const services = {
+    sso: createRequest('/matrix-sphere-sso'),
+    manage: createRequest('/matrix-sphere-management'),
+    sphere: createRequest('/matrix-sphere')
+}
+
+// 统一刷新token逻辑（修改版）
+async function refreshToken(config, currentInstance) {
+    const refreshToken = localStorage.getItem("adpSsoRefreshToken")
+    if (!refreshToken) {
+        toLogin()
+        return Promise.reject('无刷新令牌')
+    }
+
+    try {
+        // 使用sso实例刷新token
+        const refreshRes = await services.sso.post('/oauth2/token',
+            new URLSearchParams({
+                grant_type: 'refresh_token',
+                refresh_token: refreshToken
+            }),
+            {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': 'Basic ' + btoa('matrix-sphere:matrix-sphere-secret')
+                }
+            }
+        )
+
+        // 更新所有实例的token（关键修改）
+        //const newAccessToken = refreshRes.data.access_token
+        //updateAllInstancesToken(newAccessToken)
+
+        // 重试原始请求
+        //config.headers.Authorization = `Bearer ${newAccessToken}`
+        return currentInstance(config)
+
+    } catch (refreshError) {
+        removeToken()
+        toLogin()
+        return Promise.reject(refreshError)
+    }
+}
+
+// 更新所有实例的token（新增工具方法）
+function updateAllInstancesToken(newToken) {
+    Object.values(services).forEach(instance => {
+        instance.defaults.headers.common.Authorization = `Bearer ${newToken}`
+    })
+}
+
+// 工具函数
+function removeToken() {
+    localStorage.removeItem('adpSsoToken')
+    localStorage.removeItem('adpSsoRefreshToken')
+}
+
+function toLogin() {
+    swal.fire({
+        title: '登录已失效，请重新登录！',
+        icon: 'error',
+        timer: 2500,
+        showConfirmButton: false,
+        showCancelButton: false
+    }).finally(() => {
+        // router.push({path: '/login'})
+        router.push({path: '/matrix-sphere/client/login'})
+        window.location.reload()
+        //services.sphere.get('/client/login')
+    })
+}
+
+export const {sso, manage, sphere} = services

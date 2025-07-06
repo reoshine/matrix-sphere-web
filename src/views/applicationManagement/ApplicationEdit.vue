@@ -110,13 +110,15 @@ export default {
       }).then(res => {
         if (res.data.code === 2000) {
           this.modifyProjectForm = res.data.body
-          this.modifyProjectForm.jobXml = beautify.xml(this.modifyProjectForm.jobXml)
-          //注意数据显示后再去渲染高亮
-          this.$nextTick(() => {
-            document.querySelectorAll('pre code').forEach((el) => {
-              hljs.highlightElement(el);
+          if (this.modifyProjectForm.jobXml) {
+            this.modifyProjectForm.jobXml = beautify.xml(this.modifyProjectForm.jobXml)
+            //注意数据显示后再去渲染高亮
+            this.$nextTick(() => {
+              document.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+              });
             });
-          });
+          }
         }
       }).catch(err => {
         this.$message({
