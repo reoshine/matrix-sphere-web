@@ -117,15 +117,23 @@ const router = new Router({
         {
           path: '/accountManagement/authorityManagement',
           name: 'Authority',
-          component: (resolve) => require(['@/views/authority/Authority.vue'], resolve),
+          component: (resolve) => require(['@/views/account/Authority.vue'], resolve),
           meta: {
             title: '权限管理'
           },
         },
         {
+          path: '/accountManagement/menuManagement',
+          name: 'MenuManagement',
+          component: (resolve) => require(['@/views/account/MenuManagement.vue'], resolve),
+          meta: {
+            title: '菜单管理'
+          },
+        },
+        {
           path: '/accountManagement/roleManagement',
           name: 'Role',
-          component: (resolve) => require(['@/views/role/Role.vue'], resolve),
+          component: (resolve) => require(['@/views/account/Role.vue'], resolve),
           meta: {
             title: '角色管理'
           },
@@ -133,7 +141,7 @@ const router = new Router({
         {
           path: '/accountManagement/roleAuthority',
           name: 'RoleAuthority',
-          component: (resolve) => require(['@/views/role/RoleAuthority.vue'], resolve),
+          component: (resolve) => require(['@/views/account/RoleAuthority.vue'], resolve),
           meta: {
             title: '角色管理'
           },

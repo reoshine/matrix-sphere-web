@@ -25,15 +25,33 @@
               <el-divider content-position="left">配置信息</el-divider>
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px">
                 <el-tag type="warning" style="color: #324157; cursor: pointer; flex: 1" size="large">
-                  <strong>url: </strong>{{ credential.config.url }}
+                  <strong>凭据url: </strong>{{ credential.config.url }}
                 </el-tag>
                 <el-button :disabled="!credential.config.url" type="primary" size="mini" icon="el-icon-document-copy" circle @click="handleCopy(credential.config.url)"/>
               </div>
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px">
                 <el-tag type="warning"  style="color: #324157; cursor: pointer; flex: 1" size="large">
-                  <strong>token: </strong>{{ credential.config.token }}
+                  <strong>凭据名称: </strong>{{ credential.config.credentialName }}
+                </el-tag>
+                <el-button :disabled="!credential.config.credentialName" type="primary" size="mini" icon="el-icon-document-copy" circle @click="handleCopy(credential.config.credentialName)"/>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px">
+                <el-tag type="warning"  style="color: #324157; cursor: pointer; flex: 1" size="large">
+                  <strong>凭据描述: </strong>{{ credential.config.credentialDesc }}
+                </el-tag>
+                <el-button :disabled="!credential.config.credentialDesc" type="primary" size="mini" icon="el-icon-document-copy" circle @click="handleCopy(credential.config.credentialDesc)"/>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px">
+                <el-tag type="warning"  style="color: #324157; cursor: pointer; flex: 1" size="large">
+                  <strong>令牌: </strong>{{ credential.config.token }}
                 </el-tag>
                 <el-button :disabled="!credential.config.token" type="primary" size="mini" icon="el-icon-document-copy" circle @click="handleCopy(credential.config.token)"/>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px">
+                <el-tag type="warning"  style="color: #324157; cursor: pointer; flex: 1" size="large">
+                  <strong>有效期: </strong>{{ credential.config.expiresAt }}
+                </el-tag>
+                <el-button :disabled="!credential.config.expiresAt" type="primary" size="mini" icon="el-icon-document-copy" circle @click="handleCopy(credential.config.expiresAt)"/>
               </div>
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px">
                 <el-tag type="warning"  style="color: #324157; cursor: pointer; flex: 1" size="large">
@@ -87,8 +105,22 @@
         <el-form-item label="凭据url" prop="config.url" label-width="80px">
           <el-input v-model="modifyCredentialInfoForm.config.url" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="凭据描述" prop="config.token" label-width="80px">
-          <el-input v-model="modifyCredentialInfoForm.config.token" autocomplete="off"></el-input>
+        <el-form-item label="凭据名称" prop="config.credentialName" label-width="80px">
+          <el-input v-model="modifyCredentialInfoForm.config.credentialName" autocomplete="off" :disabled="!modifyCredentialInfoForm.config.credentialName"></el-input>
+        </el-form-item>
+        <el-form-item label="凭据描述" prop="config.credentialDesc" label-width="80px">
+          <el-input v-model="modifyCredentialInfoForm.config.credentialDesc" autocomplete="off" :disabled="!modifyCredentialInfoForm.config.credentialDesc"></el-input>
+        </el-form-item>
+        <el-form-item label="令牌" prop="config.token" label-width="80px">
+          <el-input v-model="modifyCredentialInfoForm.config.token" autocomplete="off" :disabled="!modifyCredentialInfoForm.config.token"></el-input>
+        </el-form-item>
+        <el-form-item label="有效期" prop="config.expiresAt" label-width="80px">
+          <el-date-picker
+              :disabled="!modifyCredentialInfoForm.config.expiresAt"
+              v-model="modifyCredentialInfoForm.config.expiresAt"
+              type="datetime"
+              placeholder="选择有效期">
+          </el-date-picker>
         </el-form-item>
         <el-form-item label="凭据用户" prop="config.user" label-width="80px">
           <el-input v-model="modifyCredentialInfoForm.config.user" autocomplete="off" :disabled="!modifyCredentialInfoForm.config.user"></el-input>
@@ -141,7 +173,10 @@ export default {
         config: {
           user: '',
           url: '',
-          token: ''
+          token: '',
+          credentialName: '',
+          credentialDesc: '',
+          expiresAt: ''
         },
         credentialDesc: '',
         createByName: '',
