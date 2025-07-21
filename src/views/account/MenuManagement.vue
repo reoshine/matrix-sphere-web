@@ -187,7 +187,7 @@ export default {
             type: 'success',
             message: '修改成功!'
           });
-          this.cancelEditStatus()
+          this.getMenuList(this.projectId)
         }
       }).catch(err => {
         this.$message({
