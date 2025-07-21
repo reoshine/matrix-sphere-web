@@ -151,7 +151,7 @@ import {
   getUnDeployedBranchList,
   removeBranch,
   getProjectInfo, queryList
-} from '@/api/api'
+} from '@/views/applicationManagement/api'
 
 export default {
   name: 'BranchManagement',
