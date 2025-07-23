@@ -63,7 +63,7 @@
 
 <script>
 
-import {getMenuById, getMenuList, modifyMenu, queryProjectList} from "@/views/account/api";
+import {getMenuById, getMenuList, modifyMenu, queryProjectList} from "@/views/accountManagement/api";
 export default {
   name: "role",
   data() {

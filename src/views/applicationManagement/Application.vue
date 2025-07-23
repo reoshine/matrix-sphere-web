@@ -429,8 +429,8 @@ export default {
 
     toBranchManagement(projectId) {
       this.$router.push({
-        name: "BranchManagement",
-        path: '/matrix/branchManagement',
+        name: "Branch",
+        path: '/applicationManagement/branch',
         params: {
           projectId: projectId
         }
@@ -440,7 +440,7 @@ export default {
     toAppDeploy(projectId) {
       this.$router.push({
         name: 'ApplicationDeploy',
-        path: "/matrix/applicationDeploy",
+        path: "/applicationManagement/applicationDeploy",
         params: {
           projectId: projectId
         }
@@ -450,7 +450,7 @@ export default {
     applicationEdit(projectId) {
       this.$router.push({
         name: 'ApplicationEdit',
-        path: "/matrix/applicationEdit",
+        path: "/applicationManagement/applicationEdit",
         params: {
           projectId: projectId
         }
