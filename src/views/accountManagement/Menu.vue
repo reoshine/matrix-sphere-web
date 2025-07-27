@@ -65,7 +65,7 @@
 
 import {getMenuById, getMenuList, modifyMenu, queryProjectList} from "@/views/accountManagement/api";
 export default {
-  name: "role",
+  name: "menu",
   data() {
     return {
       //应用列表

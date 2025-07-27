@@ -58,7 +58,7 @@ import 'highlight.js/styles/a11y-light.css'
 import {getProjectInfo, modifyProject, queryList} from "@/api/api";
 
 export default {
-  name: "ApplicationEdit",
+  name: "applicationEdit",
   data() {
     return {
       projectId: '',

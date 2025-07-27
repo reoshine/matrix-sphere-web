@@ -19,7 +19,7 @@
 <script>
 
 export default {
-  name: "MonitorComponent",
+  name: "monitorComponent",
   data() {
     return {}
   },

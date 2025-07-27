@@ -107,7 +107,7 @@
 import {addRole, getRoleById, getRolePage, modifyRole, removeRole} from "@/api/matrixspheremanagement/api";
 
 export default {
-  name: "RoleAuthority",
+  name: "roleAuthority",
   data() {
     return {
       pageNum: 1,

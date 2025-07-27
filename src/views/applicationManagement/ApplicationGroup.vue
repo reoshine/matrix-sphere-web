@@ -93,7 +93,7 @@
 import {modifyById, queryPage, add, removeById} from "@/api/api";
 
 export default {
-  name: "ApplicationGroup",
+  name: "applicationGroup",
   data() {
     return {
       //分页参数

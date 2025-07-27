@@ -165,7 +165,7 @@ import {
 } from "@/api/api";
 
 export default {
-  name: "ApplicationList.vue",
+  name: "application",
   data() {
     return {
       uploadFileType: '.xlsx, .xls',

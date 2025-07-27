@@ -25,7 +25,7 @@
 import bus from '@/util/bus';
 
 export default {
-  name: "Tags",
+  name: "tags",
   components: {
 
   },

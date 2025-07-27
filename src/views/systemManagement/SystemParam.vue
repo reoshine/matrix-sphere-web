@@ -66,7 +66,7 @@
 import {getSysParamList, getSysParamOptionList, modifySysParam} from "@/api/matrixspheremanagement/api";
 
 export default {
-  name: "SystemParamManagement",
+  name: "systemParam",
   data() {
     return {
       searchText: '',

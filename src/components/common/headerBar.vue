@@ -50,9 +50,7 @@ import bus from '@/util/bus';
 import {logout} from "@/api/api";
 
 export default {
-  // 组建的名称
-  title: "",
-  name: "Header",
+  name: "headerBar",
   computed: {
     username() {
       let username = localStorage.getItem("ms_username");

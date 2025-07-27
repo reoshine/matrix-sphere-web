@@ -60,7 +60,7 @@ import bus from '@/util/bus';
 import {getMenuList} from "@/api/api";
 
 export default {
-  name: "Sidebar",
+  name: "sidebar",
   data() {
     return {
       collapse: false,

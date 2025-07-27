@@ -1,9 +1,8 @@
 <template>
   <div class="wrapper">
-    <Header></Header>
-    <Sidebar></Sidebar>
+    <headerbar></headerbar>
+    <sidebar></sidebar>
     <div class="content-box" :class="{'content-collapse':collapse}">
-<!--      <Tags></Tags>-->
       <div class="content">
         <transition name="move" mode="out-in">
           <keep-alive :include="tagsList">
@@ -18,15 +17,16 @@
 
 <script>
 import bus from '@/util/bus';
-import Header from "@/components/common/Header";
-import Sidebar from "@/components/common/Sidebar";
-import Tags from "@/components/common/Tags";
+import headerbar from "@/components/common/headerBar";
+import sidebar from "@/components/common/sidebar";
+import tags from "@/components/common/tags";
 
 export default {
+  name: "home",
   components: {
-    Header,
-    Sidebar,
-    Tags
+    headerbar,
+    sidebar,
+    tags
   },
   data() {
     return {

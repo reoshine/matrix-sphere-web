@@ -138,7 +138,7 @@
 import {modifyById, page, add, removeById} from "./api";
 
 export default {
-  name: "CredentialList",
+  name: "credential",
   data() {
     return {
       //分页参数

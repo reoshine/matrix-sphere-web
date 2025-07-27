@@ -9,28 +9,21 @@ const router = new Router({
   routes: [
     {
       path: '/login',
-      component: () => import('@/views/login/Login.vue'),
+      component: () => import('@/views/login/login.vue'),
       meta: {
         title: '登录matrix-sphere运维部署平台'
       }
     },
     {
       path: '/',
-      component: resolve => require(['@/components/common/Home.vue'], resolve),
+      component: resolve => require(['@/components/common/home.vue'], resolve),
       meta: {
         title: 'matrix-sphere运维部署平台'
       },
       children: [
         {
-          path: '/dashboard',
-          component: resolve => require(['@/views/dashboard/Dashboard.vue'], resolve),
-          meta: {
-            title: '系统首页'
-          }
-        },
-        {
           path: '/applicationManagement/applicationGroup',
-          component: resolve => require(['@/views/applicationManagement/ApplicationGroup.vue'], resolve),
+          component: resolve => require(['@/views/applicationManagement/applicationGroup.vue'], resolve),
           meta: {
             title: '应用分组'
           }
@@ -38,7 +31,7 @@ const router = new Router({
         {
           path: '/applicationManagement/application',
           name: 'Application',
-          component: resolve => require(['@/views/applicationManagement/Application.vue'], resolve),
+          component: resolve => require(['@/views/applicationManagement/application.vue'], resolve),
           meta: {
             title: '应用列表'
           }
@@ -46,7 +39,7 @@ const router = new Router({
         {
           path: '/applicationManagement/branch',
           name: 'Branch',
-          component: (resolve) => require(['@/views/applicationManagement/Branch.vue'], resolve),
+          component: (resolve) => require(['@/views/applicationManagement/branch.vue'], resolve),
           meta: {
             title: '分支管理',
             guidePath: true,
@@ -56,7 +49,7 @@ const router = new Router({
         {
           path: '/applicationManagement/applicationDeploy',
           name: 'ApplicationDeploy',
-          component: (resolve) => require(['@/views/applicationManagement/ApplicationDeploy.vue'], resolve),
+          component: (resolve) => require(['@/views/applicationManagement/applicationDeploy.vue'], resolve),
           meta: {
             title: '应用部署',
             guidePath: true,
@@ -66,7 +59,7 @@ const router = new Router({
         {
           path: '/applicationManagement/applicationEdit',
           name: 'ApplicationEdit',
-          component: (resolve) => require(['@/views/applicationManagement/ApplicationEdit.vue'], resolve),
+          component: (resolve) => require(['@/views/applicationManagement/applicationEdit.vue'], resolve),
           meta: {
             title: '应用编辑',
             guidePath: true,
@@ -76,7 +69,7 @@ const router = new Router({
         {
           path: '/serviceMonitor/serverManagement',
           name: 'ServerManagement',
-          component: (resolve) => require(['@/views/serviceMonitor/ServerManagement.vue'], resolve),
+          component: (resolve) => require(['@/views/serviceMonitor/serverManagement.vue'], resolve),
           meta: {
             title: '服务器管理'
           },
@@ -84,7 +77,7 @@ const router = new Router({
         {
           path: '/serviceMonitor/serviceMonitor',
           name: 'ServiceMonitor',
-          component: (resolve) => require(['@/views/serviceMonitor/ServiceMonitor'], resolve),
+          component: (resolve) => require(['@/views/serviceMonitor/serviceMonitor'], resolve),
           meta: {
             title: '服务监控'
           },
@@ -92,7 +85,7 @@ const router = new Router({
         {
           path: '/serviceMonitor/containerMonitor',
           name: 'ContainerMonitor',
-          component: (resolve) => require(['@/views/containerMonitor/ContainerMonitor.vue'], resolve),
+          component: (resolve) => require(['@/views/containerMonitor/containerMonitor.vue'], resolve),
           meta: {
             title: '容器监控'
           },
@@ -100,7 +93,7 @@ const router = new Router({
         {
           path: '/credentialManagement/credential',
           name: 'Credential',
-          component: (resolve) => require(['@/views/credentialManagement/Credential.vue'], resolve),
+          component: (resolve) => require(['@/views/credentialManagement/credential.vue'], resolve),
           meta: {
             title: '凭据列表'
           },
@@ -111,7 +104,7 @@ const router = new Router({
         {
           path: '/accountManagement/account',
           name: 'Account',
-          component: (resolve) => require(['@/views/accountManagement/Account.vue'], resolve),
+          component: (resolve) => require(['@/views/accountManagement/account.vue'], resolve),
           meta: {
             title: '用户管理'
           },
@@ -119,7 +112,7 @@ const router = new Router({
         {
           path: '/accountManagement/authority',
           name: 'Authority',
-          component: (resolve) => require(['@/views/accountManagement/Authority.vue'], resolve),
+          component: (resolve) => require(['@/views/accountManagement/authority.vue'], resolve),
           meta: {
             title: '权限管理'
           },
@@ -127,7 +120,7 @@ const router = new Router({
         {
           path: '/accountManagement/menu',
           name: 'Menu',
-          component: (resolve) => require(['@/views/accountManagement/Menu.vue'], resolve),
+          component: (resolve) => require(['@/views/accountManagement/menu.vue'], resolve),
           meta: {
             title: '菜单管理'
           },
@@ -135,7 +128,7 @@ const router = new Router({
         {
           path: '/accountManagement/role',
           name: 'Role',
-          component: (resolve) => require(['@/views/accountManagement/Role.vue'], resolve),
+          component: (resolve) => require(['@/views/accountManagement/role.vue'], resolve),
           meta: {
             title: '角色管理'
           },
@@ -143,7 +136,7 @@ const router = new Router({
         {
           path: '/accountManagement/roleAuthority',
           name: 'RoleAuthority',
-          component: (resolve) => require(['@/views/accountManagement/RoleAuthority.vue'], resolve),
+          component: (resolve) => require(['@/views/accountManagement/roleAuthority.vue'], resolve),
           meta: {
             title: '角色管理'
           },
@@ -151,7 +144,7 @@ const router = new Router({
         {
           path: '/projectManagement/project',
           name: 'Project',
-          component: (resolve) => require(['@/views/projectManagement/Project.vue'], resolve),
+          component: (resolve) => require(['@/views/projectManagement/project.vue'], resolve),
           meta: {
             title: '应用管理'
           },
@@ -159,7 +152,7 @@ const router = new Router({
         {
           path: '/systemManagement/systemParam',
           name: 'SystemParam',
-          component: (resolve) => require(['@/views/systemManagement/SystemParam.vue'], resolve),
+          component: (resolve) => require(['@/views/systemManagement/systemParam.vue'], resolve),
           meta: {
             title: '系统参数管理'
           },

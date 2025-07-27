@@ -119,7 +119,7 @@ import {
 } from "@/api/matrixspheremanagement/api";
 
 export default {
-  name: "projectList",
+  name: "project",
   data() {
     return {
       pageNum: 1,

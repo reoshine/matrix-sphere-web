@@ -122,10 +122,9 @@ import {
 import bus from "@/util/bus";
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import * as CollUtils from '@/util/CollUtils'
-import {isNotEmpty} from "@/util/CollUtils";
 
 export default {
-  name: "DeployByEnv",
+  name: "deployByEnv",
   props : {
     env: String,
     projectId: {

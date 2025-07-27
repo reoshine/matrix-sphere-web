@@ -154,7 +154,7 @@ import {
 } from '@/views/applicationManagement/api'
 
 export default {
-  name: 'BranchManagement',
+  name: 'branch',
   data() {
     return {
       searchText: '',

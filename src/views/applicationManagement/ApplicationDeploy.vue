@@ -54,24 +54,24 @@
     <el-divider content-position="left">部署发布</el-divider>
     <el-col>
       <el-tabs v-model="activeName" type="card">
-        <el-tab-pane label="开发环境" name="DEV"><DeployByEnv :projectId="projectId" :env="'DEV'" v-if="activeName === 'DEV'"/></el-tab-pane>
-        <el-tab-pane label="测试环境" name="TEST"><DeployByEnv :projectId="projectId" :env="'TEST'" v-if="activeName === 'TEST'"/></el-tab-pane>
-        <el-tab-pane label="演示环境" name="POC"><DeployByEnv :projectId="projectId" :env="'POC'" v-if="activeName === 'POC'"/></el-tab-pane>
-        <el-tab-pane label="生产环境" name="PROD"><DeployByEnv :projectId="projectId" :env="'PROD'" v-if="activeName === 'PROD'"/></el-tab-pane>
+        <el-tab-pane label="开发环境" name="DEV"><deployByEnv :projectId="projectId" :env="'DEV'" v-if="activeName === 'DEV'"/></el-tab-pane>
+        <el-tab-pane label="测试环境" name="TEST"><deployByEnv :projectId="projectId" :env="'TEST'" v-if="activeName === 'TEST'"/></el-tab-pane>
+        <el-tab-pane label="演示环境" name="POC"><deployByEnv :projectId="projectId" :env="'POC'" v-if="activeName === 'POC'"/></el-tab-pane>
+        <el-tab-pane label="生产环境" name="PROD"><deployByEnv :projectId="projectId" :env="'PROD'" v-if="activeName === 'PROD'"/></el-tab-pane>
       </el-tabs>
     </el-col>
   </div>
 </template>
 
 <script>
-import DeployByEnv  from "@/components/deployByEnv/DeployByEnv.vue";
-import {getDeployMaster, getDeployRecord, getProjectById, queryList} from "@/api/api";
+import deployByEnv  from "@/components/deployByEnv/deployByEnv";
+import {getProjectById, queryList} from "@/api/api";
 import bus from "@/util/bus";
 
 export default {
-  name: "ApplicationDeploy",
+  name: "applicationDeploy",
   components: {
-    DeployByEnv
+    deployByEnv
   },
   data() {
     return {

@@ -8,7 +8,7 @@
 import {login, sphere} from '@/views/applicationManagement/api'
 
 export default {
-  name: "Login",
+  name: "login",
   data() {
     return {
 
@@ -34,7 +34,7 @@ export default {
         if (refreshTokenStr[0] === 'refreshToken') {
           localStorage.setItem("adpSsoRefreshToken", refreshTokenStr[1]);
         }
-        this.$router.replace("/applicationManagement/applicationList");
+        this.$router.replace("/applicationManagement/application");
       }
     }
   }
