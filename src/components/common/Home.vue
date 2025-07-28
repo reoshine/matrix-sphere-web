@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <headerbar></headerbar>
+    <headerBar></headerBar>
     <sidebar></sidebar>
     <div class="content-box" :class="{'content-collapse':collapse}">
       <div class="content">
@@ -17,14 +17,14 @@
 
 <script>
 import bus from '@/util/bus';
-import headerbar from "@/components/common/headerBar";
-import sidebar from "@/components/common/sidebar";
+import headerBar from "@/components/common/headerBar";
+import sidebar from "@/components/common/sidebar.vue";
 import tags from "@/components/common/tags";
 
 export default {
   name: "home",
   components: {
-    headerbar,
+    headerBar,
     sidebar,
     tags
   },
