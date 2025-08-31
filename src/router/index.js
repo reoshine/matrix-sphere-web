@@ -77,7 +77,7 @@ const router = new Router({
         {
           path: '/serviceMonitor/serviceMonitor',
           name: 'serviceMonitor',
-          component: (resolve) => require(['@/views/serviceMonitor/serviceMonitor'], resolve),
+          component: (resolve) => require(['@/views/serviceMonitor/serviceMonitor.vue'], resolve),
           meta: {
             title: '服务监控'
           },

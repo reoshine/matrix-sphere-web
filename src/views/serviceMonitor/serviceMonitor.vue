@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import monitorComponent from "@/components/deployByEnv/monitorComponent";
+import monitorComponent from "@/components/deployByEnv/monitorComponent.vue";
 
 export default {
   name: "serviceMonitor",

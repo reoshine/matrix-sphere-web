@@ -19,7 +19,7 @@
 import bus from '@/util/bus';
 import headerBar from "@/components/common/headerBar";
 import sidebar from "@/components/common/sidebar.vue";
-import tags from "@/components/common/tags";
+import tags from "@/components/common/tags.vue";
 
 export default {
   name: "home",

@@ -165,7 +165,7 @@ import {
 } from "@/api/api";
 
 export default {
-  name: "application",
+  name: "Application",
   data() {
     return {
       uploadFileType: '.xlsx, .xls',
@@ -429,7 +429,7 @@ export default {
 
     toBranchManagement(projectId) {
       this.$router.push({
-        name: "Branch",
+        name: "branch",
         path: '/applicationManagement/branch',
         params: {
           projectId: projectId
@@ -439,7 +439,7 @@ export default {
 
     toAppDeploy(projectId) {
       this.$router.push({
-        name: 'ApplicationDeploy',
+        name: 'applicationDeploy',
         path: "/applicationManagement/applicationDeploy",
         params: {
           projectId: projectId
@@ -449,7 +449,7 @@ export default {
 
     applicationEdit(projectId) {
       this.$router.push({
-        name: 'ApplicationEdit',
+        name: 'applicationEdit',
         path: "/applicationManagement/applicationEdit",
         params: {
           projectId: projectId
