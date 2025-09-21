@@ -26,7 +26,7 @@ node {
                  branches: [[name: "${params.branch}"]],
                  userRemoteConfigs: [[
                      url: "http://192.168.0.91:8088/matrixsphere/matrix-sphere-web.git",
-                     credentialsId: "e2804a17-90fa-4c8c-8f30-5985b4e5bb4c"
+                     credentialsId: "gitlab"
                  ]]])
     }
 
