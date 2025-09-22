@@ -142,12 +142,14 @@
 import {
   addAccount,
   addAccountRole,
-  getAccountPage, getAccountRoleByAccountId,
+  getAccountPage, 
+  getAccountRoleByAccountId,
   getById,
   getRoleList,
   modifyAccount,
-  removeAccount, removeAccountRole
-} from "@/api/matrixspheremanagement/api";
+  removeAccount, 
+  removeAccountRole
+} from "@/views/accountManagement/api";
 import bus from "@/util/bus";
 
 export default {

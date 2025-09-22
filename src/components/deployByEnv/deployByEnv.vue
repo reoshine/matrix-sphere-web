@@ -115,10 +115,13 @@
 import {
   build,
   deploy,
-  getDepLoyLogList, getDeployMaster,
-  getDeployRecord, getUnDeployedBranchList,
-  sseClose, getDeployStepList
-} from "@/api/api";
+  getDepLoyLogList, 
+  getDeployMaster,
+  getDeployRecord, 
+  getUnDeployedBranchList,
+  sseClose, 
+  getDeployStepList
+} from "@/views/applicationManagement/api";
 import bus from "@/util/bus";
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import * as CollUtils from '@/util/CollUtils'

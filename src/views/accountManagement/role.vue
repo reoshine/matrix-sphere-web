@@ -138,7 +138,7 @@ import {
   getRolePage,
   modifyRole,
   removeRole
-} from "@/api/matrixspheremanagement/api";
+} from "@/views/accountManagement/api";
 
 export default {
   name: "role",

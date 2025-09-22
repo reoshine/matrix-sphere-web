@@ -55,7 +55,7 @@
 import beautify from 'vkbeautify'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/a11y-light.css'
-import {getProjectInfo, modifyProject, queryList} from "@/api/api";
+import {getProjectInfo, modifyProject, queryList} from "@/views/applicationManagement/api";
 
 export default {
   name: "applicationEdit",

@@ -1,17 +1,5 @@
 import { sso, manage, sphere } from '@/axios'
 
-export function login() {
-  return sso.get('/matrix-sphere-sso/sso/login')
-}
-
-export function logout() {
-  return sso.get('/matrix-sphere-sso/logout')
-}
-
-export function authorize() {
-  return sso.get("/matrix-sphere-sso/client/login")
-}
-
 // ====================================== 系统管理 ======================================
 export function getSysParamList(data) {
   return manage.post('/sysParam/getSysParamList', data)
@@ -122,25 +110,4 @@ export function modifyAuthority(data) {
 
 export function removeAuthority(data) {
   return manage.get(`/authority/removeAuthority/${data}`)
-}
-
-// ====================================== 应用管理 ======================================
-export function getProjectPage(data) {
-  return manage.post('/project/getProjectPage', data)
-}
-
-export function getProjectById(data) {
-  return manage.get(`/project/getById/${data}`)
-}
-
-export function saveProject(data) {
-  return manage.post('/project/saveProject', data)
-}
-
-export function modifyProject(data) {
-  return manage.post('/project/modifyProject', data)
-}
-
-export function removeProject(data) {
-  return manage.post(`/project/removeProject/${data}`)
 }

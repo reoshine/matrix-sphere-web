@@ -63,7 +63,7 @@
 </template>
 
 <script>
-import {getSysParamList, getSysParamOptionList, modifySysParam} from "@/api/matrixspheremanagement/api";
+import {getSysParamList, getSysParamOptionList, modifySysParam} from "@/views/systemManagement/api";
 
 export default {
   name: "systemParam",

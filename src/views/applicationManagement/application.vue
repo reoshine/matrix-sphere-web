@@ -25,10 +25,11 @@
         <label style="margin-left:20px" for="projectGroupCode">项目分组：</label>
         <el-select clearable size="medium" v-model="projectGroupCode" placeholder="请选择" @change="queryApplicationPage">
           <el-option
-            v-for="item in projectGroupCodeList"
+            v-for="item in projectGroupList"
             :key="item.projectGroupCode"
-            :label="item.projectGroupCode"
+            :label="item.projectGroupName"
             :value="item.projectGroupCode">
+            <span style="float: left">{{ item.projectGroupCode + '&emsp;' + item.projectGroupName }}</span>
           </el-option>
         </el-select>
 
@@ -123,7 +124,7 @@
           <el-form-item prop="projectGroupCode" label="分组名称" label-width="100px">
             <el-select size="medium" v-model="saveProjectForm.projectGroupId" placeholder="请选择">
               <el-option
-                v-for="item in projectGroupCodeList"
+                v-for="item in projectGroupList"
                 :key="item.id"
                 :label="item.projectGroupCode"
                 :value="item.id">
@@ -162,7 +163,7 @@ import {
   queryProjectPage,
   removeProject,
   saveProject
-} from "@/api/api";
+} from "@/views/applicationManagement/api";
 
 export default {
   name: "Application",
@@ -178,8 +179,8 @@ export default {
       enableStatusList: ['启用', '停用'],
 
       //项目分组选择器
-      projectGroupCode: 'matrix-sphere',
-      projectGroupCodeList: [],
+      projectGroupCode: '',
+      projectGroupList: [],
 
       //编辑抽屉内容
       dialog: false,
@@ -247,7 +248,8 @@ export default {
         enableStatus: '启用'
       }).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupCodeList = res.data.body
+          this.projectGroupList = res.data.body
+          this.projectGroupCode = res.data.body[0].projectGroupName
         }
       })
     },
@@ -321,7 +323,13 @@ export default {
               message: '删除成功!'
             });
             this.queryApplicationPage();
-          }
+          } else {
+              this.$message({
+                message: res.data.message,
+                type: 'error',
+                duration: 3000,
+              });
+            }
         }).catch(err => {
           this.$message({
             message: '查询部署信息失败，原因：' + err,

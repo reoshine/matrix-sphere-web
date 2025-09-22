@@ -65,7 +65,7 @@
 
 <script>
 import deployByEnv  from "@/components/deployByEnv/deployByEnv.vue";
-import {getProjectById, queryList} from "@/api/api";
+import {getProjectById, queryList} from "@/views/applicationManagement/api";
 import bus from "@/util/bus";
 
 export default {

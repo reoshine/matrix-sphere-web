@@ -57,7 +57,7 @@
 
 <script>
 import bus from '@/util/bus';
-import {getMenuList} from "@/api/api";
+import {getMenuList} from "@/views/accountManagement/api";
 
 export default {
   name: "sidebar",

@@ -116,7 +116,7 @@ import {
   getProjectById,
   getProjectPage, modifyProject, removeProject,
   saveProject,
-} from "@/api/matrixspheremanagement/api";
+} from "@/views/projectManagement/api";
 
 export default {
   name: "project",

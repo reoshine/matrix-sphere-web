@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import {login, sphere} from '@/views/applicationManagement/api'
+import {login} from '@/views/login/api'
 
 export default {
   name: "login",

@@ -18,8 +18,8 @@
 <script>
 import bus from '@/util/bus';
 import headerBar from "@/components/common/headerBar";
-import sidebar from "@/components/common/sidebar.vue";
-import tags from "@/components/common/tags.vue";
+import sidebar from "@/components/common/sidebar";
+import tags from "@/components/common/tags";
 
 export default {
   name: "home",

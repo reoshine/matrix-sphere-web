@@ -47,7 +47,7 @@
 
 <script>
 import bus from '@/util/bus';
-import {logout} from "@/api/api";
+import {logout} from "@/views/login/api";
 
 export default {
   name: "headerBar",

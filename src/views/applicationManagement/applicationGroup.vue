@@ -90,7 +90,7 @@
 </template>
 
 <script>
-import {modifyById, queryPage, add, removeById} from "@/api/api";
+import {modifyById, queryPage, add, removeById} from "@/views/applicationManagement/api";
 
 export default {
   name: "applicationGroup",

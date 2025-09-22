@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import {addRole, getRoleById, getRolePage, modifyRole, removeRole} from "@/api/matrixspheremanagement/api";
+import {addRole, getRoleById, getRolePage, modifyRole, removeRole} from "@/views/accountManagement/api";
 
 export default {
   name: "roleAuthority",
