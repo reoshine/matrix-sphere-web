@@ -26,9 +26,7 @@ import bus from '@/util/bus';
 
 export default {
   name: "tags",
-  components: {
-
-  },
+  components: {},
   data() {
     return {
       tagsList: []
@@ -38,44 +36,99 @@ export default {
     isActive(path) {
       return path === this.$route.fullPath;
     },
-    // 关闭单个标签
+
+    // 统一的导航处理器（保持不变，用于捕获其他导航错误）
+    handleNav(pushPromise) {
+      pushPromise.catch(err => {
+        if (err.name !== 'NavigationDuplicated') {
+          console.error(err);
+        }
+      });
+    },
+
+    /**
+     * [FIX 1] 修复：关闭单个标签
+     */
     closeTags(index) {
+      // ---------------------------------
+      // 关键修复：
+      // ---------------------------------
+      // 如果只剩一个标签，提示并阻止关闭
+      if (this.tagsList.length <= 1) {
+        //this.$message.info('请至少保留一个标签页');
+        return;
+      }
+
       const delItem = this.tagsList.splice(index, 1)[0];
+      // 找出下一个要跳转的标签 (前一个或后一个)
       const item = this.tagsList[index] ? this.tagsList[index] : this.tagsList[index - 1];
+
       if (item) {
-        delItem.path === this.$route.fullPath && this.$router.push(item.path);
+        // 只有当关闭的是当前激活的标签时，才跳转
+        if (delItem.path === this.$route.fullPath) {
+          this.handleNav(this.$router.push(item.path));
+        }
+      }
+      // (如果 'item' 不存在，理论上不可能，因为我们已在开头检查 <= 1)
+    },
+
+    /**
+     * [FIX 2] 修复：关闭所有
+     */
+    closeAll() {
+      // ---------------------------------
+      // 关键修复：
+      // ---------------------------------
+      // 如果已经只剩一个或没有，提示并阻止
+      if (this.tagsList.length <= 1) {
+        this.$message.info('请至少保留一个标签页');
+        return;
+      }
+
+      // 筛选：只保留当前激活的页面
+      // (这是 "关闭所有" 的一种标准交互逻辑)
+      const currentItem = this.tagsList.find(item => this.isActive(item.path));
+      if (currentItem) {
+        this.tagsList = [currentItem];
       } else {
-        this.$router.push('/');
+        // 预防性：如果没找到，就清空并跳转到首页（这不应该发生）
+        this.tagsList = [];
+        this.handleNav(this.$router.push('/'));
       }
     },
-    // 关闭全部标签
-    closeAll() {
-      this.tagsList = [];
-      this.$router.push('/matrix/dashboard');
-    },
-    // 关闭其他标签
+
+    /**
+     * [FIX 3] 修复：关闭其他
+     * (确保 "关闭其他" 不会清空)
+     */
     closeOther() {
+      // 筛选出当前标签页
       this.tagsList = this.tagsList.filter(item => {
         return item.path === this.$route.fullPath;
       });
+      // 此时 tagsList 必定 length === 1，这是正确的
     },
-    // 设置标签
+
+    // (保持不变) 过滤 '详情页' 和 '登录页'
     setTags(route) {
-      const isExist = this.tagsList.some(item => {
-        return item.path === route.fullPath;
-      })
+      if (route.meta && (route.meta.guidePath || route.meta.hidden)) {
+        return;
+      }
+      if (route.path === '/login' || route.path === '/') {
+        return;
+      }
+      const isExist = this.tagsList.some(item => item.path === route.fullPath);
       if (!isExist) {
-        if (this.tagsList.length >= 8) {
-          this.tagsList.shift();
-        }
+        if (this.tagsList.length >= 8) this.tagsList.shift();
         this.tagsList.push({
           title: route.meta.title,
           path: route.fullPath,
-          name: route.matched[1].components.default.name
+          name: route.name // 使用 router/permission.js 中设置的 name
         })
       }
       bus.$emit('tags', this.tagsList);
     },
+
     handleTags(command) {
       command === 'other' ? this.closeOther() : this.closeAll();
     }
@@ -92,26 +145,41 @@ export default {
   },
   created() {
     this.setTags(this.$route);
-    // 监听关闭当前页面的标签页
+
+    // [FIX 4] 修复 bus 事件
     bus.$on('close_current_tags', () => {
+      // ---------------------------------
+      // 关键修复：
+      // ---------------------------------
+      // 如果只剩一个标签，提示并阻止关闭
+      if (this.tagsList.length <= 1) {
+        this.$message.info('请至少保留一个标签页');
+        return;
+      }
+
       for (let i = 0, len = this.tagsList.length; i < len; i++) {
         const item = this.tagsList[i];
         if (item.path === this.$route.fullPath) {
+
+          let pushTarget = null;
           if (i < len - 1) {
-            this.$router.push(this.tagsList[i + 1].path);
+            pushTarget = this.tagsList[i + 1].path;
           } else if (i > 0) {
-            this.$router.push(this.tagsList[i - 1].path);
-          } else {
-            this.$router.push('/');
+            pushTarget = this.tagsList[i - 1].path;
           }
+          // (如果 i === 0 且 i === len - 1, 意味着只有一个标签,
+          //  但已在函数开头被 return)
+
           this.tagsList.splice(i, 1);
+          if (pushTarget) {
+            this.handleNav(this.$router.push(pushTarget));
+          }
           break;
         }
       }
     })
   }
 }
-
 </script>
 
 <style>
