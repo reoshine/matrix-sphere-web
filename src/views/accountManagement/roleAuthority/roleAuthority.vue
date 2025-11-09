@@ -8,12 +8,12 @@
           maxlength="20"
           style="width: 400px;"
           size="medium"
-          placeholder="请输入权限编码/名称，支持模糊搜索"
+          placeholder="请输入角色编码/名称，支持模糊搜索"
           suffix-icon="el-icon-search"
           clearable
           v-model="searchText"></el-input>
       <label style="margin-left:20px" for="enabled">启用状态：</label>
-      <el-select clearable size="medium" v-model="enabled" @change="getAuthorityPage" placeholder="请选择">
+      <el-select clearable size="medium" v-model="enabled" @change="getRolePage" placeholder="请选择">
         <el-option
             v-for="item in enableStatusList"
             :key="item.enableStatus"
@@ -21,44 +21,46 @@
             :value="item.enableStatus">
         </el-option>
       </el-select>
-      <el-button type="primary" size="small" icon="el-icon-search" @click="getAuthorityPage">查询</el-button>
-      <el-button type="primary" size="small" icon="el-icon-plus" @click="addAuthority">新增</el-button>
+      <el-button type="primary" size="small" icon="el-icon-search" @click="getRolePage">查询</el-button>
+      <el-button type="primary" size="small" icon="el-icon-plus" @click="addRole">新增</el-button>
   </div>
 
-  <!-- 权限列表 -->
-  <el-divider content-position="left">权限列表</el-divider>
-  <el-empty v-show="authorityPage.total <= 0" description="无应用分组信息"></el-empty>
-  <el-table v-show="authorityPage.total > 0" :data="authorityPage.data" border>
+  <!-- 角色列表 -->
+  <el-divider content-position="left">角色列表</el-divider>
+  <el-empty v-show="rolePage.total <= 0" description="无应用分组信息"></el-empty>
+  <el-table v-show="rolePage.total > 0" :data="rolePage.data" border>
     <el-table-column type="index"></el-table-column>
-    <el-table-column prop="authorityCode" label="权限编码"></el-table-column>
-    <el-table-column prop="authorityDesc" label="权限名称"></el-table-column>
+    <el-table-column prop="roleCode" label="角色编码"></el-table-column>
+    <el-table-column prop="roleName" label="角色名称"></el-table-column>
     <el-table-column prop="createByName" label="创建人"></el-table-column>
     <el-table-column prop="enabled" label="启用状态">
       <template slot-scope="scope">
         <el-switch
-            v-model="authorityPage.data[scope.$index].enabled"
-            @change="modifyAuthorityConfirm(scope.row)">
+            v-model="rolePage.data[scope.$index].enabled"
+            @change="modifyRoleConfirm(scope.row)">
         </el-switch>
       </template>
     </el-table-column>
-    <el-table-column label="操作">
+    <el-table-column label="操作" width="500px">
       <template slot-scope="scope">
-        <el-button size="small" type="primary" icon="el-icon-edit" @click="modifyAuthority(scope.row)">修 改</el-button>
-        <el-button size="small" type="danger" icon="el-icon-delete" @click="removeAuthority(scope.row)">删 除</el-button>
+        <el-button size="small" type="primary" icon="el-icon-edit" @click="modifyRole(scope.row)">修 改</el-button>
+        <el-button size="small" type="primary" icon="el-icon-delete" @click="modifyRole(scope.row)">权限分配</el-button>
+        <el-button size="small" type="primary" icon="el-icon-delete" @click="modifyRole(scope.row)">菜单分配</el-button>
+        <el-button size="small" type="danger" icon="el-icon-delete" @click="removeRole(scope.row)">删 除</el-button>
       </template>
     </el-table-column>
   </el-table>
 
   <!-- 分页条 -->
-  <div class="authorityPage block">
+  <div class="rolePage block">
     <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="authorityPage.pageNum"
+        :current-page="rolePage.pageNum"
         :page-sizes="[10, 20, 50, 100]"
-        :page-size="authorityPage.pageCount"
+        :page-size="rolePage.pageCount"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="authorityPage.total">
+        :total="rolePage.total">
     </el-pagination>
   </div>
 
@@ -71,15 +73,15 @@
       custom-class="demo-drawer"
       ref="drawer">
     <div class="demo-drawer__content">
-      <el-form :model="saveAuthorityForm" :rules="saveAuthorityRules" ref="saveAuthorityRulesRef">
-        <el-form-item prop="authorityCode" label="权限编码" label-width="100px">
-          <el-input v-model="saveAuthorityForm.authorityCode" autocomplete="off"></el-input>
+      <el-form :model="saveRoleForm" :rules="saveRoleRules" ref="saveRoleRulesRef">
+        <el-form-item prop="roleCode" label="角色编码" label-width="100px">
+          <el-input v-model="saveRoleForm.roleCode" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item prop="authorityDesc" label="权限名称" label-width="100px">
-          <el-input v-model="saveAuthorityForm.authorityDesc" autocomplete="off"></el-input>
+        <el-form-item prop="roleName" label="角色名称" label-width="100px">
+          <el-input v-model="saveRoleForm.roleName" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item prop="enabled" label="启用状态" label-width="100px">
-          <el-select size="medium" v-model="saveAuthorityForm.enabled" placeholder="请选择">
+          <el-select size="medium" v-model="saveRoleForm.enabled" placeholder="请选择">
             <el-option
                 v-for="item in enableStatusList"
                 :key="item.enableStatus"
@@ -90,11 +92,11 @@
         </el-form-item>
       </el-form>
       <el-button style="margin-left: 20px" @click="cancelForm">取 消</el-button>
-      <el-button type="primary" v-if="drawerTitle === '新增权限'"
-                 @click="addAuthorityConfirm(saveAuthorityForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
+      <el-button type="primary" v-if="drawerTitle === '新增角色'"
+                 @click="addRoleConfirm(saveRoleForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
       </el-button>
-      <el-button type="primary" v-else-if="drawerTitle === '修改权限'"
-                 @click="modifyAuthorityConfirm(saveAuthorityForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
+      <el-button type="primary" v-else-if="drawerTitle === '修改角色'"
+                 @click="modifyRoleConfirm(saveRoleForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
       </el-button>
     </div>
   </el-drawer>
@@ -102,16 +104,10 @@
 </template>
 
 <script>
-import {
-  addAuthority,
-  getAuthorityById,
-  getAuthorityPage,
-  modifyAuthority,
-  removeAuthority,
-} from "@/views/accountManagement/api";
+import {addRole, getRoleById, getRolePage, modifyRole, removeRole} from "@/views/accountManagement/role/api";
 
 export default {
-  name: "authority",
+  name: "roleAuthority",
   data() {
     return {
       pageNum: 1,
@@ -131,17 +127,17 @@ export default {
       drawerTitle: '',
       loading: false,
       dialog: false,
-      saveAuthorityForm: {},
-      authorityPage: {},
-      authorityList: [],
+      saveRoleForm: {},
+      rolePage: {},
+      roleList: [],
 
-      saveAuthorityRules: {
-        authorityCode: [
-          { required: true, message: "请输入权限编码", trigger: "blur" },
+      saveRoleRules: {
+        roleCode: [
+          { required: true, message: "请输入角色编码", trigger: "blur" },
           { min: 3, max: 20, message: "长度在3到10个字符", trigger: "blur" },
         ],
-        authorityDesc: [
-          { required: true, message: "请输入权限名称", trigger: "blur" },
+        roleName: [
+          { required: true, message: "请输入角色名称", trigger: "blur" },
           { min: 2, max: 20, message: "长度在3到50个字符", trigger: "blur" },
         ]
       },
@@ -150,7 +146,7 @@ export default {
   },
   methods: {
     //分页查询
-    getAuthorityPage(data) {
+    getRolePage(data) {
       if (data.enabled === undefined || data.enabled === '') {
         data = {
           enabled: this.enabled,
@@ -160,7 +156,7 @@ export default {
           searchText: this.searchText
         }
       }
-      getAuthorityPage({
+      getRolePage({
         pageCount: data.pageCount,
         pageNum: data.pageNum,
         paging: data.paging,
@@ -168,11 +164,11 @@ export default {
         searchText: data.searchText
       }).then(res => {
         if (res.data.code === 2000) {
-          this.authorityPage = res.data.body
+          this.rolePage = res.data.body
         }
       }).catch(err => {
         this.$message({
-          message: '分页查询权限列表失败，原因：' + err,
+          message: '分页查询角色列表失败，原因：' + err,
           type: 'error',
           duration: 2000,
         });
@@ -180,14 +176,14 @@ export default {
     },
 
     //根据账号查询用户信息
-    getAuthorityById(authorityId) {
-      getAuthorityById(authorityId).then(res => {
+    getById(roleId) {
+      getRoleById(roleId).then(res => {
         if (res.data.code === 2000) {
-          this.saveAuthorityForm = res.data.body
+          this.saveRoleForm = res.data.body
         }
       }).catch(err => {
         this.$message({
-          message: '获取权限信息失败，原因：' + err,
+          message: '获取角色信息失败，原因：' + err,
           type: 'error',
           duration: 2000,
         });
@@ -208,31 +204,31 @@ export default {
     },
 
     //新增按钮
-    addAuthority() {
-      this.saveAuthorityForm = {}
-      this.drawerTitle = '新增权限'
+    addRole() {
+      this.saveRoleForm = {}
+      this.drawerTitle = '新增角色'
       this.dialog = true
     },
 
     //修改按钮
-    modifyAuthority(authority) {
-      this.drawerTitle = '修改权限'
+    modifyRole(role) {
+      this.drawerTitle = '修改角色'
       this.dialog = true
-      this.getAuthorityById(authority.id)
+      this.getById(role.id)
     },
 
     //抽屉取消按钮
     cancelForm() {
       this.dialog = false
-      this.$refs.saveAuthorityRulesRef.resetFields()
+      this.$refs.saveRoleRulesRef.resetFields()
     },
 
     //新增用户信息确认
-    addAuthorityConfirm(saveAuthorityForm) {
-      this.$refs.saveAuthorityRulesRef.validate((valid) => {
+    addRoleConfirm(saveRoleForm) {
+      this.$refs.saveRoleRulesRef.validate((valid) => {
         if (valid) {
-          addAuthority({
-            ...saveAuthorityForm
+          addRole({
+            ...saveRoleForm
           }).then(res => {
             if (res.data.code === 2000) {
               this.$message({
@@ -241,7 +237,7 @@ export default {
                 duration: 2000
               });
               this.dialog = false
-              this.getAuthorityPage({
+              this.getRolePage({
                 pageNum: this.pageNum,
                 pageCount: this.pageCount,
                 enabled: this.enabled,
@@ -250,7 +246,7 @@ export default {
             }
           }).catch(err => {
             this.$message({
-              message: '新增权限失败，原因：' + err,
+              message: '新增角色失败，原因：' + err,
               type: 'error',
               duration: 2000,
             });
@@ -267,7 +263,7 @@ export default {
         pageCount: pageCount,
         paging: true
       }
-      this.getAuthorityPage(data)
+      this.getRolePage(data)
     },
 
     //分页条跳转页数后
@@ -276,9 +272,9 @@ export default {
     },
 
     //修改用户信息确认
-    modifyAuthorityConfirm(saveAuthorityForm) {
-      modifyAuthority({
-        ...saveAuthorityForm
+    modifyRoleConfirm(saveRoleForm) {
+      modifyRole({
+        ...saveRoleForm
       }).then(res => {
         if (res.data.code === 2000) {
           this.$message({
@@ -287,7 +283,7 @@ export default {
             duration: 1000,
             onClose: () => {
               this.dialog = false
-              this.getAuthorityPage({
+              this.getRolePage({
                 pageNum: this.pageNum,
                 pageCount: this.pageCount,
                 enabled: this.enabled,
@@ -307,20 +303,20 @@ export default {
     },
 
     //删除用户
-    removeAuthority(authority) {
+    removeRole(role) {
       this.$confirm('此操作将永久删除, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        removeAuthority(authority.id).then(res => {
+        removeRole(role.id).then(res => {
           if (res.data.code === 2000) {
             this.$message({
               type: 'success',
               message: '删除成功!',
               duration: 2000
             });
-            this.getAuthorityPage({
+            this.getRolePage({
               pageNum: this.pageNum,
               pageCount: this.pageCount,
               enabled: this.enabled,
@@ -329,7 +325,7 @@ export default {
           }
         }).catch(err => {
           this.$message({
-            message: '删除权限失败，原因：' + err,
+            message: '删除角色失败，原因：' + err,
             type: 'error',
             duration: 2000,
           });
@@ -344,7 +340,7 @@ export default {
       enabled: this.enabled,
       paging: true
     }
-    this.getAuthorityPage(data)
+    this.getRolePage(data)
   }
 }
 </script>
@@ -362,7 +358,7 @@ export default {
   margin-bottom: 10px;
 }
 
-.authorityPage {
+.rolePage {
   position: absolute;
   bottom: 10px;
   right: 10px

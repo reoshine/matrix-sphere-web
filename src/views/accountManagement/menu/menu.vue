@@ -44,7 +44,7 @@
             <el-input v-model="menu.menuName"></el-input>
           </el-form-item>
           <el-form-item label="路由地址">
-            <el-input v-model="menu.menuCode"></el-input>
+            <el-input v-model="menu.menuUrl"></el-input>
           </el-form-item>
           <el-form-item label="图标">
             <el-input v-model="menu.icon"></el-input>
@@ -63,7 +63,8 @@
 
 <script>
 
-import {getMenuById, getMenuList, modifyMenu, queryProjectList} from "@/views/accountManagement/api";
+import {getMenuById, getMenuList, modifyMenu} from "@/views/accountManagement/menu/api";
+import {queryList} from "@/views/applicationManagement/applicationList/api";
 export default {
   name: "menu",
   data() {
@@ -90,6 +91,7 @@ export default {
       //菜单
       menu: {
         id: '',
+        menuUrl: '',
         menuCode: '',
         menuName: '',
         icon: '',
@@ -122,7 +124,7 @@ export default {
   },
   methods: {
     queryProjectList() {
-      queryProjectList({
+      queryList({
         projectId: this.projectId,
       }).then(res => {
         if (res.data.code === 2000) {

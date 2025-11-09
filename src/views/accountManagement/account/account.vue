@@ -1,7 +1,7 @@
 <template>
-<div>
-  <!-- 搜索条件 -->
-  <div class="search_condition">
+  <div>
+    <!-- 搜索条件 -->
+    <div class="search_condition">
       <el-input
           class="searchInput"
           minlength="0"
@@ -23,133 +23,137 @@
       </el-select>
       <el-button type="primary" size="small" icon="el-icon-search" @click="getAccountPage">查询</el-button>
       <el-button type="primary" size="small" icon="el-icon-plus" @click="addAccount">新增</el-button>
-  </div>
-
-  <!-- 用户列表 -->
-  <el-divider content-position="left">用户列表</el-divider>
-  <el-empty v-show="accountPage.total <= 0" description="无应用分组信息"></el-empty>
-  <el-table v-show="accountPage.total > 0" :data="accountPage.data" border>
-    <el-table-column type="index"></el-table-column>
-    <el-table-column prop="accountNo" label="用户账号"></el-table-column>
-    <el-table-column prop="accountName" label="账号名称"></el-table-column>
-    <el-table-column prop="deptName" label="所属部门"></el-table-column>
-    <el-table-column prop="d" label="密码过期时间">2023-12-31 23:59:59</el-table-column>
-    <el-table-column prop="createByName" label="创建人"></el-table-column>
-    <el-table-column prop="enabled" label="启用状态">
-      <template slot-scope="scope">
-        <el-switch
-            v-model="accountPage.data[scope.$index].enabled"
-            @change="modifyAccountConfirm(scope.row)">
-        </el-switch>
-      </template>
-    </el-table-column>
-    <el-table-column label="操作" width="300">
-      <template slot-scope="scope">
-        <el-button size="small" type="primary" icon="el-icon-edit" @click="modifyAccount(scope.row)">修 改</el-button>
-        <el-button size="small" type="primary" icon="el-icon-edit" @click="roleAllocation(scope.row)">角色分配</el-button>
-        <el-button size="small" type="danger" icon="el-icon-delete" @click="removeAccount(scope.row)">删 除</el-button>
-      </template>
-    </el-table-column>
-  </el-table>
-
-  <!-- 分页条 -->
-  <div class="rolePage block">
-    <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="accountPage.pageNum"
-        :page-sizes="[10, 20, 50, 100]"
-        :page-size="accountPage.pageCount"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="accountPage.total">
-    </el-pagination>
-  </div>
-
-  <!-- 用户信息编辑抽屉 -->
-  <el-drawer
-      :title="drawerTitle"
-      :before-close="handleAccountDrawerClose"
-      :visible.sync="accountModifyDialog"
-      direction="rtl"
-      custom-class="demo-drawer"
-      ref="drawer">
-    <div class="demo-drawer__content">
-      <el-form :model="saveAccountForm" :rules="saveAccountRules" ref="saveAccountRulesRef">
-        <el-form-item prop="accountNo" label="用户账号" label-width="100px">
-          <el-input v-model="saveAccountForm.accountNo" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="accountName" label="账号名称" label-width="100px">
-          <el-input v-model="saveAccountForm.accountName" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="accountPassword" label="密码" label-width="100px">
-          <el-input v-model="saveAccountForm.accountPassword" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="cellPhone" label="联系电话" label-width="100px">
-          <el-input v-model="saveAccountForm.cellPhone" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="idCardNo" label="身份证号" label-width="100px">
-          <el-input v-model="saveAccountForm.idCardNo" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="enabled" label="启用状态" label-width="100px">
-          <el-select size="medium" v-model="saveAccountForm.enabled" placeholder="请选择">
-            <el-option
-                v-for="item in enableStatusList"
-                :key="item.enableStatus"
-                :label="item.enableStatusName"
-                :value="item.enableStatus">
-            </el-option>
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <el-button style="margin-left: 20px" @click="accountDialogCancel">取 消</el-button>
-      <el-button type="primary" v-if="drawerTitle === '新增用户信息'"
-                 @click="addAccountConfirm(saveAccountForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
-      </el-button>
-      <el-button type="primary" v-else-if="drawerTitle === '修改用户信息'"
-                 @click="modifyAccountConfirm(saveAccountForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
-      </el-button>
     </div>
-  </el-drawer>
 
-  <!-- 用户角色分配抽屉 -->
-  <el-drawer
-      title="为用户分配角色"
-      :visible.sync="roleAllocationDialog"
-      direction="rtl"
-      custom-class="demo-drawer"
-      ref="roleAllocationDrawer"
-      size="38%">
-    <div class="demo-drawer__content">
-      <el-transfer
-          :titles="['未分配的角色', '已分配的角色']"
-          v-model="allocationRoleId"
-          :data="roleList"
-          @change="roleAllocationConfirm">
-      </el-transfer>
-      <el-button style="margin-left: 20px" @click="roleAllocationDialogCancel">取 消</el-button>
-      <el-button type="primary" v-if="drawerTitle === '新增用户信息'"
-                 @click="addAccountConfirm(saveAccountForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
-      </el-button>
-      <el-button type="primary" v-else-if="drawerTitle === '修改用户信息'"
-                 @click="modifyAccountConfirm(saveAccountForm)" :loading="loading">{{loading ? '提交中 ...' : '确 定'}}
-      </el-button>
+    <!-- 用户列表 -->
+    <el-divider content-position="left">用户列表</el-divider>
+    <el-empty v-show="accountPage.total <= 0" description="无应用分组信息"></el-empty>
+    <el-table v-show="accountPage.total > 0" :data="accountPage.data" border>
+      <el-table-column type="index"></el-table-column>
+      <el-table-column prop="accountNo" label="用户账号"></el-table-column>
+      <el-table-column prop="accountName" label="账号名称"></el-table-column>
+      <el-table-column prop="deptName" label="所属部门"></el-table-column>
+      <el-table-column prop="d" label="密码过期时间">2023-12-31 23:59:59</el-table-column>
+      <el-table-column prop="createByName" label="创建人"></el-table-column>
+      <el-table-column prop="enabled" label="启用状态">
+        <template slot-scope="scope">
+          <el-switch
+              v-model="accountPage.data[scope.$index].enabled"
+              @change="modifyAccountConfirm(scope.row)">
+          </el-switch>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="300">
+        <template slot-scope="scope">
+          <el-button size="small" type="primary" icon="el-icon-edit" @click="modifyAccount(scope.row)">修 改</el-button>
+          <el-button size="small" type="primary" icon="el-icon-edit" @click="roleAllocation(scope.row)">角色分配
+          </el-button>
+          <el-button size="small" type="danger" icon="el-icon-delete" @click="removeAccount(scope.row)">删 除
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 分页条 -->
+    <div class="rolePage block">
+      <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="accountPage.pageNum"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="accountPage.pageCount"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="accountPage.total">
+      </el-pagination>
     </div>
-  </el-drawer>
-</div>
+
+    <!-- 用户信息编辑抽屉 -->
+    <el-drawer
+        :title="drawerTitle"
+        :before-close="handleAccountDrawerClose"
+        :visible.sync="accountModifyDialog"
+        direction="rtl"
+        custom-class="demo-drawer"
+        ref="drawer">
+      <div class="demo-drawer__content">
+        <el-form :model="saveAccountForm" :rules="saveAccountRules" ref="saveAccountRulesRef">
+          <el-form-item prop="accountNo" label="用户账号" label-width="100px">
+            <el-input v-model="saveAccountForm.accountNo" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item prop="accountName" label="账号名称" label-width="100px">
+            <el-input v-model="saveAccountForm.accountName" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item prop="accountPassword" label="密码" label-width="100px">
+            <el-input v-model="saveAccountForm.accountPassword" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item prop="cellPhone" label="联系电话" label-width="100px">
+            <el-input v-model="saveAccountForm.cellPhone" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item prop="idCardNo" label="身份证号" label-width="100px">
+            <el-input v-model="saveAccountForm.idCardNo" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item prop="enabled" label="启用状态" label-width="100px">
+            <el-select size="medium" v-model="saveAccountForm.enabled" placeholder="请选择">
+              <el-option
+                  v-for="item in enableStatusList"
+                  :key="item.enableStatus"
+                  :label="item.enableStatusName"
+                  :value="item.enableStatus">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <el-button style="margin-left: 20px" @click="accountDialogCancel">取 消</el-button>
+        <el-button type="primary" v-if="drawerTitle === '新增用户信息'"
+                   @click="addAccountConfirm(saveAccountForm)" :loading="loading">{{ loading ? '提交中 ...' : '确 定' }}
+        </el-button>
+        <el-button type="primary" v-else-if="drawerTitle === '修改用户信息'"
+                   @click="modifyAccountConfirm(saveAccountForm)" :loading="loading">
+          {{ loading ? '提交中 ...' : '确 定' }}
+        </el-button>
+      </div>
+    </el-drawer>
+
+    <!-- 用户角色分配抽屉 -->
+    <el-drawer
+        title="为用户分配角色"
+        :visible.sync="roleAllocationDialog"
+        direction="rtl"
+        custom-class="demo-drawer"
+        ref="roleAllocationDrawer"
+        size="38%">
+      <div class="demo-drawer__content">
+        <el-transfer
+            :titles="['未分配的角色', '已分配的角色']"
+            v-model="allocationRoleId"
+            :data="roleList"
+            @change="roleAllocationConfirm">
+        </el-transfer>
+        <el-button style="margin-left: 20px" @click="roleAllocationDialogCancel">取 消</el-button>
+        <el-button type="primary" v-if="drawerTitle === '新增用户信息'"
+                   @click="addAccountConfirm(saveAccountForm)" :loading="loading">{{ loading ? '提交中 ...' : '确 定' }}
+        </el-button>
+        <el-button type="primary" v-else-if="drawerTitle === '修改用户信息'"
+                   @click="modifyAccountConfirm(saveAccountForm)" :loading="loading">
+          {{ loading ? '提交中 ...' : '确 定' }}
+        </el-button>
+      </div>
+    </el-drawer>
+  </div>
 </template>
 
 <script>
 import {
   addAccount,
-  addAccountRole,
-  getAccountPage, 
-  getAccountRoleByAccountId,
+  getAccountPage,
   getById,
-  getRoleList,
   modifyAccount,
-  removeAccount, 
+  removeAccount,
+  addAccountRole,
+  getAccountRoleByAccountId,
   removeAccountRole
-} from "@/views/accountManagement/api";
+} from "@/views/accountManagement/account/api";
+import {getRoleList} from "@/views/accountManagement/role/api";
 import bus from "@/util/bus";
 
 export default {
@@ -184,24 +188,24 @@ export default {
 
       saveAccountRules: {
         accountNo: [
-          { required: true, message: "请输入用户账号", trigger: "blur" },
-          { min: 2, max: 50, message: "长度在2到50个字符", trigger: "blur" },
+          {required: true, message: "请输入用户账号", trigger: "blur"},
+          {min: 2, max: 50, message: "长度在2到50个字符", trigger: "blur"},
         ],
         accountPassword: [
-          { required: true, message: "请输入密码", trigger: "blur" },
-          { min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur" },
+          {required: true, message: "请输入密码", trigger: "blur"},
+          {min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur"},
         ],
         accountName: [
-          { required: true, message: "请输入用户名称", trigger: "blur" },
-          { min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur" },
+          {required: true, message: "请输入用户名称", trigger: "blur"},
+          {min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur"},
         ],
         cellPhone: [
-          { required: true, message: "请输入用户电话", trigger: "blur" },
-          { min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur" },
+          {required: true, message: "请输入用户电话", trigger: "blur"},
+          {min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur"},
         ],
         idCardNo: [
-          { required: true, message: "请输入身份证号", trigger: "blur" },
-          { min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur" },
+          {required: true, message: "请输入身份证号", trigger: "blur"},
+          {min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur"},
         ]
       },
     }
@@ -503,10 +507,12 @@ export default {
 .demo-drawer__content {
   .el-form-item {
     margin-bottom: 20px;
+
     .el-input {
       width: 80%;
     }
   }
+
   .el-transfer {
     margin-left: 20px;
     margin-bottom: 20px;

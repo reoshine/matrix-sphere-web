@@ -135,7 +135,7 @@
 </template>
 
 <script>
-import {modifyById, page, add, removeById} from "@/views/credentialManagement/api";
+import {page} from "@/views/credentialManagement/api";
 
 export default {
   name: "credential",

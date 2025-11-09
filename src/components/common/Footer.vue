@@ -9,10 +9,14 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import "~@/assets/css/theme.less"; // 引入变量
 .el-footer {
-  background-color: #b3c0d1;
-  color: #333;
+  height: @footer-height !important; // Element UI 需要 !important
+  line-height: @footer-height;
+  background-color: @bg-footer;
+  color: #888;
   text-align: center;
-  line-height: 60px;
+  font-size: 14px;
+  border-top: 1px solid #e6e6e6; // 增加一个分割线
 }
 </style>

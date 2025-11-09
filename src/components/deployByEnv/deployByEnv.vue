@@ -121,7 +121,7 @@ import {
   getUnDeployedBranchList,
   sseClose, 
   getDeployStepList
-} from "@/views/applicationManagement/api";
+} from "@/views/applicationManagement/applicationList/api";
 import bus from "@/util/bus";
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import * as CollUtils from '@/util/CollUtils'

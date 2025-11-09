@@ -132,13 +132,14 @@
 import {
   addRole,
   addRoleMenu,
-  getMenuList,
   getRoleById,
   getRoleMenuByRoleId,
   getRolePage,
   modifyRole,
   removeRole
-} from "@/views/accountManagement/api";
+} from "@/views/accountManagement/role/api";
+
+import {getMenuList} from "@/views/accountManagement/menu/api";
 
 export default {
   name: "role",
@@ -147,6 +148,7 @@ export default {
       menuList: [
         {
           id: '',
+          menuUrl: '',
           menuCode: '',
           menuName: '',
           icon: '',

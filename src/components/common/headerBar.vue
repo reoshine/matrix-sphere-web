@@ -132,14 +132,25 @@ export default {
 </script>
 
 <style scoped lang='less'>
+@import "~@/assets/css/theme.less"; // 引入变量
+
 .header {
+  height: @header-height;
+  background-color: @bg-header;
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  height: 70px;
   font-size: 22px;
   color: #fff;
-  background-color: #242f42;
+}
+.collapse-btn {
+  line-height: @header-height;
+}
+.header .logo {
+  line-height: @header-height;
+}
+.header-user-con {
+  height: @header-height;
 }
 
 .collapse-btn {

@@ -1,9 +1,6 @@
 import { sphere } from '@/axios'
 
 // ====================================== 应用分组 ======================================
-export function queryList(data) {
-    return sphere.post('/projectGroup/queryList', data)
-}
 
 export function queryPage(data) {
     return sphere.post('/projectGroup/queryPage', data)
@@ -22,16 +19,6 @@ export function removeById(data) {
 }
 
 // ====================================== 应用列表 ======================================
-export function queryProjectPage(data) {
-    return sphere.post('/project/queryListPage', data)
-}
-
-export function exportProjectTemplate() {
-    return sphere.get('/project/exportProjectTemplate', {
-        params: {},
-        responseType: 'blob'
-    })
-}
 
 export function saveProject(data) {
     return sphere.post('/project/saveProject', data)
