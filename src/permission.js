@@ -56,6 +56,11 @@ function buildDynamicRoutes(apiMenus) {
         // 1. 如果它是一个 "页面" (有 menuUrl)
         // (我们假设所有有 menuUrl 的都是页面，没有 menuUrl 的都是父目录)
         if (menu.menuUrl && menu.menuUrl.startsWith('/')) {
+            // ---------------------------------
+            // 关键修复：
+            // ---------------------------------
+            // 1. 将 menuUrl 转为小写，用于不区分大小写的比较
+            const menuUrlLower = menu.menuUrl.toLowerCase();
             const route = {
                 path: menu.menuUrl,
                 component: loadView(menu.menuUrl), // [新] 直接用 menuUrl 加载
@@ -65,9 +70,11 @@ function buildDynamicRoutes(apiMenus) {
                     icon: menu.icon,
                     hidden: menu.hidden || false,
 
-                    // (您的业务逻辑：处理 '分支管理' 等页面)
-                    guidePath: menu.menuUrl.includes('branch') || menu.menuUrl.includes('Deploy') || menu.menuUrl.includes('Edit'),
-                    jumpPath: '/applicationManagement/application',
+                    // 2. [修复] 使用 menuUrlLower 进行比较
+                    guidePath: menuUrlLower.includes('branch') ||
+                        menuUrlLower.includes('deploy') || // 'Deploy' -> 'deploy'
+                        menuUrlLower.includes('edit'),   // 'Edit' -> 'edit'
+                    jumpPath: '/applicationManagement/applicationList/application',
                 }
             };
             routes.push(route);

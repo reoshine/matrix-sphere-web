@@ -2,7 +2,7 @@
   <div>
     <div class="query-toolbar">
       <el-form :inline="true" size="medium">
-        <el-form-item label="关键字">
+        <el-form-item>
           <el-input
               style="width: 280px;"
               minlength="0"
@@ -456,7 +456,7 @@ export default {
     toBranchManagement(projectId) {
       this.$router.push({
         name: "branch",
-        path: '/applicationManagement/branchManagement',
+        path: '/applicationManagement/branchManagement/branch',
         params: {
           projectId: projectId
         }
@@ -465,9 +465,8 @@ export default {
 
     toAppDeploy(projectId) {
       this.$router.push({
-        name: 'applicationDeploy',
-        path: "/applicationManagement/applicationDeploy",
-        params: {
+        path: "/applicationManagement/applicationList/applicationDeploy",
+        query: { // <--- 必须使用 query
           projectId: projectId
         }
       });
@@ -476,7 +475,7 @@ export default {
     applicationEdit(projectId) {
       this.$router.push({
         name: 'applicationEdit',
-        path: "/applicationManagement/applicationEdit",
+        path: "/applicationManagement/applicationList/applicationEdit",
         params: {
           projectId: projectId
         }
@@ -545,9 +544,9 @@ export default {
 // 1. 顶部工具栏美化
 // ---------------------------------
 .query-toolbar {
-  margin-bottom: 20px;
+  //margin-bottom: 20px;
   background-color: #ffffff;
-  padding: 20px 20px 10px 20px;
+  //padding: 20px 20px 10px 20px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
