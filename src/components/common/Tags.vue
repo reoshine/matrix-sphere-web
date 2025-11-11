@@ -34,7 +34,19 @@ export default {
   },
   methods: {
     isActive(path) {
-      return path === this.$route.fullPath;
+      // ---------------------------------
+      // 关键修复：
+      // ---------------------------------
+      // 1. 检查当前路由是否是 "详情页" (e.g., 部署页)
+      if (this.$route.meta.guidePath) {
+        // 2. 如果是, 检查这个标签 (path) 是否是 "详情页" 应该高亮的 "父级" (jumpPath)
+        //    (e.g., 检查 "应用列表" 标签的 path 是否等于 "应用部署" 页的 jumpPath)
+        return path === this.$route.meta.jumpPath;
+      } else {
+        // 3. 否则 (是普通页面), 保持原有逻辑
+        //    (e.g., 检查 "应用列表" 标签的 path 是否等于 "应用列表" 页的 fullPath)
+        return path === this.$route.fullPath;
+      }
     },
 
     // 统一的导航处理器（保持不变，用于捕获其他导航错误）

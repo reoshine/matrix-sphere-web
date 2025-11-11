@@ -211,7 +211,7 @@ export default {
   display: flex;
   height: 100vh;  /* 占据整个视口高度 */
   border: none;
-  padding: 20px 0;
+  padding: 0 0;
 }
 
 .left-panel, .right-panel {
