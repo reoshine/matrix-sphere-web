@@ -1,111 +1,150 @@
 <template>
-  <div>
-    <div class="query-toolbar">
-      <el-form :inline="true" size="medium">
-        <el-form-item>
+  <div class="app-container">
+    <el-card class="filter-container" shadow="never">
+      <el-form :inline="true" size="small" @submit.native.prevent>
+        <el-form-item label="应用搜索">
           <el-input
-              style="width: 280px;"
-              minlength="0"
-              maxlength="20"
-              placeholder="请输入项目编码/名称"
-              suffix-icon="el-icon-search"
+              v-model="searchText"
+              placeholder="输入编码/名称"
+              prefix-icon="el-icon-search"
               clearable
-              v-model="searchText"></el-input>
+              style="width: 240px;"
+              @keyup.enter.native="queryApplicationPage"
+          />
         </el-form-item>
 
         <el-form-item label="启用状态">
-          <el-select clearable size="medium" v-model="enableStatus" placeholder="请选择">
-            <el-option
-                v-for="item in enableStatusList"
-                :key="item"
-                :label="item"
-                :value="item">
-            </el-option>
+          <el-select v-model="enableStatus" placeholder="全部" clearable style="width: 120px;">
+            <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
 
         <el-form-item label="项目分组">
-          <el-select clearable size="medium" v-model="projectGroupCode" placeholder="请选择" @change="queryApplicationPage">
+          <el-select
+              v-model="projectGroupCode"
+              placeholder="请选择分组"
+              clearable
+              filterable
+              style="width: 180px;"
+              @change="queryApplicationPage"
+          >
             <el-option
                 v-for="item in projectGroupList"
                 :key="item.projectGroupCode"
                 :label="item.projectGroupName"
-                :value="item.projectGroupCode">
-              <span style="float: left">{{ item.projectGroupCode + '&emsp;' + item.projectGroupName }}</span>
+                :value="item.projectGroupCode"
+            >
+              <span style="float: left">{{ item.projectGroupName }}</span>
+              <span style="float: right; color: #8492a6; font-size: 12px; margin-left: 10px">{{ item.projectGroupCode }}</span>
             </el-option>
           </el-select>
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" size="small" icon="el-icon-search" @click="queryApplicationPage">查询</el-button>
+          <el-button type="primary" icon="el-icon-search" @click="queryApplicationPage">查询</el-button>
+          <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
+    </el-card>
+
+    <div class="action-bar">
+      <div class="left-panel">
+        <el-button type="primary" icon="el-icon-plus" size="small" @click="addProject">新增应用</el-button>
+      </div>
+      <div class="right-panel">
+        <el-button plain size="small" icon="el-icon-download" @click="exportProjectTemplate">模板下载</el-button>
+
+        <el-upload
+            class="upload-inline"
+            action="#"
+            :http-request="upload"
+            :accept="uploadFileType"
+            :show-file-list="false"
+        >
+          <el-button plain size="small" icon="el-icon-upload2">导入</el-button>
+        </el-upload>
+
+        <el-dropdown trigger="click" style="margin-left: 10px;">
+          <el-button plain size="small" icon="el-icon-connection">
+            同步仓库 <i class="el-icon-arrow-down el-icon--right"></i>
+          </el-button>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item icon="el-icon-loading">从 Gitee 同步</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-loading">从 GitLab 同步</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
     </div>
 
-    <div class="action-toolbar">
-      <el-button type="primary" size="small" icon="el-icon-plus" @click="addProject">新增</el-button>
+    <el-empty v-show="projectList.length <= 0" description="暂无应用信息"></el-empty>
 
-      <el-button type="success" size="small" icon="el-icon-download" @click="exportProjectTemplate">模板下载</el-button>
-      <el-upload
-          class="upload-demo"
-          action="https://jsonplaceholder.typicode.com/posts/"
-          :http-request="upload"
-          :accept="uploadFileType"
-          :show-file-list="false"
-          :file-list="fileList">
-        <el-button size="small" type="warning" icon="el-icon-upload">导入文件</el-button>
-      </el-upload>
+    <div v-show="projectList.length > 0" class="card-grid">
+      <el-row :gutter="15">
+        <el-col v-for="project in projectList" :key="project.id" :xs="24" :sm="12" :md="8" :lg="6" :xl="4">
+          <el-card shadow="hover" class="project-card" :body-style="{ padding: '0px' }">
 
-      <el-button type="info" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitee同步</el-button>
-      <el-button type="info" size="small" icon="el-icon-refresh-left" @click="exportProjectTemplate">从Gitlab同步</el-button>
+            <div class="card-header">
+              <div class="header-title">
+                <i class="el-icon-monitor icon-bg"></i>
+                <span class="code" :title="project.projectCode">{{ project.projectCode }}</span>
+              </div>
+              <el-switch
+                  v-model="project.enableStatus"
+                  active-value="启用"
+                  inactive-value="停用"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
+                  @change="enableChange($event, project)"
+              />
+            </div>
+
+            <div class="card-body">
+              <div class="project-name" :title="project.projectName">{{ project.projectName }}</div>
+              <div class="meta-row">
+                <el-tag size="mini" type="info" effect="plain">ID: {{ project.gitProjectId || 'N/A' }}</el-tag>
+                <el-tag size="mini" type="info" effect="light" v-if="project.projectGroupCode">{{ project.projectGroupCode }}</el-tag>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <div class="main-actions">
+                <el-tooltip content="进入部署控制台" placement="top" :open-delay="500">
+                  <el-button type="text" icon="el-icon-s-promotion" @click="toAppDeploy(project.id)">部署</el-button>
+                </el-tooltip>
+                <el-divider direction="vertical"></el-divider>
+                <el-button type="text" icon="el-icon-share" @click="toBranchManagement(project.id)">分支</el-button>
+              </div>
+
+              <div class="more-actions">
+                <el-dropdown trigger="hover" placement="top">
+                <span class="el-dropdown-link">
+                  <i class="el-icon-more"></i>
+                </span>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item icon="el-icon-setting" @click.native="applicationEdit(project.id)">
+                      配置流水线
+                    </el-dropdown-item>
+
+                    <el-dropdown-item icon="el-icon-edit" @click.native="modifyApplicationInfo(project.id)">
+                      修改基础信息
+                    </el-dropdown-item>
+
+                    <el-dropdown-item divided icon="el-icon-delete" class="text-danger" @click.native="removeApplication(project.id)">
+                      删除应用
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </div>
+            </div>
+
+          </el-card>
+        </el-col>
+      </el-row>
     </div>
-
-    <el-divider content-position="left">应用列表</el-divider>
-    <el-empty v-show="projectList.length <= 0" description="无应用信息"></el-empty>
-
-    <el-row v-show="projectList.length > 0" :gutter="20">
-      <el-col v-for="project in projectList" :key="project.id" :span="6">
-
-        <el-card shadow="hover" class="project-card">
-
-          <div class="card-header">
-            <span class="project-code">{{ project.projectCode }}</span>
-            <el-switch
-                :active-value="'启用'"
-                :inactive-value="'停用'"
-                v-model="project.enableStatus"
-                @change="enableChange($event, project)">
-            </el-switch>
-          </div>
-
-          <div class="card-body">
-            <el-tag class="project-name" type="" size="small">{{ project.projectName }}</el-tag>
-            <el-tag class="git-id-tag" type="info" size="small">
-              git仓库项目ID：{{project.gitProjectId}}
-            </el-tag>
-          </div>
-
-          <div class="card-footer">
-            <div class="footer-main-actions">
-              <el-button @click="toAppDeploy(project.id)" size="small" type="primary" icon="el-icon-aim">
-                去部署
-              </el-button>
-              <el-button @click="toBranchManagement(project.id)" size="small" type="primary" plain icon="el-icon-s-help">
-                分支管理
-              </el-button>
-            </div>
-            <div class="footer-secondary-actions">
-              <el-button @click.stop="applicationEdit(project.id)" size="small" type="primary" plain icon="el-icon-edit"></el-button>
-              <el-button @click.stop="removeApplication(project.id)" size="small" type="danger" plain icon="el-icon-delete"></el-button>
-            </div>
-          </div>
-
-        </el-card>
-      </el-col>
-    </el-row>
 
     <div class="pagination-container" v-show="projectList.length > 0">
       <el-pagination
+          background
           @current-change="handleCurrentChange"
           @size-change="handleSizeChange"
           :current-page="pageNum"
@@ -117,52 +156,56 @@
     </div>
 
     <el-drawer
-        :before-close="handleClose"
+        :title="saveProjectForm.id ? '编辑应用配置' : '新增应用'"
         :visible.sync="dialog"
-        direction="rtl"
-        custom-class="demo-drawer"
-        ref="drawer"
-        :with-header="true"
-        title="编辑应用"> <div class="demo-drawer__content">
-      <el-form :model="saveProjectForm" :rules="rules" ref="saveProjectFormRef">
-        <el-form-item prop="projectCode" label="项目编码" label-width="100px">
-          <el-input style="width: 80%" v-model="saveProjectForm.projectCode" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="projectName" label="项目名称" label-width="100px">
-          <el-input style="width: 80%" v-model="saveProjectForm.projectName" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="projectGroupCode" label="分组名称" label-width="100px">
-          <el-select size="medium" v-model="saveProjectForm.projectGroupId" placeholder="请选择">
-            <el-option
-                v-for="item in projectGroupList"
-                :key="item.id"
-                :label="item.projectGroupCode"
-                :value="item.id">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item prop="gitUrl" label="git地址" label-width="100px">
-          <el-input style="width: 80%" v-model="saveProjectForm.gitUrl" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item prop="enableStatus" label="启用状态" label-width="100px">
-          <el-select size="medium" v-model="saveProjectForm.enableStatus" placeholder="请选择">
-            <el-option
-                v-for="item in enableStatusList"
-                :key="item"
-                :label="item"
-                :value="item">
-            </el-option>
-          </el-select>
-        </el-form-item>
-      </el-form>
-    </div>
+        :before-close="handleClose"
+        size="500px"
+        :wrapperClosable="false"
+    >
+      <div class="drawer-content">
+        <el-form :model="saveProjectForm" :rules="rules" ref="saveProjectFormRef" label-width="100px" label-position="top">
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item prop="projectCode" label="项目编码">
+                <el-input v-model="saveProjectForm.projectCode" placeholder="例如: matrix-user-service" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item prop="projectName" label="项目名称">
+                <el-input v-model="saveProjectForm.projectName" placeholder="例如: 用户中心服务" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="projectGroupId" label="所属分组">
+                <el-select v-model="saveProjectForm.projectGroupId" placeholder="请选择" style="width: 100%">
+                  <el-option
+                      v-for="item in projectGroupList"
+                      :key="item.id"
+                      :label="item.projectGroupName"
+                      :value="item.id"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="enableStatus" label="初始状态">
+                <el-select v-model="saveProjectForm.enableStatus" style="width: 100%">
+                  <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item prop="gitUrl" label="Git 仓库地址">
+                <el-input type="input" :rows="2" v-model="saveProjectForm.gitUrl" placeholder="git@gitee.com:..." />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
 
-      <div class="demo-drawer__footer">
-        <el-button @click="cancelForm">取 消</el-button>
-        <el-button type="primary" @click="saveProject" :loading="loading">{{
-            loading ? '提交中 ...' : '确 定'
-          }}
-        </el-button>
+        <div class="drawer-footer">
+          <el-button @click="cancelForm">取 消</el-button>
+          <el-button type="primary" @click="saveProject" :loading="loading">确 定</el-button>
+        </div>
       </div>
     </el-drawer>
   </div>
@@ -191,28 +234,24 @@ export default {
       fileList: [],
 
       searchText: '',
-
-      //启用状态选择器
-      enableStatus: '启用',
+      enableStatus: '', // 默认为空查全部更合理
       enableStatusList: ['启用', '停用'],
 
-      //项目分组选择器
       projectGroupCode: '',
       projectGroupList: [],
 
-      //编辑抽屉内容
       dialog: false,
       loading: false,
       saveProjectForm: {
+        id: undefined, // 确保有id字段
         projectCode: '',
         projectName: '',
         projectGroupId: '',
         projectGroupCode: '',
         gitUrl: '',
-        enableStatus: ''
+        enableStatus: '启用'
       },
 
-      //抽屉表单校验规则
       rules: {
         projectCode: [
           { required: true, message: '请输入项目编码', trigger: 'blur' },
@@ -220,68 +259,49 @@ export default {
         ],
         projectName: [
           { required: true, message: '请输入项目名称', trigger: 'blur' },
-          { min: 3, max: 30, message: '长度在3到30个字符', trigger: 'blur' },
         ],
         projectGroupId: [
-          { required: true, message: '请选择项目分组', trigger: 'blur' },
+          { required: true, message: '请选择项目分组', trigger: 'change' }, // select用change
         ],
         gitUrl: [
-          { required: true, message: '请输入正确的git地址', trigger: 'blur' },
-          { min: 12, max: 100, message: '长度在12到100个字符', trigger: 'blur' },
+          { required: true, message: '请输入Git地址', trigger: 'blur' },
         ],
         enableStatus: [
-          { required: true, message: '请选择启用状态', trigger: 'blur' },
+          { required: true, message: '请选择启用状态', trigger: 'change' },
         ]
       },
 
-      //应用列表
-      projectList: [
-        {
-          id: '',
-          projectCode: '',
-          projectName: '',
-          projectGroupCode: '',
-          projectGroupName: '',
-          gitProjectId: '',
-          gitUrl: '',
-          enableStatus: ''
-        }
-      ],
-
-      //分页组件
+      projectList: [],
       total: 0,
       pageNum: 1,
-      pageCount: 16,
-      pageSizes: [16, 50, 100],
-      // page: {
-      //   pageNum: 1,
-      //   pageCount: 10,
-      // },
+      pageCount: 16, // 卡片布局下每页多一点比较好看
+      pageSizes: [12, 16, 24, 48], // 适配栅格系统(每行4个)
     };
   },
   methods: {
     getGroupList() {
-      queryList({
-        searchText: '',
-        enableStatus: '启用'
-      }).then(res => {
+      queryList({ searchText: '', enableStatus: '启用' }).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupList = res.data.body
-          this.projectGroupCode = res.data.body[0].projectGroupName
+          this.projectGroupList = res.data.body || []
         }
       })
     },
 
-    //每页展示数改变事件
     handleSizeChange(val) {
       this.pageCount = val;
-      this.queryApplicationPage(this.pageCount)
+      this.queryApplicationPage();
     },
 
-    //当前页改变事件
     handleCurrentChange(val) {
       this.pageNum = val;
-      this.queryApplicationPage(this.pageNum)
+      this.queryApplicationPage();
+    },
+
+    resetQuery() {
+      this.searchText = '';
+      this.enableStatus = '';
+      this.projectGroupCode = '';
+      this.queryApplicationPage();
     },
 
     //分页查询
@@ -290,41 +310,41 @@ export default {
         pageNum: this.pageNum,
         pageCount: this.pageCount,
         searchText: this.searchText,
-        enableStatus: this.enableStatus,
-        projectGroupCode: this.projectGroupCode
+        enableStatus: this.enableStatus || undefined,
+        projectGroupCode: this.projectGroupCode || undefined
       }).then(res => {
         if (res.data.code === 2000) {
           const result = res.data.body;
           this.total = result.total;
-          this.projectList = result.data;
+          this.projectList = result.data || [];
         }
       }).catch(err => {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
+        this.$message.error('查询失败：' + err);
       })
     },
 
-    // 编辑应用 (打开抽屉)
+    async addProject() {
+      this.saveProjectForm = { enableStatus: '启用' }; // 重置并给默认值
+      // 如果分组列表为空，先加载
+      if (this.projectGroupList.length === 0) {
+        await this.getGroupList();
+      }
+      this.dialog = true;
+      this.$nextTick(() => {
+        this.$refs.saveProjectFormRef && this.$refs.saveProjectFormRef.clearValidate();
+      });
+    },
+
     modifyApplicationInfo(projectId) {
-      this.getGroupList()
-      this.dialog = true
-      getProjectInfo({
-        projectId: projectId
-      }).then(res => {
+      // 先获取详情再打开
+      getProjectInfo({ projectId: projectId }).then(res => {
         if (res.data.code === 2000) {
           this.saveProjectForm = res.data.body;
           this.dialog = true;
+          // 确保分组列表已加载
+          if (this.projectGroupList.length === 0) this.getGroupList();
         }
-      }).catch(err => {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
+      });
     },
 
     // 删除应用
@@ -381,13 +401,6 @@ export default {
           duration: 2000,
         });
       })
-    },
-
-    //新增按钮绑定事件
-    async addProject() {
-      this.saveProjectForm = {}
-      await this.getGroupList()
-      this.dialog = true
     },
 
     //抽屉表单提交
@@ -530,164 +543,181 @@ export default {
 
   },
   created() {
-    this.getGroupList()
-    this.queryApplicationPage(1, 10);
-  },
+    this.getGroupList();
+    this.queryApplicationPage();
+  }
 };
 </script>
 
 <style lang="less" scoped>
-// 引入您的主题变量
-// @import "~@/assets/css/theme.less"; // 假设您的变量在这里
+/* MatrixSphere 全局容器 */
+.app-container {
+  padding: 20px;
+  background-color: #f0f2f5; /* 核心：浅灰底色 */
+  min-height: calc(100vh - 84px);
+}
 
-// ---------------------------------
-// 1. 顶部工具栏美化
-// ---------------------------------
-.query-toolbar {
-  //margin-bottom: 20px;
-  background-color: #ffffff;
-  //padding: 20px 20px 10px 20px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-  // Element UI 表单项默认 margin-bottom 太大，在工具栏中缩小
-  ::v-deep .el-form-item {
-    margin-bottom: 10px;
+/* 搜索栏卡片化 */
+.filter-container {
+  margin-bottom: 15px;
+  border: none;
+  :deep(.el-card__body) {
+    padding-bottom: 0; /* 紧凑设计 */
   }
 }
 
-.action-toolbar {
-  margin-bottom: 20px;
-
-  .upload-demo {
-    display: inline-block;
-    margin: 0 10px; // 调整上传按钮的间距
-  }
-}
-
-// ---------------------------------
-// 2. 卡片 (Card) 布局美化
-// ---------------------------------
-.project-card {
-  height: 100%; // 确保卡片在 el-col 中等高
+/* 操作栏：左右布局 */
+.action-bar {
   display: flex;
-  flex-direction: column; // 垂直布局
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 
-  // 修复 Element UI Card 的默认 padding
-  ::v-deep .el-card__body {
-    padding: 20px;
-    flex: 1; // 让 body 自动撑满剩余空间
+  .right-panel {
+    display: flex;
+    align-items: center;
+    .upload-inline {
+      display: inline-block;
+      margin-left: 10px;
+    }
+  }
+}
+
+/* 卡片网格系统 */
+.card-grid {
+  .el-col {
+    margin-bottom: 15px;
+  }
+}
+
+/* 卡片精细化设计 */
+.project-card {
+  border: none;
+  transition: all 0.3s;
+
+  &:hover {
+    transform: translateY(-3px); /* 悬浮上移效果 */
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+
+      .icon-bg {
+        background: #e6f7ff;
+        color: #1890ff;
+        padding: 6px;
+        border-radius: 4px;
+        margin-right: 8px;
+        font-size: 16px;
+      }
+
+      .code {
+        font-weight: 600;
+        color: #303133;
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .card-body {
+    padding: 15px 20px;
+    height: 100px; /* 固定高度，防止卡片参差不齐 */
     display: flex;
     flex-direction: column;
-  }
 
-  // 卡片头部
-  .card-header {
-    display: flex;
-    justify-content: space-between; // 两端对齐
-    align-items: center;
-    margin-bottom: 15px;
-
-    .project-code {
-      font-size: 18px;
-      font-weight: bold;
-      color: #333; // 使用更柔和的黑色
-    }
-  }
-
-  // 卡片主体
-  .card-body {
-    flex: 1; // 自动撑满
     .project-name {
       color: #606266;
+      font-size: 13px;
+      line-height: 1.5;
       margin-bottom: 10px;
+      height: 40px; /* 限制名称高度 */
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
-    .git-id-tag {
-      margin-left: 10px;
-      margin-top: 5px; // 分隔
+
+    .meta-row {
+      margin-top: auto; /* 底部对齐 */
+      display: flex;
+      gap: 5px;
     }
   }
 
-  // 卡片底部 (操作按钮)
   .card-footer {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #EBEEF5;
-
+    background-color: #fafafa;
+    border-top: 1px solid #f0f0f0;
+    padding: 0 10px;
+    height: 45px;
     display: flex;
-    justify-content: space-between; // 两端对齐
     align-items: center;
+    justify-content: space-between;
 
-    .footer-main-actions {
-      // 主要操作 (左侧)
+    .main-actions {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+
       .el-button {
-        // 移除不必要的间距
-        margin-right: 10px;
+        padding: 0 15px;
+        color: #606266;
+        &:hover {
+          color: #409EFF;
+        }
       }
     }
-    .footer-secondary-actions {
-      // 次要操作 (右侧)
-      .el-button {
-        margin-left: 5px;
+
+    .more-actions {
+      padding-right: 10px;
+      cursor: pointer;
+      color: #909399;
+      &:hover {
+        color: #409EFF;
       }
     }
   }
 }
 
-// ---------------------------------
-// 3. 分页 (Pagination) 布局修复
-// ---------------------------------
+/* 分页容器 */
 .pagination-container {
-  // 移除 "position: absolute"
-  text-align: right; // 企业级分页通常靠右
-  margin-top: 20px;
-  padding: 10px 0;
-}
-
-// ---------------------------------
-// 4. 抽屉 (Drawer) 页脚美化
-// ---------------------------------
-
-// 抽屉内容的内边距
-.demo-drawer__content {
-  padding: 20px;
-  // 确保内容可滚动
-  overflow-y: auto;
-  // 减去页脚的高度
-  height: calc(100vh - 80px); // 假设页脚 80px
-}
-
-.demo-drawer__footer {
-  // 用于放置抽屉的 "取消" "确定" 按钮
-  padding: 20px;
-  border-top: 1px solid #E8E8E8;
-  text-align: right;
-
-  // 固定在抽屉底部
-  position: absolute;
-  bottom: 0;
-  width: 100%;
   background: #fff;
-  box-sizing: border-box; // 确保 padding 不会撑开宽度
-
-  .el-button {
-    margin-left: 10px;
-  }
+  padding: 10px 20px;
+  text-align: right;
+  margin-top: 0; /* 紧接内容 */
 }
 
-// ---------------------------------
-// 5. 覆盖旧的、不稳定的样式
-// ---------------------------------
-.el-input, .el-select {
-  // 移除旧的固定宽度，让它们在表单中自适应
-  width: auto;
-  min-width: 190px;
-  margin-right: 10px;
-  margin-bottom: 10px;
+/* 抽屉内部样式 */
+.drawer-content {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.drawer-content form {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.drawer-footer {
+  border-top: 1px solid #e8e8e8;
+  padding: 15px 0 0;
+  text-align: right;
 }
 
-.el-col {
-  margin-bottom: 20px; // 统一 el-col 间距
-  border-radius: 4px;
+.text-danger {
+  color: #F56C6C;
 }
 </style>

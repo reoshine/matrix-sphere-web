@@ -1,131 +1,127 @@
 <template>
-  <div class="deploy-by-env-container">
-    <el-card shadow="never" class="step-card">
-      <el-steps class="deploySpeed" :align-center="true" :active="deployProcessActive" finish-status="success">
-        <el-step
-            v-for="step in steps"
-            :key="step.id"
-            :title="step.title"
-            :icon="step.icon"
-            :description="step.description"
-            :status="step.status">
-        </el-step>
-      </el-steps>
+  <div class="deploy-container">
+    <el-card shadow="never" class="process-card">
+      <div class="process-wrapper">
+        <el-steps :active="deployProcessActive" align-center finish-status="success" class="custom-steps">
+          <el-step
+              v-for="step in steps"
+              :key="step.id"
+              :title="step.title"
+              :icon="getStepIcon(step)"
+              :status="step.status"
+          >
+            <template slot="description">
+              <span v-if="step.description" class="step-error">{{ step.description }}</span>
+            </template>
+          </el-step>
+        </el-steps>
+      </div>
     </el-card>
 
-    <el-card shadow="never" class="branch-card">
-      <div slot="header" class="clearfix">
-        <el-divider content-position="left">已部署分支</el-divider>
-      </div>
-      <div class="toolbar">
-        <div class="action-group">
-          <el-button type="warning" size="small" @click="withdrawBranch" :disabled="isDisabled">退出分支</el-button>
-          <el-button type="primary" size="small" @click="reDeploy" :disabled="isDisabled">重新部署</el-button>
-          <el-button type="primary" size="small" @click="deployMain">部署main分支</el-button>
-        </div>
-        <div class="action-group">
-          <el-button type="primary" size="small" @click="getDepLoyLogList" icon="el-icon-document">部署记录</el-button>
+    <el-card shadow="never" class="module-card">
+      <div slot="header" class="card-header-flex">
+        <span class="header-title"><i class="el-icon-success text-success"></i> 已部署分支 (Feature)</span>
+        <div class="header-actions">
+          <el-button type="text" icon="el-icon-document" @click="getDepLoyLogList">查看部署历史</el-button>
         </div>
       </div>
-      <el-empty v-show="!deployInfo || !deployInfo.featureBranchList || deployInfo.featureBranchList.length <= 0" description="无已部署分支"></el-empty>
-      <el-table v-show="deployInfo && deployInfo.featureBranchList && deployInfo.featureBranchList.length > 0" :data="deployInfo.featureBranchList" @selection-change="selectedDeployed" border>
-        <el-table-column type="selection"></el-table-column>
-        <el-table-column prop="branchName" label="分支" width="400"></el-table-column>
-        <el-table-column prop="description" label="描述" width="400"></el-table-column>
-        <el-table-column prop="createByName" label="创建人" width="180"></el-table-column>
-        <el-table-column prop="gmtCreate" label="创建时间"></el-table-column>
+
+      <div class="toolbar-container">
+        <div class="left-actions">
+          <el-tooltip content="将选中分支从环境中移除" placement="top">
+            <el-button type="warning" plain icon="el-icon-remove-outline" size="small" @click="withdrawBranch" :disabled="isDisabled">退出分支</el-button>
+          </el-tooltip>
+          <el-tooltip content="重新构建并部署选中分支" placement="top">
+            <el-button type="primary" plain icon="el-icon-refresh" size="small" @click="reDeploy" :disabled="isDisabled">重新部署</el-button>
+          </el-tooltip>
+          <el-divider direction="vertical"></el-divider>
+          <el-button type="danger" plain icon="el-icon-s-flag" size="small" @click="deployMain">紧急部署 Main 分支</el-button>
+        </div>
+      </div>
+
+      <el-table
+          :data="deployInfo.featureBranchList"
+          @selection-change="selectedDeployed"
+          border
+          stripe
+          highlight-current-row
+          style="width: 100%"
+          empty-text="当前环境暂无已部署的 Feature 分支"
+      >
+        <el-table-column type="selection" width="50" align="center" />
+        <el-table-column prop="branchName" label="分支名称" min-width="200">
+          <template slot-scope="scope">
+            <el-tag size="medium" type="success" effect="plain">{{ scope.row.branchName }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="createByName" label="创建人" width="120" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="160" align="center" />
       </el-table>
     </el-card>
 
-    <el-card shadow="never" class="branch-card">
-      <div slot="header" class="clearfix">
-        <el-divider content-position="left">未部署分支</el-divider>
+    <el-card shadow="never" class="module-card">
+      <div slot="header" class="card-header-flex">
+        <span class="header-title"><i class="el-icon-time"></i> 待部署分支</span>
+        <el-button type="primary" size="small" icon="el-icon-upload2" @click="deploy" :disabled="deployBranchBtnIsDisabled">部署选中分支</el-button>
       </div>
-      <div class="toolbar">
-        <el-button type="primary" size="small" @click="deploy" :disabled="deployBranchBtnIsDisabled">部署分支</el-button>
-      </div>
-      <el-empty v-show="unDeployedBranchList.length <= 0" description="无未部署分支"></el-empty>
-      <div v-show="unDeployedBranchList.length > 0">
-        <el-table :data="unDeployedBranchList" @selection-change="getUnDeployBranchIds" ref="selectedStatus" border>
-          <el-table-column type="selection"></el-table-column>
-          <el-table-column prop="branchName" label="分支" width="400"></el-table-column>
-          <el-table-column prop="description" label="描述" width="400"></el-table-column>
-          <el-table-column prop="createByName" label="创建人" width="180"></el-table-column>
-          <el-table-column prop="gmtCreate" label="创建时间"></el-table-column>
-        </el-table>
-      </div>
+
+      <el-table
+          :data="unDeployedBranchList"
+          @selection-change="getUnDeployBranchIds"
+          ref="selectedStatus"
+          border
+          stripe
+          style="width: 100%"
+          empty-text="暂无待部署的分支"
+      >
+        <el-table-column type="selection" width="50" align="center" />
+        <el-table-column prop="branchName" label="分支名称" min-width="200">
+          <template slot-scope="scope">
+            <span style="font-weight: 600">{{ scope.row.branchName }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="createByName" label="创建人" width="120" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="160" align="center" />
+      </el-table>
     </el-card>
 
     <el-drawer
-        size="30%"
+        title="部署历史记录"
         :visible.sync="dialog"
         direction="rtl"
-        custom-class="demo-drawer"
-        :modal="false"
-        ref="drawer">
+        size="600px"
+        custom-class="log-drawer"
+    >
+      <div class="log-list">
+        <div v-for="(deployLog, index) in deployLogList" :key="index" class="log-item">
+          <el-card shadow="hover" class="log-card">
+            <div slot="header" class="log-header">
+              <span class="log-time"><i class="el-icon-time"></i> {{ deployLog.deployTime }}</span>
+              <el-tag size="small" effect="dark" :type="getDeployStatusType(deployLog.deployStatus)">
+                {{ getDeployStatusText(deployLog.deployStatus) }}
+              </el-tag>
+            </div>
 
-      <div class="demo-drawer__content" v-for="deployLog in deployLogList" :key="deployLog.deployTime" style="margin-bottom: 20px">
-        <el-card class="box-card" style="width: 95%; margin: 0 15px">
-          <div slot="header" class="clearfix">
-            <span>{{ deployLog.projectName }} 最新10次部署记录</span>
-          </div>
-
-          <el-descriptions :labelStyle="{width:'100px'}" :size="'mini'" :column="3" border>
-            <el-descriptions-item>
-              <template slot="label">
-                部署人
-              </template>
-              <el-tag size="small" type="primary">{{ deployLog.deployByName }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                部署环境
-              </template>
-              <el-tag size="small" type="primary">{{ deployLog.deployEnvironment }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                部署类型
-              </template>
-              <el-tag size="small" type="primary">{{ deployLog.deployType }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item :span="3">
-              <template slot="label">
-                feature分支
-              </template>
-              <el-tag size="small" type="primary" v-for="item in deployLog.featureBranchNameList" :key="item">{{ item }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item :span="3">
-              <template slot="label">
-                release分支
-              </template>
-              <el-tag size="small" type="primary" v-if="deployLog.releaseBranchName">{{ deployLog.releaseBranchName }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item :span="3">
-              <template slot="label">
-                部署时间
-              </template>
-              <el-tag size="small" type="primary">{{ deployLog.deployTime }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item :span="3">
-              <template slot="label">
-                部署状态
-              </template>
-              <el-tag size="small" effect="dark" v-if="deployLog.deployStatus === 0" type="info">初始化</el-tag>
-              <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 1" type="warning">部署中</el-tag>
-              <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 2" type="success">部署成功</el-tag>
-              <el-tag size="small" effect="dark" v-else-if="deployLog.deployStatus === 3" type="danger">部署失败</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item v-if="deployLog.deployStatus === 3" :span="2">
-              <template slot="label">
-                失败原因
-              </template>
-              <el-tag size="small" type="primary">{{ deployLog.errorMessage }}</el-tag>
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
+            <el-descriptions :column="1" border size="mini">
+              <el-descriptions-item label="操作人">{{ deployLog.deployByName }}</el-descriptions-item>
+              <el-descriptions-item label="类型">{{ deployLog.deployType }}</el-descriptions-item>
+              <el-descriptions-item label="Release 分支" v-if="deployLog.releaseBranchName">
+                {{ deployLog.releaseBranchName }}
+              </el-descriptions-item>
+              <el-descriptions-item label="Feature 分支">
+                <div class="tag-group">
+                  <el-tag v-for="item in deployLog.featureBranchNameList" :key="item" size="mini" type="info">{{ item }}</el-tag>
+                </div>
+              </el-descriptions-item>
+              <el-descriptions-item label="失败原因" v-if="deployLog.deployStatus === 3">
+                <span class="text-danger">{{ deployLog.errorMessage }}</span>
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-card>
+        </div>
       </div>
-
     </el-drawer>
   </div>
 </template>
@@ -140,16 +136,15 @@ import {
   sseClose,
   getDeployStepList
 } from "@/views/applicationManagement/applicationList/api";
-// import bus from "@/util/bus"; // [移除] 不再需要
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import * as CollUtils from '@/util/CollUtils'
 
-// [新增] 步骤条状态映射
+// 步骤状态常量
 const STEP_STATUS_MAP = {
-  0: 'wait',    // 0: 初始化
-  1: 'process', // 1: 进行中
-  2: 'success', // 2: 成功
-  3: 'error'    // 3: 失败
+  0: 'wait',    // 初始化
+  1: 'process', // 进行中
+  2: 'success', // 成功
+  3: 'error'    // 失败
 };
 
 export default {
@@ -163,406 +158,37 @@ export default {
   },
   data() {
     return {
-      // 按钮禁用状态
+      // 按钮状态
       isDisabled: true,
       deployBranchBtnIsDisabled: true,
 
-      // API 数据
+      // 业务数据
       deployMaster: {},
       deployInfo: {
         featureBranchList: []
       },
       unDeployedBranchList: [],
 
-      // ---------------------------------
-      // [核心重构] 步骤条状态
-      // ---------------------------------
-      deployProcessActive: -1,
+      // 步骤条数据
+      deployProcessActive: 0,
       steps: [
-        { id: 'merge', title: '合并', status: 'wait', icon: '', description: '' },
-        { id: 'build', title: '构建', status: 'wait', icon: '', description: '' },
-        { id: 'publish', title: '部署', status: 'wait', icon: '', description: '' },
-        { id: 'finish', title: '完成', status: 'wait', icon: '', description: '' }
+        { id: 'merge', title: '分支合并', status: 'wait', icon: 'el-icon-files' },
+        { id: 'build', title: '代码构建', status: 'wait', icon: 'el-icon-cpu' },
+        { id: 'publish', title: '容器部署', status: 'wait', icon: 'el-icon-upload' },
+        { id: 'finish', title: '完成上线', status: 'wait', icon: 'el-icon-check' }
       ],
 
-      // 抽屉
+      // 日志抽屉
       dialog: false,
       deployLogList: [],
 
-      // SSE
+      // SSE连接对象
       eventSource: null,
 
-      // 表格选择
+      // 选中项 ID 集合
       unDeployedBranchIds: [],
       deployedBranchIds: []
     };
-  },
-  methods: {
-    // ---------------------------------
-    // [核心重构] 1. 步骤条状态机
-    // ---------------------------------
-
-    /**
-     * [新] 处理单个SSE消息并更新UI
-     * @param {object} item - SSE 消息 { stepCode, stepStatus, errorMessage }
-     */
-    updateStepState(item) {
-      // 1. 找到对应的步骤
-      const step = this.steps.find(s => s.id === item.stepCode);
-      if (!step) return;
-
-      // 2. 更新状态
-      step.status = STEP_STATUS_MAP[item.stepStatus] || 'wait';
-      step.icon = (step.status === 'process') ? 'el-icon-loading' : '';
-      step.description = (step.status === 'error') ? item.errorMessage : '';
-
-      // 3. 重新计算总进度
-      // (activeIndex = 第一个 *未成功* 的步骤索引)
-      const activeIndex = this.steps.findIndex(s => s.status !== 'success');
-      this.deployProcessActive = (activeIndex === -1) ? 4 : activeIndex;
-
-      // 4. 部署结束 (成功或失败)，关闭SSE
-      if (item.stepCode === 'finish' && (item.stepStatus === 2 || item.stepStatus === 3)) {
-        this.sseClose(this.projectId);
-      }
-    },
-
-    /**
-     * [新] "刷新保持状态" - 处理从API获取的完整步骤列表
-     * @param {Array} stepList - getDeployStepList API 返回的数组
-     */
-    processStepList(stepList) {
-      if (!stepList || stepList.length === 0) return;
-
-      let finalActiveIndex = 0;
-      const stepCodes = ['merge', 'build', 'publish', 'finish'];
-
-      for (const code of stepCodes) {
-        const stepUpdate = stepList.find(item => item.stepCode === code);
-        if (stepUpdate) {
-          // [复用] 调用单一的更新逻辑
-          this.updateStepState(stepUpdate);
-        }
-      }
-
-      // 再次计算总进度
-      const activeIndex = this.steps.findIndex(s => s.status !== 'success');
-      this.deployProcessActive = (activeIndex === -1) ? 4 : activeIndex;
-    },
-
-    /**
-     * [重构] 清空状态
-     */
-    clearDeployStatus() {
-      this.deployProcessActive = -1;
-      this.steps = [
-        { id: 'merge', title: '合并', status: 'wait', icon: '', description: '' },
-        { id: 'build', title: '构建', status: 'wait', icon: '', description: '' },
-        { id: 'publish', title: '部署', status: 'wait', icon: '', description: '' },
-        { id: 'finish', title: '完成', status: 'wait', icon: '', description: '' }
-      ];
-    },
-
-    // ---------------------------------
-    // [重构] 2. SSE 和 API 调用
-    // ---------------------------------
-
-    // [重构] 监听SSE消息
-    listenDeployStepMessage() {
-      this.eventSource.onmessage = (res => {
-        try {
-          const item = JSON.parse(res.data);
-          // [调用] 使用重构后的状态机
-          this.updateStepState(item);
-        } catch (e) {
-          console.error("SSE message parse error:", e);
-        }
-      })
-    },
-
-    // [重构] "刷新保持状态" API
-    getDeployStepList() {
-      getDeployStepList({
-        projectId: this.projectId, // [修复] 使用 this.projectId
-        deployEnvironment: this.deployEnvironment
-      }).then(res => {
-        if (res.data.code === 2000 && CollUtils.isNotEmpty(res.data.body)) {
-          // [调用] 使用重构后的处理器
-          this.processStepList(res.data.body);
-        }
-      }).catch(err => {
-        this.$message({
-          message: '查询部署步骤失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-    },
-
-    // [重构] 部署信息 (修复了 bus)
-    async getDeployMaster(projectId, activeName) {
-      let result;
-      try {
-        const res = await getDeployMaster({
-          projectId: projectId,
-          deployEnvironment: activeName
-        });
-        if (res.data.code === 2000) {
-          this.deployMaster = res.data.body;
-          result = res.data.body;
-        }
-      } catch (err) {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000
-        });
-      }
-
-      if (result) {
-        await this.getDeployRecord(result.id);
-        if (this.deployInfo) {
-          // [修复] 替换 bus.$emit
-          this.$emit('deployInfoUpdated', this.deployInfo);
-        }
-      } else {
-        // [修复] 替换 bus.$emit
-        this.$emit('deployInfoUpdated', {deployInfo: {}, featureBranchList: []});
-      }
-      return result;
-    },
-
-    // (getDeployRecord 保持不变)
-    async getDeployRecord(deployMasterId) {
-      let result;
-      await getDeployRecord({
-        deployMasterId: deployMasterId
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.deployInfo = res.data.body;
-          result = res.data.body;
-        }
-      }).catch(err => {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-      return result;
-    },
-
-    // (getUnDeployedBranchList 保持不变, 修复了 this.projectId)
-    getUnDeployedBranchList(projectId) {
-      getUnDeployedBranchList({
-        projectId: projectId,
-        deployEnvironment: this.deployEnvironment
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.unDeployedBranchList = res.data.body;
-        }
-      }).catch(err => {
-        this.$message({
-          message: '获取分支列表失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-    },
-
-    // (getDepLoyLogList 保持不变, 修复了 this.projectId)
-    getDepLoyLogList() {
-      this.dialog = true
-      getDepLoyLogList({
-        projectId: this.projectId,
-        deployEnvironment: this.deployEnvironment,
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.deployLogList = res.data.body
-        }
-      }).catch(err => {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-    },
-
-    // ---------------------------------
-    // 3. 部署动作 (修复了 bus 和 this.projectId)
-    // ---------------------------------
-
-    // (部署分支)
-    async deploy() {
-      await this.clearDeployStatus();
-      await this.createSseConnect(this.projectId); // [修复]
-      let result;
-      const toBeDeployBranchIds = this.unDeployedBranchIds.concat(this.deployInfo.featureBranchList.map((item) => item.id));
-
-      try {
-        const res = await deploy({
-          projectId: this.projectId, // [修复]
-          branchIds: toBeDeployBranchIds,
-          deployEnvironment: this.deployEnvironment,
-          deployType: '提交分支部署'
-        });
-
-        if (res.data.code === 2000) {
-          result = res.data.body;
-          this.listenDeployStepMessage();
-          await this.getUnDeployedBranchList(result.project.id);
-          let deployRecord = await this.getDeployRecord(result.deployMaster.id);
-          this.$emit('deployInfoUpdated', deployRecord); // [修复]
-          this.$refs.selectedStatus.clearSelection();
-        } else {
-          this.$message({ message: res.data.message, type: 'error' });
-          this.sseClose(this.projectId); // 失败时关闭
-        }
-      } catch (err) {
-        this.$message({ message: '部署失败，原因：' + err, type: 'error' });
-        this.sseClose(this.projectId); // 失败时关闭
-      }
-    },
-
-    // (退出分支 - 逻辑同上)
-    async withdrawBranch() {
-      await this.clearDeployStatus();
-      await this.createSseConnect(this.projectId);
-      let result;
-      try {
-        const res = await deploy({
-          projectId: this.projectId,
-          branchIds: this.deployedBranchIds,
-          deployEnvironment: this.deployEnvironment,
-          deployType: '退出分支部署'
-        });
-        if (res.data.code === 2000) {
-          result = res.data.body
-          this.listenDeployStepMessage()
-          await this.getUnDeployedBranchList(result.project.id)
-          let deployRecord = await this.getDeployRecord(result.deployMaster.id)
-          this.$emit('deployInfoUpdated', deployRecord); // [修复]
-          // (注意：这里没有 $refs.selectedStatus，退出分支应该清空 *已部署* 的选择)
-          // this.$refs.selectedStatus.clearSelection()
-        } else {
-          this.$message({ message: res.data.message, type: 'error' });
-          this.sseClose(this.projectId);
-        }
-      } catch (err) {
-        this.$message({ message: '退出分支失败，原因：' + err, type: 'error' });
-        this.sseClose(this.projectId);
-      }
-    },
-
-    // (重新部署 - 逻辑同上)
-    async reDeploy() {
-      await this.clearDeployStatus();
-      await this.createSseConnect(this.projectId);
-      if (!this.deployedBranchIds || this.deployedBranchIds.length === 0) {
-        this.$message.info('请先选择要重新部署的分支');
-        return;
-      }
-      let result;
-      try {
-        const res = await deploy({
-          projectId: this.projectId,
-          branchIds: this.deployedBranchIds,
-          deployEnvironment: this.deployEnvironment,
-          deployType: '重新部署'
-        });
-        if (res.data.code === 2000) {
-          result = res.data.body;
-          this.listenDeployStepMessage();
-          await this.getUnDeployedBranchList(result.project.id);
-          let deployRecord = await this.getDeployRecord(result.deployMaster.id);
-          this.$emit('deployInfoUpdated', deployRecord); // [修复]
-        } else {
-          this.$message({ message: res.data.message, type: 'error' });
-          this.sseClose(this.projectId);
-        }
-      } catch (err) {
-        this.$message({ message: '重新部署失败，原因：' + err, type: 'error' });
-        this.sseClose(this.projectId);
-      }
-    },
-
-    // (部署main - 逻辑同上)
-    async deployMain() {
-      await this.clearDeployStatus();
-      await this.createSseConnect(this.projectId);
-      let result;
-      try {
-        const res = await deploy({
-          projectId: this.projectId,
-          branchIds: [],
-          deployEnvironment: this.deployEnvironment,
-          deployType: 'main分支部署'
-        });
-        if (res.data.code === 2000) {
-          result = res.data.body;
-          this.listenDeployStepMessage();
-          await this.getUnDeployedBranchList(result.project.id);
-          let deployRecord = await this.getDeployRecord(result.deployMaster.id);
-          this.$emit('deployInfoUpdated', deployRecord); // [修复]
-          if (this.$refs.selectedStatus) {
-            this.$refs.selectedStatus.clearSelection();
-          }
-        } else {
-          this.$message({ message: res.data.message, type: 'error' });
-          this.sseClose(this.projectId);
-        }
-      } catch (err) {
-        this.$message({ message: '部署main失败，原因：' + err, type: 'error' });
-        this.sseClose(this.projectId);
-      }
-    },
-
-    // ---------------------------------
-    // 4. SSE 和 表格选择
-    // ---------------------------------
-
-    // (表格选择器 - 保持不变)
-    getUnDeployBranchIds(val) {
-      this.unDeployedBranchIds = val.map((item) => item.id);
-      this.deployBranchBtnIsDisabled = this.unDeployedBranchIds.length <= 0;
-    },
-    selectedDeployed(selectedBranchList) {
-      this.deployedBranchIds = selectedBranchList.map((item) => item.id);
-      this.isDisabled = this.deployedBranchIds.length <= 0;
-    },
-
-    // (SSE 创建 - 保持不变, 修复了 this.projectId)
-    createSseConnect(projectId) {
-      // (确保旧连接已关闭)
-      if (this.eventSource) {
-        this.eventSource.close();
-      }
-      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${projectId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
-          heartbeatTimeout: 10000000
-        }
-      });
-      this.eventSource.onopen = (res => {
-        console.log('已建立长连接 ==> ');
-      });
-      // [新增] 增加错误处理
-      this.eventSource.onerror = (err) => {
-        console.error("SSE 连接发生错误:", err);
-        this.eventSource.close();
-      };
-    },
-
-    // (SSE 关闭 - 保持不变, 修复了 this.projectId)
-    sseClose(projectId) {
-      if (this.eventSource) {
-        this.eventSource.close();
-        this.eventSource = null; // 释放
-      }
-      sseClose(projectId); // [修复] 应该传入 projectId
-      console.log('连接已关闭');
-    }
   },
 
   computed: {
@@ -571,92 +197,331 @@ export default {
     }
   },
 
+  methods: {
+    // --- 辅助 UI 方法 ---
+    getStepIcon(step) {
+      if (step.status === 'process') return 'el-icon-loading';
+      if (step.status === 'error') return 'el-icon-close';
+      if (step.status === 'success') return 'el-icon-check';
+      return step.icon || 'el-icon-more';
+    },
+
+    getDeployStatusType(status) {
+      const map = { 0: 'info', 1: 'primary', 2: 'success', 3: 'danger' };
+      return map[status] || 'info';
+    },
+
+    getDeployStatusText(status) {
+      const map = { 0: '初始化', 1: '部署中', 2: '成功', 3: '失败' };
+      return map[status] || '未知';
+    },
+
+    // --- 核心 SSE 状态机逻辑 ---
+
+    updateStepState(item) {
+      const step = this.steps.find(s => s.id === item.stepCode);
+      if (!step) return;
+
+      step.status = STEP_STATUS_MAP[item.stepStatus] || 'wait';
+      step.description = (step.status === 'error') ? item.errorMessage : '';
+
+      // 计算当前激活步骤 (找到第一个非成功的)
+      const activeIndex = this.steps.findIndex(s => s.status !== 'success');
+      this.deployProcessActive = (activeIndex === -1) ? 4 : activeIndex;
+
+      // 终态关闭连接
+      if (item.stepCode === 'finish' && (item.stepStatus === 2 || item.stepStatus === 3)) {
+        this.sseClose(this.projectId);
+      }
+    },
+
+    processStepList(stepList) {
+      if (!stepList || stepList.length === 0) return;
+      ['merge', 'build', 'publish', 'finish'].forEach(code => {
+        const stepUpdate = stepList.find(item => item.stepCode === code);
+        if (stepUpdate) this.updateStepState(stepUpdate);
+      });
+    },
+
+    clearDeployStatus() {
+      this.deployProcessActive = 0;
+      this.steps.forEach(s => {
+        s.status = 'wait';
+        s.description = '';
+      });
+    },
+
+    // --- API 交互 ---
+
+    listenDeployStepMessage() {
+      this.eventSource.onmessage = (res => {
+        try {
+          this.updateStepState(JSON.parse(res.data));
+        } catch (e) {
+          console.error("SSE Parse Error:", e);
+        }
+      })
+    },
+
+    getDeployStepList() {
+      getDeployStepList({
+        projectId: this.projectId,
+        deployEnvironment: this.deployEnvironment
+      }).then(res => {
+        if (res.data.code === 2000 && CollUtils.isNotEmpty(res.data.body)) {
+          this.processStepList(res.data.body);
+        }
+      });
+    },
+
+    async getDeployMaster(projectId, activeName) {
+      let result;
+      try {
+        const res = await getDeployMaster({ projectId, deployEnvironment: activeName });
+        if (res.data.code === 2000) {
+          this.deployMaster = res.data.body;
+          result = res.data.body;
+        }
+      } catch (e) { console.error(e) }
+
+      if (result) {
+        await this.getDeployRecord(result.id);
+      } else {
+        this.$emit('deployInfoUpdated', { deployInfo: {}, featureBranchList: [] });
+      }
+      return result;
+    },
+
+    async getDeployRecord(deployMasterId) {
+      let result;
+      await getDeployRecord({ deployMasterId }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployInfo = res.data.body;
+          result = res.data.body;
+          this.$emit('deployInfoUpdated', this.deployInfo);
+        }
+      });
+      return result;
+    },
+
+    getUnDeployedBranchList(projectId) {
+      getUnDeployedBranchList({
+        projectId: projectId,
+        deployEnvironment: this.deployEnvironment
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.unDeployedBranchList = res.data.body;
+        }
+      });
+    },
+
+    getDepLoyLogList() {
+      this.dialog = true;
+      getDepLoyLogList({
+        projectId: this.projectId,
+        deployEnvironment: this.deployEnvironment,
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployLogList = res.data.body;
+        }
+      });
+    },
+
+    // --- 部署动作 ---
+
+    async executeDeployAction(actionType) {
+      await this.clearDeployStatus();
+      await this.createSseConnect(this.projectId);
+
+      // 根据类型决定分支ID
+      let ids = [];
+      if (actionType === '提交分支部署') {
+        ids = this.unDeployedBranchIds.concat(this.deployInfo.featureBranchList.map(i => i.id));
+      } else if (actionType === 'main分支部署') {
+        ids = [];
+      } else {
+        ids = this.deployedBranchIds; // 退出 或 重部署
+      }
+
+      try {
+        const res = await deploy({
+          projectId: this.projectId,
+          branchIds: ids,
+          deployEnvironment: this.deployEnvironment,
+          deployType: actionType
+        });
+
+        if (res.data.code === 2000) {
+          const result = res.data.body;
+          this.listenDeployStepMessage();
+
+          // 刷新数据
+          await this.getUnDeployedBranchList(result.project.id);
+          await this.getDeployRecord(result.deployMaster.id);
+
+          // 清空选择
+          if (this.$refs.selectedStatus) this.$refs.selectedStatus.clearSelection();
+
+        } else {
+          this.$message.error(res.data.message);
+          this.sseClose(this.projectId);
+        }
+      } catch (err) {
+        this.$message.error('操作失败: ' + err);
+        this.sseClose(this.projectId);
+      }
+    },
+
+    deploy() { this.executeDeployAction('提交分支部署'); },
+    withdrawBranch() { this.executeDeployAction('退出分支部署'); },
+    reDeploy() {
+      if (!this.deployedBranchIds.length) return this.$message.warning('请选择要重部署的分支');
+      this.executeDeployAction('重新部署');
+    },
+    deployMain() { this.executeDeployAction('main分支部署'); },
+
+    // --- 表格选择 ---
+    getUnDeployBranchIds(val) {
+      this.unDeployedBranchIds = val.map(i => i.id);
+      this.deployBranchBtnIsDisabled = this.unDeployedBranchIds.length <= 0;
+    },
+    selectedDeployed(val) {
+      this.deployedBranchIds = val.map(i => i.id);
+      this.isDisabled = this.deployedBranchIds.length <= 0;
+    },
+
+    // --- SSE 管理 ---
+    createSseConnect(projectId) {
+      if (this.eventSource) this.eventSource.close();
+      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${projectId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
+          heartbeatTimeout: 10000000
+        }
+      });
+      this.eventSource.onerror = () => this.eventSource.close();
+    },
+
+    sseClose(projectId) {
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
+      sseClose(projectId);
+    }
+  },
+
   mounted() {
-    // [修复] 直接使用 this.projectId
     this.getUnDeployedBranchList(this.projectId);
     this.getDeployMaster(this.projectId, this.deployEnvironment).then(data => {
-      // 检查 deployMaster 的*最新*状态，而不是组件的 deployMaster (可能已过时)
-      if (data && data.deployStatus === 1) { // 1=部署中 (假设)
+      // 如果当前处于部署中，恢复SSE连接
+      if (data && data.deployStatus === 1) {
         this.createSseConnect(this.projectId);
         this.listenDeployStepMessage();
       }
     });
-  },
-
-  created() {
-    // [修复] 不再需要从 localStorage 获取 projectId，它是一个 prop
-    // [修复] getDeployStepList 应该在 mounted 中，在 getDeployMaster 之后
-    //        或者在 getDeployMaster 成功后调用
-    //        我们保留在 created 中，用于页面刷新
     this.getDeployStepList();
   },
 
   beforeDestroy() {
-    if(this.eventSource) {
+    if (this.eventSource) {
       this.eventSource.close();
       this.sseClose(this.projectId);
     }
-  },
+  }
 };
 </script>
+
 <style lang="less" scoped>
-// [新增] 容器总间距
-.deploy-by-env-container {
-  padding: 0 10px; // 左右留出一点空间
+.deploy-container {
+  /* 无需 padding，父组件已经给了 */
 }
 
-// [新增] 卡片统一样式
-.step-card,
-.branch-card {
+/* 卡片通用样式修正 */
+.process-card, .module-card {
   margin-bottom: 20px;
+  border: 1px solid #ebeef5;
 
-  // 移除卡片头部的默认边框
   ::v-deep .el-card__header {
-    border-bottom: none;
-    padding: 20px 20px 0 20px; // 调整内边距
+    padding: 15px 20px;
+    background-color: #fff;
+    border-bottom: 1px solid #ebeef5;
   }
-  // 移除卡片主体的默认内边距 (如果 divider 在里面)
+
   ::v-deep .el-card__body {
     padding: 20px;
   }
 }
 
-// [新增] 步骤条卡片
-.step-card {
-  .deploySpeed {
-    padding: 10px 0; // 步骤条的内边距
+/* 1. 进度卡片 */
+.process-card {
+  background: #fdfdfd; /* 极淡的背景区分 */
+  .process-wrapper {
+    padding: 10px 40px;
+  }
+  .step-error {
+    color: #F56C6C;
+    font-size: 12px;
   }
 }
 
-// [新增] 按钮工具栏布局
-.toolbar {
+/* 2. 模块卡片头 */
+.card-header-flex {
   display: flex;
-  justify-content: space-between; // 两端对齐
+  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; // 换行
-  margin-bottom: 20px;
-}
 
-.action-group {
-  // 按钮组
-  margin-bottom: 10px; // 换行时的间距
-  .el-button {
-    margin-right: 10px;
-    margin-bottom: 0; // 覆盖旧样式
+  .header-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #303133;
+
+    i { margin-right: 6px; }
+    .text-success { color: #67C23A; }
   }
 }
 
-// (旧样式 - 已被 .action-group 覆盖)
-// .el-button {
-//   margin-bottom: 15px
-// }
+/* 3. 工具栏 */
+.toolbar-container {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
 
-// (旧样式 - .el-steps 已在 .step-card 中)
-// .el-steps {
-//   margin-top: 50px;
-//   margin-bottom: 50px;
-// }
-// .deploySpeed {
-//   padding: 0 50px;
-// }
+  .left-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+}
+
+/* 4. 日志抽屉列表 */
+.log-list {
+  padding: 20px;
+
+  .log-item {
+    margin-bottom: 15px;
+  }
+
+  .log-card {
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .log-time {
+      font-size: 13px;
+      font-weight: bold;
+      color: #606266;
+    }
+
+    .tag-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .text-danger { color: #F56C6C; }
+  }
+}
 </style>

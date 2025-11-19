@@ -1,399 +1,380 @@
 <template>
-  <div>
-    <div>
-      <el-input
-          minlength="0"
-          maxlength="20"
-          style="width: 320px;"
-          size="medium"
-          placeholder="请输入应用分组编码/名称，支持模糊搜索"
-          suffix-icon="el-icon-search"
-          clearable
-          v-model="searchText"></el-input>
-
-      <label style="margin-left:20px" for="enableStatus">启用状态：</label>
-      <el-select clearable size="medium" v-model="enableStatus" placeholder="请选择">
-        <el-option
-            v-for="item in enableStatusList"
-            :key="item"
-            :label="item"
-            :value="item">
-        </el-option>
-      </el-select>
-      <el-button type="primary" size="small" icon="el-icon-search" @click="queryPage">查询</el-button>
-      <el-button type="primary" size="small" icon="el-icon-plus" @click="addDialog">新增</el-button>
-    </div>
-    <el-divider content-position="left">应用分组列表</el-divider>
-    <el-empty v-show="projectGroupList.length <= 0" description="无应用分组信息"></el-empty>
-    <el-table v-show="projectGroupList.length > 0" :data="projectGroupList" border>
-      <el-table-column type="index"></el-table-column>
-      <el-table-column prop="projectGroupCode" label="应用分组编码"></el-table-column>
-      <el-table-column prop="projectGroupName" label="应用分组名称"></el-table-column>
-      <el-table-column prop="createByName" label="创建人"></el-table-column>
-      <el-table-column prop="gmtCreate" label="创建时间"></el-table-column>
-      <el-table-column prop="enableStatus" label="启用状态" @click.stop="projectGroupInfo.enableStatus === 1 ? 0 : 1">
-        <template slot-scope="scope">
-          <el-switch
-              style="padding: 0 10px"
-              :active-value="'启用'"
-              :inactive-value="'停用'"
-              v-model="scope.row.enableStatus"
-              @change="enableChange($event, scope.row)">
-          </el-switch>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="scope">
-          <el-button size="small" type="primary" icon="el-icon-edit" @click="editProjectGroup(scope.row)">修 改</el-button>
-          <el-button size="small" type="danger" icon="el-icon-delete" @click="deleteConfirm(scope.row.id)">删 除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <div style="position: absolute; bottom: 10px;right: 0" v-show="projectGroupList.length > 0" class="pagination">
-      <el-pagination
-          class="text-center"
-          @current-change="handleCurrentChange"
-          @size-change="handleSizeChange"
-          :current-page="pageNum"
-          :page-sizes="pageSizes"
-          :page-size="pageCount"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total">
-      </el-pagination>
-    </div>
-
-    <el-dialog :title="dialogTitle"
-               :close-on-click-modal="false"
-               :visible.sync="modifyGroupDialogVisible"
-               v-if="modifyGroupDialogVisible"
-               width="617px">
-      <el-form class="modifyProjectGroup"
-               :model="editProjectGroupForm"
-               :rules="modifyProjectGroupRules"
-               ref="modifyProjectGroupRulesRef"
-               size="small">
-        <el-form-item label="应用分组编码: " prop="projectGroupCode" label-width="120px">
-          <el-input v-model="editProjectGroupForm.projectGroupCode" autocomplete="off"></el-input>
+  <div class="app-container">
+    <el-card class="filter-container" shadow="never">
+      <el-form :inline="true" :model="queryParams" size="small" @submit.native.prevent>
+        <el-form-item label="应用分组">
+          <el-input
+              v-model="queryParams.searchText"
+              placeholder="输入编码/名称模糊搜索"
+              clearable
+              prefix-icon="el-icon-search"
+              @keyup.enter.native="handleQuery"
+              style="width: 240px;"
+          />
         </el-form-item>
-        <el-form-item label="应用分组名称: " prop="projectGroupName" label-width="120px">
-          <el-input v-model="editProjectGroupForm.projectGroupName" autocomplete="off"></el-input>
+        <el-form-item label="启用状态">
+          <el-select v-model="queryParams.enableStatus" placeholder="全部" clearable style="width: 120px;">
+            <el-option
+                v-for="item in enableStatusList"
+                :key="item"
+                :label="item"
+                :value="item"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-search" @click="handleQuery">查询</el-button>
+          <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <div class="action-bar">
+      <el-button type="primary" icon="el-icon-plus" size="small" @click="handleAdd">新增分组</el-button>
+    </div>
+
+    <el-card shadow="never" :body-style="{ padding: '0' }" class="table-card">
+      <el-table
+          v-loading="loading"
+          :data="projectGroupList"
+          border
+          stripe
+          highlight-current-row
+          style="width: 100%"
+      >
+        <el-table-column type="index" label="序号" width="60" align="center" />
+
+        <el-table-column prop="projectGroupCode" label="应用分组编码" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="projectGroupName" label="应用分组名称" min-width="150" show-overflow-tooltip />
+
+        <el-table-column prop="enableStatus" label="启用状态" width="120" align="center">
+          <template slot-scope="scope">
+            <el-switch
+                v-model="scope.row.enableStatus"
+                active-value="启用"
+                inactive-value="停用"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+                @change="enableChange($event, scope.row)"
+            />
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="createByName" label="创建人" width="120" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="160" align="center" />
+
+        <el-table-column label="操作" align="center" width="180" fixed="right">
+          <template slot-scope="scope">
+            <el-button type="text" icon="el-icon-edit" size="small" @click="handleEdit(scope.row)">修改</el-button>
+            <el-button type="text" icon="el-icon-delete" size="small" class="text-danger" @click="handleDelete(scope.row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-container">
+        <el-pagination
+            background
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+            :current-page.sync="queryParams.pageNum"
+            :page-size.sync="queryParams.pageCount"
+            :page-sizes="pageSizes"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
+
+    <el-dialog
+        :title="dialogTitle"
+        :visible.sync="dialogVisible"
+        width="500px"
+        :close-on-click-modal="false"
+        append-to-body
+    >
+      <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="120px"
+          label-position="right"
+          size="small"
+          style="padding-right: 20px;"
+      >
+        <el-form-item label="分组编码" prop="projectGroupCode">
+          <el-input v-model="form.projectGroupCode" placeholder="请输入唯一编码" />
+        </el-form-item>
+        <el-form-item label="分组名称" prop="projectGroupName">
+          <el-input v-model="form.projectGroupName" placeholder="请输入显示名称" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="cancelModifyProjectGroup">取 消</el-button>
-        <el-button v-if="dialogTitle === '修改应用分组'" type="primary" @click="modify">确 定</el-button>
-        <el-button v-else-if="dialogTitle === '新增应用分组'" type="primary" @click="add">确 定</el-button>
+        <el-button size="small" @click="cancelForm">取 消</el-button>
+        <el-button size="small" type="primary" :loading="submitLoading" @click="submitForm">确 定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import {modifyById, queryPage, add, removeById} from "@/views/applicationManagement/applicationGroup/api";
+import { modifyById, queryPage, add, removeById } from "@/views/applicationManagement/applicationGroup/api";
 
 export default {
   name: "applicationGroup",
   data() {
     return {
-      //分页参数
-      total: 0,
-      pageNum: 1,
-      pageCount: 10,
+      // 页面状态
+      loading: false,
+      submitLoading: false,
+
+      // 搜索参数（整合到一个对象中）
+      queryParams: {
+        pageNum: 1,
+        pageCount: 10,
+        searchText: '',
+        enableStatus: '' // 默认为空，代表查询所有
+      },
       pageSizes: [10, 20, 50, 100],
+      total: 0,
 
-      //弹窗的title文案
-      dialogTitle: '',
-
-      //搜索内容
-      searchText: '',
-
-      //
-      modifyGroupDialogVisible: false,
-      modifyGroupFormVisible: false,
-
-      // 编辑弹窗表单对象
-      editProjectGroupForm: {
-        id: '',
-        projectGroupCode: '',
-        projectGroupName: '',
-        enableStatus: '',
-      },
-
-      //应用分组
-      projectGroupInfo: {
-        id: '',
-        projectGroupCode: '',
-        projectGroupName: '',
-        enableStatus: '',
-        createByName: '',
-        gmtCreate: '',
-      },
-      projectGroupList: [],
-
-      //启用状态列表
-      enableStatus: '启用',
+      // 字典数据
       enableStatusList: ['启用', '停用'],
 
-      modifyProjectGroupRules: {
+      // 表格数据
+      projectGroupList: [],
+
+      // 弹窗控制
+      dialogVisible: false,
+      dialogTitle: '',
+
+      // 表单数据
+      form: {
+        id: undefined,
+        projectGroupCode: '',
+        projectGroupName: '',
+        enableStatus: '启用'
+      },
+
+      // 表单校验
+      rules: {
         projectGroupCode: [
           { required: true, message: "请输入应用分组编码", trigger: "blur" },
-          { min: 2, max: 50, message: "长度在2到50个字符", trigger: "blur" },
+          { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" }
         ],
         projectGroupName: [
           { required: true, message: "请输入应用分组名称", trigger: "blur" },
-          { min: 3, max: 50, message: "长度在3到50个字符", trigger: "blur" },
+          { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" }
         ]
-      },
-    }
+      }
+    };
+  },
+  created() {
+    this.getList();
   },
   methods: {
-    //当前页改变事件
-    handleCurrentChange(val) {
-      this.pageNum = val;
-      this.queryPage(this.pageNum)
-    },
+    /** 获取列表 */
+    getList() {
+      this.loading = true;
+      // 注意：这里修正了原代码中 searchText 传值不一致的问题
+      const params = {
+        pageNum: this.queryParams.pageNum,
+        pageCount: this.queryParams.pageCount,
+        searchText: this.queryParams.searchText,
+        enableStatus: this.queryParams.enableStatus || undefined // 如果为空字符串则传undefined或后端约定的值
+      };
 
-    //每页展示数改变事件
-    handleSizeChange(val) {
-      this.pageCount = val;
-      this.queryPage(this.pageCount)
-    },
-
-    //分页查询分组列表
-    queryPage() {
-      queryPage({
-        pageNum: this.pageNum,
-        pageCount: this.pageCount,
-        searchText: '',
-        enableStatus: this.enableStatus
-      }).then(res => {
+      queryPage(params).then(res => {
         if (res.data.code === 2000) {
           const result = res.data.body;
-          this.total = result.total;
-          this.projectGroupList = result.data;
+          this.total = result.total || 0;
+          this.projectGroupList = result.data || [];
+        } else {
+          this.$message.error(res.data.message || '查询失败');
         }
       }).catch(err => {
-        this.$message({
-          message: '分页查询应用分组失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-        this.loading = false
-      })
-    },
-
-    addDialog() {
-      this.dialogTitle = '新增应用分组'
-      this.modifyGroupDialogVisible = true
-      this.modifyGroupFormVisible = true
-    },
-
-    add() {
-      this.$refs.modifyProjectGroupRulesRef.validate((valid) => {
-        if (valid) {
-          add({
-            projectGroupCode: this.editProjectGroupForm.projectGroupCode,
-            projectGroupName: this.editProjectGroupForm.projectGroupName,
-            enableStatus: '启用'
-          }).then(res => {
-            if (res.data.code === 2000) {
-              this.$message({
-                message: '添加分组成功！',
-                type: 'success',
-                duration: 1000
-              });
-              this.editProjectGroupForm = {}
-              this.modifyGroupDialogVisible = false
-              this.queryPage()
-            } else {
-              this.$message({
-                message: res.data.message,
-                type: 'error',
-                duration: 3000,
-              });
-            }
-          }).catch(err => {
-            this.$message({
-              message: '新增应用分组失败，原因：' + err,
-              type: 'error',
-              duration: 2000,
-            });
-            this.loading = false
-          })
-        }
-      })
-    },
-
-    editProjectGroup(projectGroup) {
-      this.dialogTitle = '修改应用分组'
-      this.modifyGroupDialogVisible = true
-      this.modifyGroupFormVisible = true
-      this.editProjectGroupForm = JSON.parse(JSON.stringify(projectGroup))
-    },
-
-    cancelModifyProjectGroup() {
-      this.modifyGroupDialogVisible = false
-      this.modifyGroupFormVisible = false
-      this.editProjectGroupForm = {}
-    },
-
-    modify() {
-      this.$refs.modifyProjectGroupRulesRef.validate((valid) => {
-        modifyById({
-          id: this.editProjectGroupForm.id,
-          projectGroupCode: this.editProjectGroupForm.projectGroupCode,
-          projectGroupName: this.editProjectGroupForm.projectGroupName
-        }).then(res => {
-          if (res.data.code === 2000) {
-            if (res.data.code === 2000) {
-              this.$message({
-                message: '修改分组成功！',
-                type: 'success',
-                duration: 2000,
-              });
-              this.editProjectGroupForm = {}
-              this.modifyGroupDialogVisible = false
-              this.queryPage()
-            } else {
-              this.$message({
-                message: res.data.message,
-                type: 'error',
-                duration: 3000,
-              });
-            }
-          }
-        }).catch(err => {
-          this.$message({
-            message: '分页查询应用分组失败，原因：' + err,
-            type: 'error',
-            duration: 2000,
-          });
-          this.loading = false
-        })
+        this.$message.error('网络错误：' + err);
+      }).finally(() => {
+        this.loading = false;
       });
     },
 
-    //删除应用分组
-    deleteConfirm(projectGroupId) {
-      this.$confirm('此操作将删除应用分组, 是否继续?', '提示', {
+    /** 搜索按钮 */
+    handleQuery() {
+      this.queryParams.pageNum = 1;
+      this.getList();
+    },
+
+    /** 重置按钮 */
+    resetQuery() {
+      this.queryParams.searchText = '';
+      this.queryParams.enableStatus = '';
+      this.handleQuery();
+    },
+
+    /** 分页操作 */
+    handleSizeChange(val) {
+      this.queryParams.pageCount = val;
+      this.getList();
+    },
+    handleCurrentChange(val) {
+      this.queryParams.pageNum = val;
+      this.getList();
+    },
+
+    /** 重置表单 */
+    resetForm() {
+      this.form = {
+        id: undefined,
+        projectGroupCode: '',
+        projectGroupName: '',
+        enableStatus: '启用'
+      };
+      this.$nextTick(() => {
+        if (this.$refs.formRef) this.$refs.formRef.clearValidate();
+      });
+    },
+
+    /** 打开新增弹窗 */
+    handleAdd() {
+      this.resetForm();
+      this.dialogTitle = '新增应用分组';
+      this.dialogVisible = true;
+    },
+
+    /** 打开编辑弹窗 */
+    handleEdit(row) {
+      this.resetForm();
+      this.dialogTitle = '修改应用分组';
+      this.form = JSON.parse(JSON.stringify(row)); // 深拷贝
+      this.dialogVisible = true;
+    },
+
+    /** 取消弹窗 */
+    cancelForm() {
+      this.dialogVisible = false;
+      this.resetForm();
+    },
+
+    /** 提交表单 */
+    submitForm() {
+      this.$refs.formRef.validate((valid) => {
+        if (valid) {
+          this.submitLoading = true;
+
+          // 根据是否有ID判断是新增还是修改
+          const isEdit = !!this.form.id;
+          const apiCall = isEdit ? modifyById : add;
+
+          // 构建参数 (新增时不需要ID)
+          const params = isEdit ? {
+            id: this.form.id,
+            projectGroupCode: this.form.projectGroupCode,
+            projectGroupName: this.form.projectGroupName
+          } : {
+            projectGroupCode: this.form.projectGroupCode,
+            projectGroupName: this.form.projectGroupName,
+            enableStatus: '启用' // 新增默认启用
+          };
+
+          apiCall(params).then(res => {
+            if (res.data.code === 2000) {
+              this.$message.success(isEdit ? '修改成功' : '添加成功');
+              this.dialogVisible = false;
+              this.getList();
+            } else {
+              this.$message.error(res.data.message || '操作失败');
+            }
+          }).catch(err => {
+            this.$message.error('请求异常：' + err);
+          }).finally(() => {
+            this.submitLoading = false;
+          });
+        }
+      });
+    },
+
+    /** 删除操作 */
+    handleDelete(id) {
+      this.$confirm('此操作将永久删除该应用分组, 是否继续?', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        removeById(projectGroupId).then(res => {
-          if (res.data.code === 2000) {
-            this.$message({
-              type: 'success',
-              message: '删除成功!'
-            });
-            this.queryPage();
-          } else {
-            this.$message({
-              message: '删除应用分组失败，原因：' + res.data.message,
-              type: 'error',
-              duration: 3000,
-            });
-          }
-        }).catch(err => {
-          console.log(err)
-          this.$message({
-            message: '删除应用分组失败，原因：' + err,
-            type: 'error',
-            duration: 3000,
-          });
-        })
-      })
-    },
-
-    enableChange(e,row) {
-      modifyById({
-        id: row.id,
-        enableStatus: row.enableStatus
+        return removeById(id);
       }).then(res => {
         if (res.data.code === 2000) {
-          if (res.data.code === 2000) {
-            this.$message({
-              message: row.enableStatus === 1 ? '已启用' : '已停用',
-              type: 'success',
-              duration: 2000,
-            });
-            this.editProjectGroupForm = {}
-            this.modifyGroupDialogVisible = false
-            this.queryPage()
-          } else {
-            this.$message({
-              message: res.data.message,
-              type: 'error',
-              duration: 3000,
-            });
-          }
+          this.$message.success('删除成功');
+          this.getList();
+        } else {
+          this.$message.error(res.data.message || '删除失败');
+        }
+      }).catch(() => {});
+    },
+
+    /** 状态切换 */
+    enableChange(newValue, row) {
+      // 这里需要注意：如果后端API失败，需要把 Switch 的状态改回去
+      const originalStatus = newValue === '启用' ? '停用' : '启用';
+
+      modifyById({
+        id: row.id,
+        enableStatus: newValue
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.$message.success(newValue === '启用' ? '已启用' : '已停用');
+        } else {
+          this.$message.error(res.data.message || '状态修改失败');
+          row.enableStatus = originalStatus; // 恢复界面显示
         }
       }).catch(err => {
-        this.$message({
-          message: '分页查询应用分组失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-        this.loading = false
-      })
+        this.$message.error('网络错误');
+        row.enableStatus = originalStatus; // 恢复界面显示
+      });
     }
-  },
-  created() {
-    this.pageNum = 1
-    this.pageCount = 10
-    this.queryPage();
   }
 }
 </script>
 
 <style lang="less" scoped>
-.el-input {
-  width: 80%;
-  margin-right: 10px;
-  margin-bottom: 10px;
+/* MatrixSphere 标准样式 */
+.app-container {
+  padding: 20px;
+  background-color: #f0f2f5;
+  min-height: calc(100vh - 84px);
 }
 
-.el-select {
-  width: 190px;
-  margin-right: 10px;
-  margin-bottom: 10px;
-}
-
-.el-row {
-  margin-bottom: 20px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.el-col {
+.filter-container {
   margin-bottom: 15px;
-  border-radius: 4px;
-
-  div {
-    padding: 5px 5px;
+  border: none;
+  :deep(.el-card__body) {
+    padding-bottom: 0; /* 减少搜索栏底部空白 */
   }
 }
 
-.bg-purple {
-  background: #d3dce6;
+.action-bar {
+  margin-bottom: 15px;
 }
 
-.grid-content {
-  border-radius: 4px;
-  min-height: 150px;
+.table-card {
+  border: none;
 }
 
-.pagination {
-  display: flex;
-  float: right;
+.pagination-container {
+  padding: 15px 20px;
+  background: #fff;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
 }
 
-.modifyProjectGroup {
-  .el-form-item {
-    margin-bottom: 20px;
+.text-danger {
+  color: #F56C6C;
+  &:hover {
+    color: #f78989;
   }
+}
+
+/* 修复 dialog footer 的对齐 */
+.dialog-footer {
+  text-align: right;
 }
 </style>

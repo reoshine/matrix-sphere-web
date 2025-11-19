@@ -1,102 +1,127 @@
 <template>
-  <div>
-    <el-divider content-position="left">应用信息</el-divider>
-    <div>
-      <el-descriptions class="appDeployDiv" title="" :column="2" border>
-        <el-descriptions-item>
-          <template slot="label">
-            <i class="el-icon-s-order"></i>
-            应用编码
-          </template>
-          <el-tag size="small" v-if="projectInfo.projectCode">{{projectInfo.projectCode}}</el-tag>
+  <div class="app-container">
+    <el-card class="info-card" shadow="never">
+      <div slot="header" class="clearfix">
+        <span class="card-title"><i class="el-icon-s-operation"></i> 应用状态概览</span>
+        <el-tag
+            size="small"
+            effect="dark"
+            :type="activeName === 'PROD' ? 'danger' : 'primary'"
+            style="float: right"
+        >
+          当前控制台: {{ envMap[activeName] }}
+        </el-tag>
+      </div>
+
+      <el-descriptions class="margin-top" :column="4" border size="medium">
+        <el-descriptions-item label="应用名称">
+          <span class="text-bold">{{ projectInfo.projectName }}</span>
         </el-descriptions-item>
-        <el-descriptions-item>
-          <template slot="label">
-            <i class="el-icon-document"></i>
-            应用名称
-          </template>
-          <el-tag size="small" v-if="projectInfo.projectName">{{projectInfo.projectName}}</el-tag>
+
+        <el-descriptions-item label="应用编码">
+          <el-tag size="small" type="info">{{ projectInfo.projectCode }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item>
-          <template slot="label">
-            <i class="el-icon-location-outline"></i>
-            应用分组
-          </template>
-          <el-tag size="small" v-if="projectInfo.projectGroupId">
-            {{projectGroupMap.get(projectInfo.projectGroupId) || '未知'}}
+
+        <el-descriptions-item label="所属分组">
+          {{ projectGroupMap.get(projectInfo.projectGroupId) || '-' }}
+        </el-descriptions-item>
+
+        <el-descriptions-item label="Git 仓库">
+          <el-link
+              v-if="projectInfo.gitUrl"
+              type="primary"
+              :href="projectInfo.gitUrl"
+              target="_blank"
+              :underline="false"
+          >
+            <i class="el-icon-link"></i> 跳转仓库
+          </el-link>
+          <span v-else>-</span>
+        </el-descriptions-item>
+
+        <el-descriptions-item label="当前 Release 分支" :span="2">
+          <el-tag v-if="deployedInfo.releaseBranchName" type="success" effect="light">
+            <i class="el-icon-guide"></i> {{ deployedInfo.releaseBranchName }}
           </el-tag>
+          <span v-else class="text-gray">暂无发布分支信息</span>
         </el-descriptions-item>
-        <el-descriptions-item>
-          <template slot="label">
-            <i class="el-icon-link"></i>
-            git地址
-          </template>
-          <el-tag size="small" v-if="projectInfo.gitUrl">{{projectInfo.gitUrl}}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item :span="2">
-          <template slot="label">
-            <i class="el-icon-link"></i>
-            release分支
-          </template>
-          <el-tag size="small" v-if="deployedInfo.releaseBranchName">{{deployedInfo.releaseBranchName}}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <template slot="label">
-            <i class="el-icon-link"></i>
-            feature分支
-          </template>
-          <el-tag
-              v-if="deployedInfo.featureBranchList && deployedInfo.featureBranchList.length > 0"
-              v-for="item in deployedInfo.featureBranchList"
-              :key="item.branchName"
-              size="small"
-              style="margin-right: 5px">
-            {{item.branchName}}
-          </el-tag>
+
+        <el-descriptions-item label="包含 Feature 分支" :span="2">
+          <div v-if="deployedInfo.featureBranchList && deployedInfo.featureBranchList.length > 0" class="feature-tags">
+            <el-tag
+                v-for="item in deployedInfo.featureBranchList"
+                :key="item.branchName"
+                size="mini"
+                type="warning"
+                effect="plain"
+                class="feature-item"
+            >
+              {{ item.branchName }}
+            </el-tag>
+          </div>
+          <span v-else class="text-gray">无合并特性分支</span>
         </el-descriptions-item>
       </el-descriptions>
-    </div>
+    </el-card>
 
-    <el-divider content-position="left">部署发布</el-divider>
-    <el-col>
-      <el-tabs v-model="activeName" type="card">
-        <el-tab-pane label="开发环境" name="DEV">
-          <deployByEnv
-              :projectId="projectId"
-              :env="'DEV'"
-              v-if="activeName === 'DEV'"
-              @deployInfoUpdated="onDeployInfoUpdated" />
+    <el-card class="deploy-card" shadow="never" :body-style="{ padding: '0' }">
+      <el-tabs v-model="activeName" type="border-card" class="env-tabs">
+        <el-tab-pane name="DEV">
+          <span slot="label"><i class="el-icon-cpu"></i> 开发环境 (DEV)</span>
+          <div class="tab-content">
+            <deployByEnv
+                v-if="activeName === 'DEV'"
+                :projectId="projectId"
+                env="DEV"
+                @deployInfoUpdated="onDeployInfoUpdated"
+            />
+          </div>
         </el-tab-pane>
-        <el-tab-pane label="测试环境" name="TEST">
-          <deployByEnv
-              :projectId="projectId"
-              :env="'TEST'"
-              v-if="activeName === 'TEST'"
-              @deployInfoUpdated="onDeployInfoUpdated" />
+
+        <el-tab-pane name="TEST">
+          <span slot="label"><i class="el-icon-s-check"></i> 测试环境 (TEST)</span>
+          <div class="tab-content">
+            <deployByEnv
+                v-if="activeName === 'TEST'"
+                :projectId="projectId"
+                env="TEST"
+                @deployInfoUpdated="onDeployInfoUpdated"
+            />
+          </div>
         </el-tab-pane>
-        <el-tab-pane label="演示环境" name="POC">
-          <deployByEnv
-              :projectId="projectId"
-              :env="'POC'"
-              v-if="activeName === 'POC'"
-              @deployInfoUpdated="onDeployInfoUpdated" />
+
+        <el-tab-pane name="POC">
+          <span slot="label"><i class="el-icon-monitor"></i> 演示环境 (POC)</span>
+          <div class="tab-content">
+            <deployByEnv
+                v-if="activeName === 'POC'"
+                :projectId="projectId"
+                env="POC"
+                @deployInfoUpdated="onDeployInfoUpdated"
+            />
+          </div>
         </el-tab-pane>
-        <el-tab-pane label="生产环境" name="PROD">
-          <deployByEnv
-              :projectId="projectId"
-              :env="'PROD'"
-              v-if="activeName === 'PROD'"
-              @deployInfoUpdated="onDeployInfoUpdated" />
+
+        <el-tab-pane name="PROD">
+          <span slot="label"><i class="el-icon-s-platform"></i> 生产环境 (PROD)</span>
+          <div class="tab-content">
+            <deployByEnv
+                v-if="activeName === 'PROD'"
+                :projectId="projectId"
+                env="PROD"
+                @deployInfoUpdated="onDeployInfoUpdated"
+            />
+          </div>
         </el-tab-pane>
       </el-tabs>
-    </el-col>
+    </el-card>
   </div>
 </template>
 
 <script>
 import deployByEnv  from "@/components/deployByEnv/deployByEnv.vue";
-import {getProjectById} from "@/views/applicationManagement/applicationList/api";
-import {queryList} from "@/views/applicationManagement/applicationGroup/api";
+import { getProjectById } from "@/views/applicationManagement/applicationList/api";
+import { queryList } from "@/views/applicationManagement/applicationGroup/api";
 import bus from "@/util/bus";
 
 export default {
@@ -106,125 +131,160 @@ export default {
   },
   data() {
     return {
-
       projectId: '',
-      deployMasterId: '',
 
-      //tabs 当前激活环境
+      // 当前激活环境
       activeName: 'DEV',
 
-      //应用分组
+      // 字典映射 (用于右上角 Tag 显示)
+      envMap: {
+        'DEV': '开发环境',
+        'TEST': '测试环境',
+        'POC': '演示环境',
+        'PROD': '生产环境'
+      },
+
+      // 数据
       projectGroupList: [],
-
-      //应用信息
       projectInfo: {},
-
-      deployedInfo: {},
-
-      deployMaster: {},
-
-      deployRecord: {},
-
-      //已合并分支列表
-      featureBranchList: [],
-      deployedBranch: ''
+      deployedInfo: {}, // 存储子组件传递回来的分支信息
     };
-  },
-  methods: {
-    // 新增: 事件处理
-    onDeployInfoUpdated(data) {
-      if (JSON.stringify(data)) {
-        this.deployedInfo = data;
-      }
-    },
-    //获取项目信息
-    getProject(projectId) {
-      getProjectById({
-        projectId: projectId
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.projectInfo = res.data.body;
-
-          // ---------------------------------
-          // 关键修复：
-          // ---------------------------------
-          // 发出事件，通知 PageHeader 更新标题
-          bus.$emit('set-page-title', this.projectInfo.projectName);
-
-          // (旧的 localStorage 逻辑)
-          localStorage.setItem('projectId', this.projectInfo.id)
-        }
-      }).catch(err => {
-        this.$message({
-          message: '查询部署信息失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-        this.loading = false
-      })
-    },
-
-    getGroupList() {
-      queryList({
-        searchText: '',
-        enableStatus: '启用'
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.projectGroupList = res.data.body
-        }
-      })
-    },
-
-    // getProjectGroupCode(id) {
-    //   const obj = this.projectGroupList.find(item => item.id === id)
-    //   return obj === undefined ? '' : obj.projectGroupCode
-    // }
   },
 
   computed: {
-    // [优化] 使用 computed map 代替 'find' 方法，性能更好
+    // 优化：使用 Map 提高查找效率
     projectGroupMap() {
       const map = new Map();
-      this.projectGroupList.forEach(item => {
-        map.set(item.id, item.projectGroupCode);
-      });
+      if (this.projectGroupList && this.projectGroupList.length > 0) {
+        this.projectGroupList.forEach(item => {
+          map.set(item.id, item.projectGroupCode);
+        });
+      }
       return map;
     }
   },
 
-  mounted() {
+  methods: {
+    // 接收子组件传来的部署信息 (release分支/feature分支)
+    onDeployInfoUpdated(data) {
+      if (data && Object.keys(data).length > 0) {
+        this.deployedInfo = data;
+      }
+    },
+
+    // 获取项目详情
+    getProject(projectId) {
+      const loading = this.$loading({ target: '.info-card', text: '加载应用信息...' });
+      getProjectById({ projectId: projectId }).then(res => {
+        if (res.data.code === 2000) {
+          this.projectInfo = res.data.body;
+
+          // 更新 PageHeader
+          bus.$emit('set-page-title', this.projectInfo.projectName);
+        }
+      }).catch(err => {
+        this.$message.error('查询应用信息失败：' + err);
+      }).finally(() => {
+        loading.close();
+      });
+    },
+
+    // 获取分组列表
+    getGroupList() {
+      queryList({ searchText: '', enableStatus: '启用' }).then(res => {
+        if (res.data.code === 2000) {
+          this.projectGroupList = res.data.body || [];
+        }
+      });
+    }
   },
 
   created() {
-    // 1. 优先从 URL query 中读取
-    let projectId = this.$route.query.projectId;
+    // 1. 优先从 Query 获取
+    let pid = this.$route.query.projectId;
 
-    if (projectId) {
-      // 2. 如果 URL 中有，使用它，并更新 localStorage 供刷新使用
-      this.projectId = projectId;
-      localStorage.setItem('projectId', projectId); // 存入 (不需要 JSON.stringify)
-    } else {
-      // 3. 如果 URL 中没有 (例如 F5 刷新页面)，从 localStorage 回退
-      this.projectId = localStorage.getItem('projectId');
+    // 2. 其次从 LocalStorage 获取 (处理刷新)
+    if (!pid) {
+      pid = localStorage.getItem('projectId');
     }
 
-    if (this.projectId) {
+    if (pid) {
+      this.projectId = pid;
+      // 更新缓存
+      localStorage.setItem('projectId', pid);
+
       this.getProject(this.projectId);
       this.getGroupList();
     } else {
-      // 4. 彻底找不到ID，报错并返回
-      this.$message.error('未指定应用ID，即将返回列表页');
-      this.$router.push('/applicationManagement/application');
+      this.$message.warning('丢失应用ID参数，请从列表页重新进入');
+      this.$router.push('/applicationManagement/applicationList');
     }
   },
+
   beforeDestroy() {
-    // 离开页面时，重置标题
+    // 重置标题
     bus.$emit('set-page-title', null);
-    // (localStorage.removeItem('projectId') 已在上面被移除)
-  },
+  }
 };
 </script>
 
 <style lang="less" scoped>
+.app-container {
+  padding: 20px;
+  background-color: #f0f2f5;
+  min-height: calc(100vh - 84px);
+}
 
+/* 1. 顶部信息卡片 */
+.info-card {
+  margin-bottom: 20px;
+  border: none;
+
+  .card-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #303133;
+  }
+
+  .text-bold {
+    font-weight: 600;
+    color: #303133;
+  }
+
+  .text-gray {
+    color: #909399;
+    font-size: 12px;
+  }
+
+  .feature-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+}
+
+/* 2. 部署 Tabs 卡片 */
+.deploy-card {
+  border: none;
+  min-height: 500px; /* 保证高度 */
+
+  /* 覆盖 Element UI Tabs 样式，使其更贴合 Card */
+  :deep(.el-tabs--border-card) {
+    border: none;
+    box-shadow: none;
+  }
+
+  :deep(.el-tabs--border-card > .el-tabs__header) {
+    background-color: #f5f7fa;
+    border-bottom: 1px solid #e4e7ed;
+  }
+
+  :deep(.el-tabs--border-card > .el-tabs__content) {
+    padding: 0; /* 去除默认 padding，让子组件自己控制 */
+  }
+
+  .tab-content {
+    padding: 20px;
+  }
+}
 </style>
