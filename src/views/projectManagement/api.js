@@ -3,50 +3,50 @@ import { sphere } from '@/axios'
 // ====================================== 应用分组 ======================================
 
 export function queryPage(data) {
-    return sphere.post('/projectGroup/queryPage', data)
+    return sphere.post('/applicationGroup/queryPage', data)
 }
 
 export function add(data) {
-    return sphere.post('/projectGroup/add', data)
+    return sphere.post('/applicationGroup/add', data)
 }
 
 export function modifyById(data) {
-    return sphere.post('/projectGroup/modifyById', data)
+    return sphere.post('/applicationGroup/modifyById', data)
 }
 
 export function removeById(data) {
-    return sphere.post(`/projectGroup/removeById/${data}`)
+    return sphere.post(`/applicationGroup/removeById/${data}`)
 }
 
 // ====================================== 应用列表 ======================================
 
 export function saveProject(data) {
-    return sphere.post('/project/saveProject', data)
+    return sphere.post('/application/saveApplication', data)
 }
 
 export function modifyProject(data) {
-    return sphere.post('/project/modifyProject', data)
+    return sphere.post('/application/modifyApplication', data)
 }
 
 export function getProjectInfo(data) {
-    return sphere.post('/project/getProjectInfo', data)
+    return sphere.post('/application/getApplicationInfo', data)
 }
 
 export function removeProject(data) {
-    return sphere.post(`/project/remove/${data}`)
+    return sphere.post(`/application/remove/${data}`)
 }
 
 export function enableChange(data) {
-    return sphere.post('/project/updateEnableStatus', data)
+    return sphere.post('/application/updateEnableStatus', data)
 }
 
 export function importFile(data, config) {
-    return sphere.post('/project/importProject', data, config)
+    return sphere.post('/application/importApplication', data, config)
 }
 
 // ====================================== 分支管理 ======================================
 export function getProjectById(data) {
-    return sphere.post('/project/getProjectInfo', data)
+    return sphere.post('/application/getApplicationInfo', data)
 }
 
 export function getUnDeployedBranchList(data) {

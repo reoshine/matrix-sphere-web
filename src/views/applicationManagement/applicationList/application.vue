@@ -21,7 +21,7 @@
 
         <el-form-item label="项目分组">
           <el-select
-              v-model="projectGroupCode"
+              v-model="applicationGroupCode"
               placeholder="请选择分组"
               clearable
               filterable
@@ -29,13 +29,13 @@
               @change="queryApplicationPage"
           >
             <el-option
-                v-for="item in projectGroupList"
-                :key="item.projectGroupCode"
-                :label="item.projectGroupName"
-                :value="item.projectGroupCode"
+                v-for="item in applicationGroupList"
+                :key="item.applicationGroupCode"
+                :label="item.applicationGroupName"
+                :value="item.applicationGroupCode"
             >
-              <span style="float: left">{{ item.projectGroupName }}</span>
-              <span style="float: right; color: #8492a6; font-size: 12px; margin-left: 10px">{{ item.projectGroupCode }}</span>
+              <span style="float: left">{{ item.applicationGroupName }}</span>
+              <span style="float: right; color: #8492a6; font-size: 12px; margin-left: 10px">{{ item.applicationGroupCode }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -49,10 +49,10 @@
 
     <div class="action-bar">
       <div class="left-panel">
-        <el-button type="primary" icon="el-icon-plus" size="small" @click="addProject">新增应用</el-button>
+        <el-button type="primary" icon="el-icon-plus" size="small" @click="addApplication">新增应用</el-button>
       </div>
       <div class="right-panel">
-        <el-button plain size="small" icon="el-icon-download" @click="exportProjectTemplate">模板下载</el-button>
+        <el-button plain size="small" icon="el-icon-download" @click="exportApplicationTemplate">模板下载</el-button>
 
         <el-upload
             class="upload-inline"
@@ -76,43 +76,43 @@
       </div>
     </div>
 
-    <el-empty v-show="projectList.length <= 0" description="暂无应用信息"></el-empty>
+    <el-empty v-show="applicationList.length <= 0" description="暂无应用信息"></el-empty>
 
-    <div v-show="projectList.length > 0" class="card-grid">
+    <div v-show="applicationList.length > 0" class="card-grid">
       <el-row :gutter="15">
-        <el-col v-for="project in projectList" :key="project.id" :xs="24" :sm="12" :md="8" :lg="6" :xl="4">
-          <el-card shadow="hover" class="project-card" :body-style="{ padding: '0px' }">
+        <el-col v-for="application in applicationList" :key="application.id" :xs="24" :sm="12" :md="8" :lg="6" :xl="4">
+          <el-card shadow="hover" class="application-card" :body-style="{ padding: '0px' }">
 
             <div class="card-header">
               <div class="header-title">
                 <i class="el-icon-monitor icon-bg"></i>
-                <span class="code" :title="project.projectCode">{{ project.projectCode }}</span>
+                <span class="code" :title="application.applicationCode">{{ application.applicationCode }}</span>
               </div>
               <el-switch
-                  v-model="project.enableStatus"
+                  v-model="application.enableStatus"
                   active-value="启用"
                   inactive-value="停用"
                   active-color="#13ce66"
                   inactive-color="#ff4949"
-                  @change="enableChange($event, project)"
+                  @change="enableChange($event, application)"
               />
             </div>
 
             <div class="card-body">
-              <div class="project-name" :title="project.projectName">{{ project.projectName }}</div>
+              <div class="application-name" :title="application.applicationName">{{ application.applicationName }}</div>
               <div class="meta-row">
-                <el-tag size="mini" type="info" effect="plain">ID: {{ project.gitProjectId || 'N/A' }}</el-tag>
-                <el-tag size="mini" type="info" effect="light" v-if="project.projectGroupCode">{{ project.projectGroupCode }}</el-tag>
+                <el-tag size="mini" type="info" effect="plain">ID: {{ application.gitApplicationId || 'N/A' }}</el-tag>
+                <el-tag size="mini" type="info" effect="light" v-if="application.applicationGroupCode">{{ application.applicationGroupCode }}</el-tag>
               </div>
             </div>
 
             <div class="card-footer">
               <div class="main-actions">
                 <el-tooltip content="进入部署控制台" placement="top" :open-delay="500">
-                  <el-button type="text" icon="el-icon-s-promotion" @click="toAppDeploy(project.id)">部署</el-button>
+                  <el-button type="text" icon="el-icon-s-promotion" @click="toAppDeploy(application.id)">部署</el-button>
                 </el-tooltip>
                 <el-divider direction="vertical"></el-divider>
-                <el-button type="text" icon="el-icon-share" @click="toBranchManagement(project.id)">分支</el-button>
+                <el-button type="text" icon="el-icon-share" @click="toBranchManagement(application.id)">分支</el-button>
               </div>
 
               <div class="more-actions">
@@ -121,15 +121,15 @@
                   <i class="el-icon-more"></i>
                 </span>
                   <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item icon="el-icon-setting" @click.native="applicationEdit(project.id)">
+                    <el-dropdown-item icon="el-icon-setting" @click.native="applicationEdit(application.id)">
                       配置流水线
                     </el-dropdown-item>
 
-                    <el-dropdown-item icon="el-icon-edit" @click.native="modifyApplicationInfo(project.id)">
+                    <el-dropdown-item icon="el-icon-edit" @click.native="modifyApplicationInfo(application.id)">
                       修改基础信息
                     </el-dropdown-item>
 
-                    <el-dropdown-item divided icon="el-icon-delete" class="text-danger" @click.native="removeApplication(project.id)">
+                    <el-dropdown-item divided icon="el-icon-delete" class="text-danger" @click.native="removeApplication(application.id)">
                       删除应用
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -142,7 +142,7 @@
       </el-row>
     </div>
 
-    <div class="pagination-container" v-show="projectList.length > 0">
+    <div class="pagination-container" v-show="applicationList.length > 0">
       <el-pagination
           background
           @current-change="handleCurrentChange"
@@ -156,32 +156,32 @@
     </div>
 
     <el-drawer
-        :title="saveProjectForm.id ? '编辑应用配置' : '新增应用'"
+        :title="saveApplicationForm.id ? '编辑应用配置' : '新增应用'"
         :visible.sync="dialog"
         :before-close="handleClose"
         size="500px"
         :wrapperClosable="false"
     >
       <div class="drawer-content">
-        <el-form :model="saveProjectForm" :rules="rules" ref="saveProjectFormRef" label-width="100px" label-position="top">
+        <el-form :model="saveApplicationForm" :rules="rules" ref="saveApplicationFormRef" label-width="100px" label-position="top">
           <el-row :gutter="20">
             <el-col :span="24">
-              <el-form-item prop="projectCode" label="项目编码">
-                <el-input v-model="saveProjectForm.projectCode" placeholder="例如: matrix-user-service" />
+              <el-form-item prop="applicationCode" label="项目编码">
+                <el-input v-model="saveApplicationForm.applicationCode" placeholder="例如: matrix-user-service" />
               </el-form-item>
             </el-col>
             <el-col :span="24">
-              <el-form-item prop="projectName" label="项目名称">
-                <el-input v-model="saveProjectForm.projectName" placeholder="例如: 用户中心服务" />
+              <el-form-item prop="applicationName" label="项目名称">
+                <el-input v-model="saveApplicationForm.applicationName" placeholder="例如: 用户中心服务" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item prop="projectGroupId" label="所属分组">
-                <el-select v-model="saveProjectForm.projectGroupId" placeholder="请选择" style="width: 100%">
+              <el-form-item prop="applicationGroupId" label="所属分组">
+                <el-select v-model="saveApplicationForm.applicationGroupId" placeholder="请选择" style="width: 100%">
                   <el-option
-                      v-for="item in projectGroupList"
+                      v-for="item in applicationGroupList"
                       :key="item.id"
-                      :label="item.projectGroupName"
+                      :label="item.applicationGroupName"
                       :value="item.id"
                   />
                 </el-select>
@@ -189,14 +189,14 @@
             </el-col>
             <el-col :span="12">
               <el-form-item prop="enableStatus" label="初始状态">
-                <el-select v-model="saveProjectForm.enableStatus" style="width: 100%">
+                <el-select v-model="saveApplicationForm.enableStatus" style="width: 100%">
                   <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="24">
               <el-form-item prop="gitUrl" label="Git 仓库地址">
-                <el-input type="input" :rows="2" v-model="saveProjectForm.gitUrl" placeholder="git@gitee.com:..." />
+                <el-input type="input" :rows="2" v-model="saveApplicationForm.gitUrl" placeholder="git@gitee.com:..." />
               </el-form-item>
             </el-col>
           </el-row>
@@ -204,7 +204,7 @@
 
         <div class="drawer-footer">
           <el-button @click="cancelForm">取 消</el-button>
-          <el-button type="primary" @click="saveProject" :loading="loading">确 定</el-button>
+          <el-button type="primary" @click="saveApplication" :loading="loading">确 定</el-button>
         </div>
       </div>
     </el-drawer>
@@ -217,12 +217,12 @@
 //
 import {
   enableChange,
-  exportProjectTemplate,
-  getProjectInfo,
+  exportApplicationTemplate,
+  getApplicationInfo,
   importFile,
-  queryProjectPage,
-  removeProject,
-  saveProject
+  queryApplicationPage,
+  removeApplication,
+  saveApplication
 } from "@/views/applicationManagement/applicationList/api";
 import {queryList} from "@/views/applicationManagement/applicationGroup/api";
 
@@ -237,30 +237,30 @@ export default {
       enableStatus: '', // 默认为空查全部更合理
       enableStatusList: ['启用', '停用'],
 
-      projectGroupCode: '',
-      projectGroupList: [],
+      applicationGroupCode: '',
+      applicationGroupList: [],
 
       dialog: false,
       loading: false,
-      saveProjectForm: {
+      saveApplicationForm: {
         id: undefined, // 确保有id字段
-        projectCode: '',
-        projectName: '',
-        projectGroupId: '',
-        projectGroupCode: '',
+        applicationCode: '',
+        applicationName: '',
+        applicationGroupId: '',
+        applicationGroupCode: '',
         gitUrl: '',
         enableStatus: '启用'
       },
 
       rules: {
-        projectCode: [
+        applicationCode: [
           { required: true, message: '请输入项目编码', trigger: 'blur' },
           { min: 3, max: 40, message: '长度在3到40个字符', trigger: 'blur' },
         ],
-        projectName: [
+        applicationName: [
           { required: true, message: '请输入项目名称', trigger: 'blur' },
         ],
-        projectGroupId: [
+        applicationGroupId: [
           { required: true, message: '请选择项目分组', trigger: 'change' }, // select用change
         ],
         gitUrl: [
@@ -271,7 +271,7 @@ export default {
         ]
       },
 
-      projectList: [],
+      applicationList: [],
       total: 0,
       pageNum: 1,
       pageCount: 16, // 卡片布局下每页多一点比较好看
@@ -282,7 +282,7 @@ export default {
     getGroupList() {
       queryList({ searchText: '', enableStatus: '启用' }).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupList = res.data.body || []
+          this.applicationGroupList = res.data.body || []
         }
       })
     },
@@ -300,61 +300,61 @@ export default {
     resetQuery() {
       this.searchText = '';
       this.enableStatus = '';
-      this.projectGroupCode = '';
+      this.applicationGroupCode = '';
       this.queryApplicationPage();
     },
 
     //分页查询
     queryApplicationPage() {
-      queryProjectPage({
+      queryApplicationPage({
         pageNum: this.pageNum,
         pageCount: this.pageCount,
         searchText: this.searchText,
         enableStatus: this.enableStatus || undefined,
-        projectGroupCode: this.projectGroupCode || undefined
+        applicationGroupCode: this.applicationGroupCode || undefined
       }).then(res => {
         if (res.data.code === 2000) {
           const result = res.data.body;
           this.total = result.total;
-          this.projectList = result.data || [];
+          this.applicationList = result.data || [];
         }
       }).catch(err => {
         this.$message.error('查询失败：' + err);
       })
     },
 
-    async addProject() {
-      this.saveProjectForm = { enableStatus: '启用' }; // 重置并给默认值
+    async addApplication() {
+      this.saveApplicationForm = { enableStatus: '启用' }; // 重置并给默认值
       // 如果分组列表为空，先加载
-      if (this.projectGroupList.length === 0) {
+      if (this.applicationGroupList.length === 0) {
         await this.getGroupList();
       }
       this.dialog = true;
       this.$nextTick(() => {
-        this.$refs.saveProjectFormRef && this.$refs.saveProjectFormRef.clearValidate();
+        this.$refs.saveApplicationFormRef && this.$refs.saveApplicationFormRef.clearValidate();
       });
     },
 
-    modifyApplicationInfo(projectId) {
+    modifyApplicationInfo(applicationId) {
       // 先获取详情再打开
-      getProjectInfo({ projectId: projectId }).then(res => {
+      getApplicationInfo({ applicationId: applicationId }).then(res => {
         if (res.data.code === 2000) {
-          this.saveProjectForm = res.data.body;
+          this.saveApplicationForm = res.data.body;
           this.dialog = true;
           // 确保分组列表已加载
-          if (this.projectGroupList.length === 0) this.getGroupList();
+          if (this.applicationGroupList.length === 0) this.getGroupList();
         }
       });
     },
 
     // 删除应用
-    removeApplication(projectId) {
+    removeApplication(applicationId) {
       this.$confirm('此操作将永久删除, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        removeProject(projectId).then(res => {
+        removeApplication(applicationId).then(res => {
           if (res.data.code === 2000) {
             this.$message({
               type: 'success',
@@ -379,9 +379,9 @@ export default {
     },
 
     // 修改启用状态
-    enableChange($event, project) {
+    enableChange($event, application) {
       enableChange({
-        projectId: project.id,
+        applicationId: application.id,
         enableStatus: $event
       }).then(res => {
         if (res.data.code === 2000) {
@@ -404,11 +404,11 @@ export default {
     },
 
     //抽屉表单提交
-    saveProject() {
-      this.$refs.saveProjectFormRef.validate((valid) => {
+    saveApplication() {
+      this.$refs.saveApplicationFormRef.validate((valid) => {
         if (valid) {
-          saveProject({
-            ...this.saveProjectForm,
+          saveApplication({
+            ...this.saveApplicationForm,
             shouldAddJenkinsJob: true
           }).then(res => {
             if (res.data.code === 2000) {
@@ -440,8 +440,8 @@ export default {
       });
     },
 
-    exportProjectTemplate() {
-      exportProjectTemplate().then(res => {
+    exportApplicationTemplate() {
+      exportApplicationTemplate().then(res => {
         let blob = new Blob([res.data], {
           type: 'application/vnd.ms-excel;charset=utf-8'
         })
@@ -466,31 +466,31 @@ export default {
       })
     },
 
-    toBranchManagement(projectId) {
+    toBranchManagement(applicationId) {
       this.$router.push({
         name: "branch",
         path: '/applicationManagement/branchManagement/branch',
         params: {
-          projectId: projectId
+          applicationId: applicationId
         }
       });
     },
 
-    toAppDeploy(projectId) {
+    toAppDeploy(applicationId) {
       this.$router.push({
         path: "/applicationManagement/applicationList/applicationDeploy",
         query: { // <--- 必须使用 query
-          projectId: projectId
+          applicationId: applicationId
         }
       });
     },
 
-    applicationEdit(projectId) {
+    applicationEdit(applicationId) {
       this.$router.push({
         name: 'applicationEdit',
         path: "/applicationManagement/applicationList/applicationEdit",
         params: {
-          projectId: projectId
+          applicationId: applicationId
         }
       });
     },
@@ -591,7 +591,7 @@ export default {
 }
 
 /* 卡片精细化设计 */
-.project-card {
+.application-card {
   border: none;
   transition: all 0.3s;
 
@@ -638,7 +638,7 @@ export default {
     display: flex;
     flex-direction: column;
 
-    .project-name {
+    .application-name {
       color: #606266;
       font-size: 13px;
       line-height: 1.5;

@@ -20,36 +20,36 @@
         <el-card shadow="never" class="config-card">
           <div slot="header" class="clearfix">
             <span class="card-title">基础参数配置</span>
-            <el-tag size="small" :type="modifyProjectForm.enableStatus === '启用' ? 'success' : 'danger'" style="float: right">
-              {{ modifyProjectForm.enableStatus || '未知状态' }}
+            <el-tag size="small" :type="modifyApplicationForm.enableStatus === '启用' ? 'success' : 'danger'" style="float: right">
+              {{ modifyApplicationForm.enableStatus || '未知状态' }}
             </el-tag>
           </div>
 
           <el-form
-              :model="modifyProjectForm"
+              :model="modifyApplicationForm"
               :rules="rules"
-              ref="modifyProjectFormRef"
+              ref="modifyApplicationFormRef"
               label-position="top"
               size="medium"
           >
-            <el-form-item prop="projectCode" label="项目编码">
-              <el-input v-model="modifyProjectForm.projectCode" placeholder="唯一标识，如 user-service" disabled>
+            <el-form-item prop="applicationCode" label="项目编码">
+              <el-input v-model="modifyApplicationForm.applicationCode" placeholder="唯一标识，如 user-service" disabled>
                 <template slot="prepend">CODE</template>
               </el-input>
             </el-form-item>
 
-            <el-form-item prop="projectName" label="项目名称">
-              <el-input v-model="modifyProjectForm.projectName" placeholder="应用显示名称" />
+            <el-form-item prop="applicationName" label="项目名称">
+              <el-input v-model="modifyApplicationForm.applicationName" placeholder="应用显示名称" />
             </el-form-item>
 
             <el-row :gutter="10">
               <el-col :span="12">
-                <el-form-item prop="projectGroupId" label="所属分组">
-                  <el-select v-model="modifyProjectForm.projectGroupId" placeholder="请选择" style="width: 100%">
+                <el-form-item prop="applicationGroupId" label="所属分组">
+                  <el-select v-model="modifyApplicationForm.applicationGroupId" placeholder="请选择" style="width: 100%">
                     <el-option
-                        v-for="item in projectGroupList"
+                        v-for="item in applicationGroupList"
                         :key="item.id"
-                        :label="item.projectGroupName"
+                        :label="item.applicationGroupName"
                         :value="item.id">
                     </el-option>
                   </el-select>
@@ -57,7 +57,7 @@
               </el-col>
               <el-col :span="12">
                 <el-form-item prop="enableStatus" label="应用状态">
-                  <el-select v-model="modifyProjectForm.enableStatus" placeholder="请选择" style="width: 100%">
+                  <el-select v-model="modifyApplicationForm.enableStatus" placeholder="请选择" style="width: 100%">
                     <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
                   </el-select>
                 </el-form-item>
@@ -68,7 +68,7 @@
               <el-input
                   type="textarea"
                   :rows="3"
-                  v-model="modifyProjectForm.gitUrl"
+                  v-model="modifyApplicationForm.gitUrl"
                   placeholder="git@github.com:..."
                   resize="none"
               />
@@ -77,7 +77,7 @@
 
           <div class="form-actions">
             <el-button @click="cancelForm">返 回</el-button>
-            <el-button type="primary" @click="modifyProject" :loading="loading" icon="el-icon-check">保存配置</el-button>
+            <el-button type="primary" @click="modifyApplication" :loading="loading" icon="el-icon-check">保存配置</el-button>
           </div>
         </el-card>
       </el-col>
@@ -90,7 +90,7 @@
           </div>
 
           <div class="code-editor-container">
-            <el-empty v-if="!modifyProjectForm.jobXml" description="暂无流水线配置信息"></el-empty>
+            <el-empty v-if="!modifyApplicationForm.jobXml" description="暂无流水线配置信息"></el-empty>
             <pre v-else class="hljs-container"><code class="xml" ref="codeBlock">{{ prettyXmlContent }}</code></pre>
           </div>
         </el-card>
@@ -105,41 +105,41 @@ import hljs from 'highlight.js'
 // 关键修改：使用深色主题 (atom-one-dark) 以符合 IDE 风格
 import 'highlight.js/styles/atom-one-dark.css'
 
-import { getProjectInfo, modifyProject } from "@/views/applicationManagement/applicationList/api";
+import { getApplicationInfo, modifyApplication } from "@/views/applicationManagement/applicationList/api";
 import { queryList } from "@/views/applicationManagement/applicationGroup/api";
 
 export default {
   name: "applicationEdit",
   data() {
     return {
-      projectId: '',
+      applicationId: '',
       loading: false,
 
       // 表单数据
-      modifyProjectForm: {
+      modifyApplicationForm: {
         id: '', // 确保 ID 存在
-        projectCode: '',
-        projectName: '',
-        projectGroupId: '',
-        projectGroupCode: '',
+        applicationCode: '',
+        applicationName: '',
+        applicationGroupId: '',
+        applicationGroupCode: '',
         gitUrl: '',
         enableStatus: '',
         jobXml: ''
       },
 
       // 字典数据
-      projectGroupList: [],
+      applicationGroupList: [],
       enableStatusList: ['启用', '停用'],
 
       // 校验规则
       rules: {
-        projectCode: [
+        applicationCode: [
           { required: true, message: '请输入项目编码', trigger: 'blur' }
         ],
-        projectName: [
+        applicationName: [
           { required: true, message: '请输入项目名称', trigger: 'blur' }
         ],
-        projectGroupId: [
+        applicationGroupId: [
           { required: true, message: '请选择项目分组', trigger: 'change' }
         ],
         gitUrl: [
@@ -155,13 +155,13 @@ export default {
   computed: {
     // 使用计算属性处理格式化，逻辑更清晰
     prettyXmlContent() {
-      if (!this.modifyProjectForm.jobXml) return '';
+      if (!this.modifyApplicationForm.jobXml) return '';
       try {
         // vkbeautify 可能会报错，加个 try-catch
-        return beautify.xml(this.modifyProjectForm.jobXml);
+        return beautify.xml(this.modifyApplicationForm.jobXml);
       } catch (e) {
         console.warn('XML format error', e);
-        return this.modifyProjectForm.jobXml;
+        return this.modifyApplicationForm.jobXml;
       }
     }
   },
@@ -188,19 +188,19 @@ export default {
     getGroupList() {
       queryList({ searchText: '', enableStatus: '启用' }).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupList = res.data.body || []
+          this.applicationGroupList = res.data.body || []
         }
       })
     },
 
-    fetchProjectInfo(projectId) {
-      if (!projectId) return;
+    fetchApplicationInfo(applicationId) {
+      if (!applicationId) return;
       // 开启全屏 loading 或卡片 loading
       const loadingInstance = this.$loading({ target: '.app-container', lock: true, text: '加载配置中...' });
 
-      getProjectInfo({ projectId: projectId }).then(res => {
+      getApplicationInfo({ applicationId: applicationId }).then(res => {
         if (res.data.code === 2000) {
-          this.modifyProjectForm = res.data.body;
+          this.modifyApplicationForm = res.data.body;
         }
       }).catch(err => {
         this.$message.error('获取详情失败：' + err);
@@ -209,11 +209,11 @@ export default {
       });
     },
 
-    modifyProject() {
-      this.$refs.modifyProjectFormRef.validate((valid) => {
+    modifyApplication() {
+      this.$refs.modifyApplicationFormRef.validate((valid) => {
         if (valid) {
           this.loading = true;
-          modifyProject({ ...this.modifyProjectForm }).then(res => {
+          modifyApplication({ ...this.modifyApplicationForm }).then(res => {
             if (res.data.code === 2000) {
               this.$message.success('配置保存成功');
               // 保存后不需要刷新整个页面，只需要刷新数据或返回
@@ -251,19 +251,19 @@ export default {
     this.getGroupList();
 
     // 优先使用 vue-router 参数，其次 localStorage (保持原有兼容逻辑)
-    let pid = this.$route.params.projectId || this.$route.query.projectId;
+    let pid = this.$route.params.applicationId || this.$route.query.applicationId;
 
-    if (!pid && localStorage.getItem('projectId')) {
+    if (!pid && localStorage.getItem('applicationId')) {
       try {
-        pid = JSON.parse(localStorage.getItem('projectId'));
+        pid = JSON.parse(localStorage.getItem('applicationId'));
       } catch(e) {}
     }
 
     if (pid) {
-      this.projectId = pid;
+      this.applicationId = pid;
       // 更新 localStorage
-      localStorage.setItem('projectId', JSON.stringify(pid));
-      this.fetchProjectInfo(pid);
+      localStorage.setItem('applicationId', JSON.stringify(pid));
+      this.fetchApplicationInfo(pid);
     } else {
       this.$message.warning('参数丢失，无法加载项目信息');
     }
@@ -272,7 +272,7 @@ export default {
   destroyed () {
     // 建议: 离开页面时是否清除 localStorage 取决于业务，
     // 如果用户刷新页面需要保持状态，则不应该清除。
-    // localStorage.removeItem('projectId')
+    // localStorage.removeItem('applicationId')
   }
 }
 </script>

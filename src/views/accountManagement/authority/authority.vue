@@ -108,7 +108,7 @@ import {
   getAuthorityPage,
   modifyAuthority,
   removeAuthority,
-} from "@/views/accountManagement/authority/api";
+} from "@/views/accountManagement/api";
 
 export default {
   name: "authority",

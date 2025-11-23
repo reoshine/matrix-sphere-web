@@ -1,48 +1,48 @@
 import { sphere } from '@/axios'
 
 // ====================================== 应用列表 ======================================
-export function queryProjectPage(data) {
-    return sphere.post('/project/queryListPage', data)
+export function queryApplicationPage(data) {
+    return sphere.post('/application/queryListPage', data)
 }
 
 export function queryList(data) {
-    return sphere.post('/project/queryList', data)
+    return sphere.post('/application/queryList', data)
 }
 
-export function exportProjectTemplate() {
-    return sphere.get('/project/exportProjectTemplate', {
+export function exportApplicationTemplate() {
+    return sphere.get('/application/exportApplicationTemplate', {
         params: {},
         responseType: 'blob'
     })
 }
 
-export function saveProject(data) {
-    return sphere.post('/project/saveProject', data)
+export function saveApplication(data) {
+    return sphere.post('/application/saveApplication', data)
 }
 
-export function modifyProject(data) {
-    return sphere.post('/project/modifyProject', data)
+export function modifyApplication(data) {
+    return sphere.post('/application/modifyApplication', data)
 }
 
-export function getProjectInfo(data) {
-    return sphere.post('/project/getProjectInfo', data)
+export function getApplicationInfo(data) {
+    return sphere.post('/application/getApplicationInfo', data)
 }
 
-export function removeProject(data) {
-    return sphere.post(`/project/remove/${data}`)
+export function removeApplication(data) {
+    return sphere.post(`/application/remove/${data}`)
 }
 
 export function enableChange(data) {
-    return sphere.post('/project/updateEnableStatus', data)
+    return sphere.post('/application/updateEnableStatus', data)
 }
 
 export function importFile(data, config) {
-    return sphere.post('/project/importProject', data, config)
+    return sphere.post('/application/importApplication', data, config)
 }
 
 // ====================================== 分支管理 ======================================
-export function getProjectById(data) {
-    return sphere.post('/project/getProjectInfo', data)
+export function getApplicationById(data) {
+    return sphere.post('/application/getApplicationInfo', data)
 }
 
 export function getUnDeployedBranchList(data) {

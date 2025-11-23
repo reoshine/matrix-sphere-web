@@ -1,7 +1,7 @@
 // src/permission.js (最终形态 - 约定优于配置)
 import router from './router'
 import store from './store'
-import { getMenuList } from '@/views/accountManagement/menu/api'
+import { getMenuList } from '@/views/accountManagement/api'
 
 // 1. 导入主布局 (所有页面都渲染在它内部)
 const Layout = () => import('@/components/common/home.vue');

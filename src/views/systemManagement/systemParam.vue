@@ -21,7 +21,7 @@
         </el-option>
       </el-select>
       <el-button type="primary" size="small" icon="el-icon-search" @click="getSysParamList">查询</el-button>
-      <el-button type="primary" size="small" icon="el-icon-plus" @click="addProject()">新增</el-button>
+      <el-button type="primary" size="small" icon="el-icon-plus" @click="addApplication()">新增</el-button>
     </div>
     <el-divider content-position="left">参数列表</el-divider>
 

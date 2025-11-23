@@ -18,22 +18,22 @@
       </el-form>
     </el-card>
 
-    <el-card class="info-card" shadow="hover" v-if="projectInfo.id">
+    <el-card class="info-card" shadow="hover" v-if="applicationInfo.id">
       <div slot="header" class="clearfix">
         <span class="card-title"><i class="el-icon-s-platform"></i> 当前应用信息</span>
       </div>
       <el-descriptions :column="4" border size="medium">
         <el-descriptions-item label="应用编码">
-          <el-tag size="small" effect="plain">{{ projectInfo.projectCode || '-' }}</el-tag>
+          <el-tag size="small" effect="plain">{{ applicationInfo.applicationCode || '-' }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="应用名称">
-          {{ projectInfo.projectName || '-' }}
+          {{ applicationInfo.applicationName || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="所属分组">
-          <el-tag type="info" size="small">{{ getProjectGroupCode(projectInfo.projectGroupId) || '-' }}</el-tag>
+          <el-tag type="info" size="small">{{ getApplicationGroupCode(applicationInfo.applicationGroupId) || '-' }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="Git 仓库">
-          <el-link type="primary" :href="projectInfo.gitUrl" target="_blank" :underline="false">
+          <el-link type="primary" :href="applicationInfo.gitUrl" target="_blank" :underline="false">
             <i class="el-icon-link"></i> 查看仓库
           </el-link>
         </el-descriptions-item>
@@ -172,10 +172,10 @@
 import {
   createBranch,
   modifyBranch,
-  getProjectById,
+  getApplicationById,
   getUnDeployedBranchList,
   removeBranch,
-  getProjectInfo
+  getApplicationInfo
 } from '@/views/applicationManagement/applicationList/api';
 import { queryList } from '@/views/applicationManagement/applicationGroup/api';
 
@@ -184,41 +184,36 @@ export default {
   data() {
     return {
       loading: false,
+      modifyLoading: false, // 新增修改Loading
       searchText: '',
-      projectId: '',
+      applicationId: '',
 
-      // 数据对象
-      projectInfo: {},
+      applicationInfo: {},
       branchList: [],
-      projectGroupList: [],
+      applicationGroupList: [],
 
-      // 表单对象
       branchInfo: {
         branchName: '',
         description: ''
       },
 
-      // 编辑对象
       modifyBranchDialogVisible: false,
       editBranchForm: {},
 
-      // 字典（如果需要下拉框可保留，这里改用了 Switch）
-      canPushList: [{ canPush: false, canPushDesc: '否' }, { canPush: true, canPushDesc: '是' }],
-      isProtectedList: [{ isProtected: false, isProtectedDesc: '否' }, { isProtected: true, isProtectedDesc: '是' }],
+      // 删除未使用的 List 变量
 
-      // 校验规则
       createBranchRules: {
         branchName: [
-          { required: true, message: "请输入分支名称", trigger: "blur" },
-          { pattern: /^[a-zA-Z0-9_-]+$/, message: '只能包含字母、数字、下划线或横线', trigger: 'blur' }
+          {required: true, message: "请输入分支名称", trigger: "blur"},
+          {pattern: /^[a-zA-Z0-9_-]+$/, message: '只能包含字母、数字、下划线或横线', trigger: 'blur'}
         ],
         description: [
-          { required: true, message: "请输入分支描述", trigger: "blur" }
+          {required: true, message: "请输入分支描述", trigger: "blur"}
         ]
       },
       modifyBranchRules: {
         description: [
-          { required: true, message: "请输入分支描述", trigger: "blur" }
+          {required: true, message: "请输入分支描述", trigger: "blur"}
         ]
       },
     };
@@ -231,15 +226,14 @@ export default {
         this.$message.warning('请输入查询条件');
         return;
       }
-      const loading = this.$loading({ target: '.app-container' });
-      getProjectInfo({ searchText: this.searchText }).then(res => {
+      const loading = this.$loading({target: '.app-container'});
+      getApplicationInfo({searchText: this.searchText}).then(res => {
         if (res.data.code === 2000) {
-          this.projectInfo = res.data.body;
-          // 存储ID，防止刷新丢失
-          if (this.projectInfo.id) {
-            this.projectId = this.projectInfo.id;
-            localStorage.setItem('projectId', JSON.stringify(this.projectId));
-            this.getBranchListByProjectId(this.projectId);
+          this.applicationInfo = res.data.body;
+          if (this.applicationInfo.id) {
+            this.applicationId = this.applicationInfo.id;
+            localStorage.setItem('applicationId', JSON.stringify(this.applicationId));
+            this.getBranchListByApplicationId(this.applicationId);
           }
         } else {
           this.$message.error(res.data.message || '查询应用失败');
@@ -247,19 +241,17 @@ export default {
       }).finally(() => loading.close());
     },
 
-    // 通过ID加载应用详情
-    getProject(projectId) {
-      getProjectById({ projectId: projectId }).then(res => {
+    getApplication(applicationId) {
+      getApplicationById({applicationId: applicationId}).then(res => {
         if (res.data.code === 2000) {
-          this.projectInfo = res.data.body;
-          this.searchText = this.projectInfo.projectCode; // 回填搜索框
+          this.applicationInfo = res.data.body;
+          this.searchText = this.applicationInfo.applicationCode;
         }
       });
     },
 
-    // 加载分支列表
-    getBranchListByProjectId(projectId) {
-      getUnDeployedBranchList({ projectId: projectId }).then(res => {
+    getBranchListByApplicationId(applicationId) {
+      getUnDeployedBranchList({applicationId: applicationId}).then(res => {
         if (res.data.code === 2000) {
           this.branchList = res.data.body || [];
         }
@@ -267,18 +259,17 @@ export default {
     },
 
     refreshList() {
-      if (this.projectId) {
-        this.getBranchListByProjectId(this.projectId);
+      if (this.applicationId) {
+        this.getBranchListByApplicationId(this.applicationId);
       }
     },
 
-    // 创建分支
     createBranch() {
       this.$refs.createBranchRef.validate((valid) => {
         if (valid) {
           this.loading = true;
           createBranch({
-            projectId: this.projectInfo.id,
+            applicationId: this.applicationInfo.id,
             branchName: 'feature_' + this.branchInfo.branchName,
             description: this.branchInfo.description,
             sourceBranch: 'main',
@@ -301,16 +292,21 @@ export default {
     },
 
     resetCreateForm() {
-      this.branchInfo = { branchName: '', description: '' };
+      this.branchInfo = {branchName: '', description: ''};
       this.$nextTick(() => {
         this.$refs.createBranchRef.clearValidate();
       });
     },
 
-    // 打开编辑
     editBranchInfo(branch) {
       this.editBranchForm = JSON.parse(JSON.stringify(branch));
       this.modifyBranchDialogVisible = true;
+      // 修复：打开弹窗时清除上次的校验状态
+      this.$nextTick(() => {
+        if (this.$refs.modifyBranchRef) {
+          this.$refs.modifyBranchRef.clearValidate();
+        }
+      });
     },
 
     cancelModifyBranch() {
@@ -318,12 +314,13 @@ export default {
       this.editBranchForm = {};
     },
 
-    // 提交修改
     modifyBranch() {
       this.$refs.modifyBranchRef.validate((valid) => {
         if (valid) {
+          this.modifyLoading = true;
           modifyBranch({
-            projectId: this.projectInfo.id,
+            id: this.editBranchForm.id, // 修复：必须传 ID
+            applicationId: this.editBranchForm.applicationId, // 建议使用 row 里的 appId
             branchName: this.editBranchForm.branchName,
             description: this.editBranchForm.description,
             isProtected: this.editBranchForm.isProtected
@@ -335,6 +332,8 @@ export default {
             } else {
               this.$message.error(res.data.message);
             }
+          }).finally(() => {
+            this.modifyLoading = false;
           });
         }
       });
@@ -348,7 +347,7 @@ export default {
         confirmButtonClass: 'el-button--danger'
       }).then(() => {
         return removeBranch({
-          projectId: branch.projectId,
+          applicationId: branch.applicationId,
           branchId: branch.id
         });
       }).then(res => {
@@ -358,48 +357,47 @@ export default {
         } else {
           this.$message.error(res.data.message);
         }
-      }).catch(() => {});
+      }).catch(() => {
+      });
     },
 
-    // 辅助方法
     getGroupList() {
-      queryList({ searchText: '', enableStatus: '启用' }).then(res => {
+      queryList({searchText: '', enableStatus: '启用'}).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupList = res.data.body || [];
+          this.applicationGroupList = res.data.body || [];
         }
       });
     },
 
-    getProjectGroupCode(id) {
-      const obj = this.projectGroupList.find(item => item.id === id);
-      return obj ? obj.projectGroupCode : '-';
+    getApplicationGroupCode(id) {
+      const obj = this.applicationGroupList.find(item => item.id === id);
+      return obj ? obj.applicationGroupCode : '-';
     }
   },
 
   created() {
     this.getGroupList();
+    let pid = this.$route.params.applicationId;
 
-    // 优先处理路由参数
-    let pid = this.$route.params.projectId;
-
-    // 其次处理缓存
-    if (!pid && localStorage.getItem('projectId')) {
-      try {
-        pid = JSON.parse(localStorage.getItem('projectId'));
-      } catch (e) { /* ignore */ }
+    // 安全解析 localStorage
+    if (!pid) {
+      const cachedId = localStorage.getItem('applicationId');
+      if (cachedId) {
+        try {
+          pid = JSON.parse(cachedId);
+        } catch (e) {
+          console.error('Failed to parse applicationId', e);
+        }
+      }
     }
 
     if (pid) {
-      this.projectId = pid;
-      // 无论来源哪里，都统一存一次，保证状态延续
-      localStorage.setItem('projectId', JSON.stringify(pid));
-      this.getProject(pid);
-      this.getBranchListByProjectId(pid);
+      this.applicationId = pid;
+      localStorage.setItem('applicationId', JSON.stringify(pid));
+      this.getApplication(pid);
+      this.getBranchListByApplicationId(pid);
     }
-  },
-
-  // 建议移除 beforeDestroy 清除逻辑，防止用户 F5 刷新后丢失选中状态
-  // beforeDestroy() { localStorage.removeItem('projectId') },
+  }
 }
 </script>
 

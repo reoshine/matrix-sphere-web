@@ -151,7 +151,7 @@ export default {
   name: "deployByEnv",
   props : {
     env: String,
-    projectId: {
+    applicationId: {
       type: [String, Number],
       required: true
     }
@@ -231,7 +231,7 @@ export default {
 
       // 终态关闭连接
       if (item.stepCode === 'finish' && (item.stepStatus === 2 || item.stepStatus === 3)) {
-        this.sseClose(this.projectId);
+        this.sseClose(this.applicationId);
       }
     },
 
@@ -265,7 +265,7 @@ export default {
 
     getDeployStepList() {
       getDeployStepList({
-        projectId: this.projectId,
+        applicationId: this.applicationId,
         deployEnvironment: this.deployEnvironment
       }).then(res => {
         if (res.data.code === 2000 && CollUtils.isNotEmpty(res.data.body)) {
@@ -274,10 +274,10 @@ export default {
       });
     },
 
-    async getDeployMaster(projectId, activeName) {
+    async getDeployMaster(applicationId, activeName) {
       let result;
       try {
-        const res = await getDeployMaster({ projectId, deployEnvironment: activeName });
+        const res = await getDeployMaster({ applicationId: applicationId, deployEnvironment: activeName });
         if (res.data.code === 2000) {
           this.deployMaster = res.data.body;
           result = res.data.body;
@@ -304,9 +304,9 @@ export default {
       return result;
     },
 
-    getUnDeployedBranchList(projectId) {
+    getUnDeployedBranchList(applicationId) {
       getUnDeployedBranchList({
-        projectId: projectId,
+        applicationId: applicationId,
         deployEnvironment: this.deployEnvironment
       }).then(res => {
         if (res.data.code === 2000) {
@@ -318,7 +318,7 @@ export default {
     getDepLoyLogList() {
       this.dialog = true;
       getDepLoyLogList({
-        projectId: this.projectId,
+        applicationId: this.applicationId,
         deployEnvironment: this.deployEnvironment,
       }).then(res => {
         if (res.data.code === 2000) {
@@ -331,7 +331,7 @@ export default {
 
     async executeDeployAction(actionType) {
       await this.clearDeployStatus();
-      await this.createSseConnect(this.projectId);
+      await this.createSseConnect(this.applicationId);
 
       // 根据类型决定分支ID
       let ids = [];
@@ -345,7 +345,7 @@ export default {
 
       try {
         const res = await deploy({
-          projectId: this.projectId,
+          applicationId: this.applicationId,
           branchIds: ids,
           deployEnvironment: this.deployEnvironment,
           deployType: actionType
@@ -356,7 +356,7 @@ export default {
           this.listenDeployStepMessage();
 
           // 刷新数据
-          await this.getUnDeployedBranchList(result.project.id);
+          await this.getUnDeployedBranchList(result.application.id);
           await this.getDeployRecord(result.deployMaster.id);
 
           // 清空选择
@@ -364,11 +364,11 @@ export default {
 
         } else {
           this.$message.error(res.data.message);
-          this.sseClose(this.projectId);
+          this.sseClose(this.applicationId);
         }
       } catch (err) {
         this.$message.error('操作失败: ' + err);
-        this.sseClose(this.projectId);
+        this.sseClose(this.applicationId);
       }
     },
 
@@ -391,9 +391,9 @@ export default {
     },
 
     // --- SSE 管理 ---
-    createSseConnect(projectId) {
+    createSseConnect(applicationId) {
       if (this.eventSource) this.eventSource.close();
-      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${projectId}`, {
+      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${applicationId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
           heartbeatTimeout: 10000000
@@ -402,21 +402,21 @@ export default {
       this.eventSource.onerror = () => this.eventSource.close();
     },
 
-    sseClose(projectId) {
+    sseClose(applicationId) {
       if (this.eventSource) {
         this.eventSource.close();
         this.eventSource = null;
       }
-      sseClose(projectId);
+      sseClose(applicationId);
     }
   },
 
   mounted() {
-    this.getUnDeployedBranchList(this.projectId);
-    this.getDeployMaster(this.projectId, this.deployEnvironment).then(data => {
+    this.getUnDeployedBranchList(this.applicationId);
+    this.getDeployMaster(this.applicationId, this.deployEnvironment).then(data => {
       // 如果当前处于部署中，恢复SSE连接
       if (data && data.deployStatus === 1) {
-        this.createSseConnect(this.projectId);
+        this.createSseConnect(this.applicationId);
         this.listenDeployStepMessage();
       }
     });
@@ -426,7 +426,7 @@ export default {
   beforeDestroy() {
     if (this.eventSource) {
       this.eventSource.close();
-      this.sseClose(this.projectId);
+      this.sseClose(this.applicationId);
     }
   }
 };

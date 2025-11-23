@@ -36,7 +36,7 @@
     <el-card shadow="never" :body-style="{ padding: '0' }" class="table-card">
       <el-table
           v-loading="loading"
-          :data="projectGroupList"
+          :data="applicationGroupList"
           border
           stripe
           highlight-current-row
@@ -44,8 +44,8 @@
       >
         <el-table-column type="index" label="序号" width="60" align="center" />
 
-        <el-table-column prop="projectGroupCode" label="应用分组编码" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="projectGroupName" label="应用分组名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="applicationGroupCode" label="应用分组编码" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="applicationGroupName" label="应用分组名称" min-width="150" show-overflow-tooltip />
 
         <el-table-column prop="enableStatus" label="启用状态" width="120" align="center">
           <template slot-scope="scope">
@@ -101,11 +101,11 @@
           size="small"
           style="padding-right: 20px;"
       >
-        <el-form-item label="分组编码" prop="projectGroupCode">
-          <el-input v-model="form.projectGroupCode" placeholder="请输入唯一编码" />
+        <el-form-item label="分组编码" prop="applicationGroupCode">
+          <el-input v-model="form.applicationGroupCode" placeholder="请输入唯一编码" />
         </el-form-item>
-        <el-form-item label="分组名称" prop="projectGroupName">
-          <el-input v-model="form.projectGroupName" placeholder="请输入显示名称" />
+        <el-form-item label="分组名称" prop="applicationGroupName">
+          <el-input v-model="form.applicationGroupName" placeholder="请输入显示名称" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -141,7 +141,7 @@ export default {
       enableStatusList: ['启用', '停用'],
 
       // 表格数据
-      projectGroupList: [],
+      applicationGroupList: [],
 
       // 弹窗控制
       dialogVisible: false,
@@ -150,18 +150,18 @@ export default {
       // 表单数据
       form: {
         id: undefined,
-        projectGroupCode: '',
-        projectGroupName: '',
+        applicationGroupCode: '',
+        applicationGroupName: '',
         enableStatus: '启用'
       },
 
       // 表单校验
       rules: {
-        projectGroupCode: [
+        applicationGroupCode: [
           { required: true, message: "请输入应用分组编码", trigger: "blur" },
           { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" }
         ],
-        projectGroupName: [
+        applicationGroupName: [
           { required: true, message: "请输入应用分组名称", trigger: "blur" },
           { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" }
         ]
@@ -187,7 +187,7 @@ export default {
         if (res.data.code === 2000) {
           const result = res.data.body;
           this.total = result.total || 0;
-          this.projectGroupList = result.data || [];
+          this.applicationGroupList = result.data || [];
         } else {
           this.$message.error(res.data.message || '查询失败');
         }
@@ -225,8 +225,8 @@ export default {
     resetForm() {
       this.form = {
         id: undefined,
-        projectGroupCode: '',
-        projectGroupName: '',
+        applicationGroupCode: '',
+        applicationGroupName: '',
         enableStatus: '启用'
       };
       this.$nextTick(() => {
@@ -268,11 +268,11 @@ export default {
           // 构建参数 (新增时不需要ID)
           const params = isEdit ? {
             id: this.form.id,
-            projectGroupCode: this.form.projectGroupCode,
-            projectGroupName: this.form.projectGroupName
+            applicationGroupCode: this.form.applicationGroupCode,
+            applicationGroupName: this.form.applicationGroupName
           } : {
-            projectGroupCode: this.form.projectGroupCode,
-            projectGroupName: this.form.projectGroupName,
+            applicationGroupCode: this.form.applicationGroupCode,
+            applicationGroupName: this.form.applicationGroupName,
             enableStatus: '启用' // 新增默认启用
           };
 

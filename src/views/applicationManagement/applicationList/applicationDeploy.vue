@@ -15,22 +15,22 @@
 
       <el-descriptions class="margin-top" :column="4" border size="medium">
         <el-descriptions-item label="应用名称">
-          <span class="text-bold">{{ projectInfo.projectName }}</span>
+          <span class="text-bold">{{ applicationInfo.applicationName }}</span>
         </el-descriptions-item>
 
         <el-descriptions-item label="应用编码">
-          <el-tag size="small" type="info">{{ projectInfo.projectCode }}</el-tag>
+          <el-tag size="small" type="info">{{ applicationInfo.applicationCode }}</el-tag>
         </el-descriptions-item>
 
         <el-descriptions-item label="所属分组">
-          {{ projectGroupMap.get(projectInfo.projectGroupId) || '-' }}
+          {{ applicationGroupMap.get(applicationInfo.applicationGroupId) || '-' }}
         </el-descriptions-item>
 
         <el-descriptions-item label="Git 仓库">
           <el-link
-              v-if="projectInfo.gitUrl"
+              v-if="applicationInfo.gitUrl"
               type="primary"
-              :href="projectInfo.gitUrl"
+              :href="applicationInfo.gitUrl"
               target="_blank"
               :underline="false"
           >
@@ -71,7 +71,7 @@
           <div class="tab-content">
             <deployByEnv
                 v-if="activeName === 'DEV'"
-                :projectId="projectId"
+                :applicationId="applicationId"
                 env="DEV"
                 @deployInfoUpdated="onDeployInfoUpdated"
             />
@@ -83,7 +83,7 @@
           <div class="tab-content">
             <deployByEnv
                 v-if="activeName === 'TEST'"
-                :projectId="projectId"
+                :applicationId="applicationId"
                 env="TEST"
                 @deployInfoUpdated="onDeployInfoUpdated"
             />
@@ -95,7 +95,7 @@
           <div class="tab-content">
             <deployByEnv
                 v-if="activeName === 'POC'"
-                :projectId="projectId"
+                :applicationId="applicationId"
                 env="POC"
                 @deployInfoUpdated="onDeployInfoUpdated"
             />
@@ -107,7 +107,7 @@
           <div class="tab-content">
             <deployByEnv
                 v-if="activeName === 'PROD'"
-                :projectId="projectId"
+                :applicationId="applicationId"
                 env="PROD"
                 @deployInfoUpdated="onDeployInfoUpdated"
             />
@@ -120,7 +120,7 @@
 
 <script>
 import deployByEnv  from "@/components/deployByEnv/deployByEnv.vue";
-import { getProjectById } from "@/views/applicationManagement/applicationList/api";
+import { getApplicationById } from "@/views/applicationManagement/applicationList/api";
 import { queryList } from "@/views/applicationManagement/applicationGroup/api";
 import bus from "@/util/bus";
 
@@ -131,7 +131,7 @@ export default {
   },
   data() {
     return {
-      projectId: '',
+      applicationId: '',
 
       // 当前激活环境
       activeName: 'DEV',
@@ -145,19 +145,19 @@ export default {
       },
 
       // 数据
-      projectGroupList: [],
-      projectInfo: {},
+      applicationGroupList: [],
+      applicationInfo: {},
       deployedInfo: {}, // 存储子组件传递回来的分支信息
     };
   },
 
   computed: {
     // 优化：使用 Map 提高查找效率
-    projectGroupMap() {
+    applicationGroupMap() {
       const map = new Map();
-      if (this.projectGroupList && this.projectGroupList.length > 0) {
-        this.projectGroupList.forEach(item => {
-          map.set(item.id, item.projectGroupCode);
+      if (this.applicationGroupList && this.applicationGroupList.length > 0) {
+        this.applicationGroupList.forEach(item => {
+          map.set(item.id, item.applicationGroupCode);
         });
       }
       return map;
@@ -173,14 +173,14 @@ export default {
     },
 
     // 获取项目详情
-    getProject(projectId) {
+    getApplication(applicationId) {
       const loading = this.$loading({ target: '.info-card', text: '加载应用信息...' });
-      getProjectById({ projectId: projectId }).then(res => {
+      getApplicationById({ applicationId: applicationId }).then(res => {
         if (res.data.code === 2000) {
-          this.projectInfo = res.data.body;
+          this.applicationInfo = res.data.body;
 
           // 更新 PageHeader
-          bus.$emit('set-page-title', this.projectInfo.projectName);
+          bus.$emit('set-page-title', this.applicationInfo.applicationName);
         }
       }).catch(err => {
         this.$message.error('查询应用信息失败：' + err);
@@ -193,7 +193,7 @@ export default {
     getGroupList() {
       queryList({ searchText: '', enableStatus: '启用' }).then(res => {
         if (res.data.code === 2000) {
-          this.projectGroupList = res.data.body || [];
+          this.applicationGroupList = res.data.body || [];
         }
       });
     }
@@ -201,19 +201,19 @@ export default {
 
   created() {
     // 1. 优先从 Query 获取
-    let pid = this.$route.query.projectId;
+    let pid = this.$route.query.applicationId;
 
     // 2. 其次从 LocalStorage 获取 (处理刷新)
     if (!pid) {
-      pid = localStorage.getItem('projectId');
+      pid = localStorage.getItem('applicationId');
     }
 
     if (pid) {
-      this.projectId = pid;
+      this.applicationId = pid;
       // 更新缓存
-      localStorage.setItem('projectId', pid);
+      localStorage.setItem('applicationId', pid);
 
-      this.getProject(this.projectId);
+      this.getApplication(this.applicationId);
       this.getGroupList();
     } else {
       this.$message.warning('丢失应用ID参数，请从列表页重新进入');
