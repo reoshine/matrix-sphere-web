@@ -61,7 +61,7 @@
         </el-table-column>
 
         <el-table-column prop="createByName" label="创建人" width="120" align="center" />
-        <el-table-column prop="gmtCreate" label="创建时间" width="160" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="170" align="center" />
 
         <el-table-column label="操作" align="center" width="180" fixed="right">
           <template slot-scope="scope">

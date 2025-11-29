@@ -2,13 +2,14 @@
   <div class="deploy-container">
     <el-card shadow="never" class="process-card">
       <div class="process-wrapper">
-        <el-steps :active="deployProcessActive" align-center finish-status="success" class="custom-steps">
+        <el-steps :active="deployProcessActive" align-center class="custom-steps">
           <el-step
-              v-for="step in steps"
+              v-for="(step, index) in steps"
               :key="step.id"
               :title="step.title"
               :icon="getStepIcon(step)"
               :status="step.status"
+              :class="{ 'step-line-success': isLineSuccess(index) }"
           >
             <template slot="description">
               <span v-if="step.description" class="step-error">{{ step.description }}</span>
@@ -56,7 +57,7 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createByName" label="创建人" width="120" align="center" />
-        <el-table-column prop="gmtCreate" label="创建时间" width="160" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="170" align="center" />
       </el-table>
     </el-card>
 
@@ -83,7 +84,7 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createByName" label="创建人" width="120" align="center" />
-        <el-table-column prop="gmtCreate" label="创建时间" width="160" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="170" align="center" />
       </el-table>
     </el-card>
 
@@ -139,12 +140,11 @@ import {
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import * as CollUtils from '@/util/CollUtils'
 
-// 步骤状态常量
 const STEP_STATUS_MAP = {
-  0: 'wait',    // 初始化
-  1: 'process', // 进行中
-  2: 'success', // 成功
-  3: 'error'    // 失败
+  0: 'wait',
+  1: 'process',
+  2: 'success',
+  3: 'error'
 };
 
 export default {
@@ -158,34 +158,24 @@ export default {
   },
   data() {
     return {
-      // 按钮状态
       isDisabled: true,
       deployBranchBtnIsDisabled: true,
-
-      // 业务数据
       deployMaster: {},
-      deployInfo: {
-        featureBranchList: []
-      },
+      deployInfo: { featureBranchList: [] },
       unDeployedBranchList: [],
 
-      // 步骤条数据
       deployProcessActive: 0,
       steps: [
         { id: 'merge', title: '分支合并', status: 'wait', icon: 'el-icon-files' },
         { id: 'build', title: '代码构建', status: 'wait', icon: 'el-icon-cpu' },
         { id: 'publish', title: '容器部署', status: 'wait', icon: 'el-icon-upload' },
-        { id: 'finish', title: '完成上线', status: 'wait', icon: 'el-icon-check' }
+        { id: 'finish', title: '完成上线', status: 'wait', icon: 'el-icon-video-play' }
       ],
 
-      // 日志抽屉
       dialog: false,
       deployLogList: [],
-
-      // SSE连接对象
       eventSource: null,
-
-      // 选中项 ID 集合
+      pollingTimer: null,
       unDeployedBranchIds: [],
       deployedBranchIds: []
     };
@@ -198,69 +188,167 @@ export default {
   },
 
   methods: {
-    // --- 辅助 UI 方法 ---
     getStepIcon(step) {
-      if (step.status === 'process') return 'el-icon-loading';
       if (step.status === 'error') return 'el-icon-close';
+      if (step.status === 'process') return 'el-icon-loading';
       if (step.status === 'success') return 'el-icon-check';
-      return step.icon || 'el-icon-more';
+      return step.icon;
     },
 
-    getDeployStatusType(status) {
-      const map = { 0: 'info', 1: 'primary', 2: 'success', 3: 'danger' };
-      return map[status] || 'info';
-    },
+    // 修改点 2: 判断线条是否应该变绿
+    // 逻辑：当前步骤成功 且 下一步骤也成功
+    isLineSuccess(index) {
+      const currentStep = this.steps[index];
+      const nextStep = this.steps[index + 1];
 
-    getDeployStatusText(status) {
-      const map = { 0: '初始化', 1: '部署中', 2: '成功', 3: '失败' };
-      return map[status] || '未知';
-    },
+      // 如果没有下一步（最后一步），不需要关心线
+      if (!nextStep) return false;
 
-    // --- 核心 SSE 状态机逻辑 ---
+      // 只有两端都 success，线才变绿
+      return currentStep.status === 'success' && nextStep.status === 'success';
+    },
 
     updateStepState(item) {
-      const step = this.steps.find(s => s.id === item.stepCode);
-      if (!step) return;
+      const index = this.steps.findIndex(s => s.id === item.stepCode);
+      if (index === -1) return;
 
-      step.status = STEP_STATUS_MAP[item.stepStatus] || 'wait';
-      step.description = (step.status === 'error') ? item.errorMessage : '';
+      const currentStep = { ...this.steps[index] };
+      const statusKey = Number(item.stepStatus);
+      const newStatus = STEP_STATUS_MAP[statusKey] || 'wait';
 
-      // 计算当前激活步骤 (找到第一个非成功的)
-      const activeIndex = this.steps.findIndex(s => s.status !== 'success');
-      this.deployProcessActive = (activeIndex === -1) ? 4 : activeIndex;
+      currentStep.status = newStatus;
+      currentStep.description = (newStatus === 'error') ? item.errorMessage : '';
 
-      // 终态关闭连接
-      if (item.stepCode === 'finish' && (item.stepStatus === 2 || item.stepStatus === 3)) {
-        this.sseClose(this.applicationId);
+      this.$set(this.steps, index, currentStep);
+
+      if (newStatus === 'error') {
+        this.deployProcessActive = index;
+        this.closeResources();
+        this.refreshData();
+        return;
       }
+
+      if (newStatus === 'success' && index < this.steps.length - 1) {
+        const nextIndex = index + 1;
+        const nextStep = { ...this.steps[nextIndex] };
+        if (nextStep.status === 'wait') {
+          nextStep.status = 'process';
+          this.$set(this.steps, nextIndex, nextStep);
+        }
+      }
+
+      this.recalcActiveIndex();
+
+      if (item.stepCode === 'finish' && newStatus === 'success') {
+        this.closeResources();
+        this.refreshData();
+      }
+    },
+
+    recalcActiveIndex() {
+      const firstNotSuccess = this.steps.findIndex(s => s.status !== 'success');
+      this.deployProcessActive = firstNotSuccess === -1 ? this.steps.length : firstNotSuccess;
     },
 
     processStepList(stepList) {
       if (!stepList || stepList.length === 0) return;
-      ['merge', 'build', 'publish', 'finish'].forEach(code => {
-        const stepUpdate = stepList.find(item => item.stepCode === code);
-        if (stepUpdate) this.updateStepState(stepUpdate);
+      const stepOrder = ['merge', 'build', 'publish', 'finish'];
+      stepOrder.forEach(code => {
+        const stepData = stepList.find(item => item.stepCode === code);
+        if (stepData) {
+          this.updateStepState(stepData);
+        }
       });
     },
 
     clearDeployStatus() {
       this.deployProcessActive = 0;
-      this.steps.forEach(s => {
-        s.status = 'wait';
-        s.description = '';
-      });
+      this.steps = this.steps.map((s, index) => ({
+        ...s,
+        status: index === 0 ? 'process' : 'wait',
+        description: ''
+      }));
     },
 
-    // --- API 交互 ---
+    // === 资源管理 ===
+    createSseConnect(applicationId) {
+      this.closeResources();
+      const sseUrl = `http://192.168.0.10:7002/matrix-sphere/sse/connect/${applicationId}`;
 
-    listenDeployStepMessage() {
+      this.eventSource = new EventSourcePolyfill(sseUrl, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
+          heartbeatTimeout: 3600000
+        }
+      });
+
+      this.eventSource.addEventListener('connect', () => console.log("SSE Connected"));
+
       this.eventSource.onmessage = (res => {
         try {
-          this.updateStepState(JSON.parse(res.data));
+          const data = JSON.parse(res.data);
+          this.updateStepState(data);
         } catch (e) {
           console.error("SSE Parse Error:", e);
         }
-      })
+      });
+
+      this.eventSource.onerror = (err) => {
+        console.warn("SSE Error -> Polling", err);
+        this.handleSseError();
+      };
+    },
+
+    handleSseError() {
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
+      this.startPolling();
+    },
+
+    startPolling() {
+      if (this.pollingTimer) return;
+      this.pollCurrentStatus();
+      this.pollingTimer = setInterval(() => {
+        this.pollCurrentStatus();
+      }, 3000);
+    },
+
+    pollCurrentStatus() {
+      this.getDeployStepList();
+      getDeployMaster({
+        applicationId: this.applicationId,
+        deployEnvironment: this.deployEnvironment
+      }).then(res => {
+        if (res.data.code === 2000 && res.data.body) {
+          const status = res.data.body.deployStatus;
+          if (status === 2 || status === 3) {
+            this.closeResources();
+            this.refreshData();
+          }
+        }
+      }).catch(() => {});
+    },
+
+    closeResources() {
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
+      if (this.pollingTimer) {
+        clearInterval(this.pollingTimer);
+        this.pollingTimer = null;
+      }
+      sseClose(this.applicationId).catch(() => {});
+    },
+
+    // === API Calls ===
+    refreshData() {
+      this.getUnDeployedBranchList(this.applicationId);
+      if (this.deployMaster && this.deployMaster.id) {
+        this.getDeployRecord(this.deployMaster.id);
+      }
     },
 
     getDeployStepList() {
@@ -277,7 +365,7 @@ export default {
     async getDeployMaster(applicationId, activeName) {
       let result;
       try {
-        const res = await getDeployMaster({ applicationId: applicationId, deployEnvironment: activeName });
+        const res = await getDeployMaster({ applicationId, deployEnvironment: activeName });
         if (res.data.code === 2000) {
           this.deployMaster = res.data.body;
           result = res.data.body;
@@ -327,20 +415,17 @@ export default {
       });
     },
 
-    // --- 部署动作 ---
-
     async executeDeployAction(actionType) {
-      await this.clearDeployStatus();
-      await this.createSseConnect(this.applicationId);
+      this.clearDeployStatus();
+      this.createSseConnect(this.applicationId);
 
-      // 根据类型决定分支ID
       let ids = [];
       if (actionType === '提交分支部署') {
         ids = this.unDeployedBranchIds.concat(this.deployInfo.featureBranchList.map(i => i.id));
       } else if (actionType === 'main分支部署') {
         ids = [];
       } else {
-        ids = this.deployedBranchIds; // 退出 或 重部署
+        ids = this.deployedBranchIds;
       }
 
       try {
@@ -353,22 +438,16 @@ export default {
 
         if (res.data.code === 2000) {
           const result = res.data.body;
-          this.listenDeployStepMessage();
-
-          // 刷新数据
           await this.getUnDeployedBranchList(result.application.id);
           await this.getDeployRecord(result.deployMaster.id);
-
-          // 清空选择
           if (this.$refs.selectedStatus) this.$refs.selectedStatus.clearSelection();
-
         } else {
           this.$message.error(res.data.message);
-          this.sseClose(this.applicationId);
+          this.closeResources();
         }
       } catch (err) {
         this.$message.error('操作失败: ' + err);
-        this.sseClose(this.applicationId);
+        this.closeResources();
       }
     },
 
@@ -380,7 +459,6 @@ export default {
     },
     deployMain() { this.executeDeployAction('main分支部署'); },
 
-    // --- 表格选择 ---
     getUnDeployBranchIds(val) {
       this.unDeployedBranchIds = val.map(i => i.id);
       this.deployBranchBtnIsDisabled = this.unDeployedBranchIds.length <= 0;
@@ -390,54 +468,37 @@ export default {
       this.isDisabled = this.deployedBranchIds.length <= 0;
     },
 
-    // --- SSE 管理 ---
-    createSseConnect(applicationId) {
-      if (this.eventSource) this.eventSource.close();
-      this.eventSource = new EventSourcePolyfill(`http://192.168.0.10:7002/matrix-sphere/sse/connect/${applicationId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
-          heartbeatTimeout: 10000000
-        }
-      });
-      this.eventSource.onerror = () => this.eventSource.close();
+    getDeployStatusType(status) {
+      const map = { 0: 'info', 1: 'primary', 2: 'success', 3: 'danger' };
+      return map[status] || 'info';
     },
-
-    sseClose(applicationId) {
-      if (this.eventSource) {
-        this.eventSource.close();
-        this.eventSource = null;
-      }
-      sseClose(applicationId);
+    getDeployStatusText(status) {
+      const map = { 0: '初始化', 1: '部署中', 2: '成功', 3: '失败'};
+      return map[status] || '未知';
     }
   },
 
   mounted() {
     this.getUnDeployedBranchList(this.applicationId);
     this.getDeployMaster(this.applicationId, this.deployEnvironment).then(data => {
-      // 如果当前处于部署中，恢复SSE连接
       if (data && data.deployStatus === 1) {
         this.createSseConnect(this.applicationId);
-        this.listenDeployStepMessage();
       }
     });
     this.getDeployStepList();
   },
 
   beforeDestroy() {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.sseClose(this.applicationId);
-    }
+    this.closeResources();
   }
 };
 </script>
 
 <style lang="less" scoped>
 .deploy-container {
-  /* 无需 padding，父组件已经给了 */
+  padding: 0 10px;
 }
 
-/* 卡片通用样式修正 */
 .process-card, .module-card {
   margin-bottom: 20px;
   border: 1px solid #ebeef5;
@@ -453,19 +514,127 @@ export default {
   }
 }
 
-/* 1. 进度卡片 */
 .process-card {
-  background: #fdfdfd; /* 极淡的背景区分 */
+  background: #fdfdfd;
+
   .process-wrapper {
-    padding: 10px 40px;
+    padding: 10px 20px;
   }
+
+  /* * =========================================
+   * 核心样式修复与线条颜色接管
+   * =========================================
+   */
+
+  /* 1. 全局强制重置线条颜色为灰色 */
+  /* 去掉 Element UI 默认的进度条填充效果，完全由我们控制背景色 */
+
+  ::v-deep .el-step__line-inner {
+    display: none !important;
+  }
+
+  ::v-deep .el-step__line {
+    background-color: #C0C4CC !important; /* 默认灰 */
+  }
+
+  /* 2. 只有当父级有 step-line-success 类时，线条才变绿 */
+
+  ::v-deep .el-step.step-line-success {
+    .el-step__line {
+      background-color: #67C23A !important; /* 成功绿 */
+    }
+  }
+
+  /* 3. 成功状态图标 (绿底白钩) */
+
+  ::v-deep .el-step__head.is-success {
+    .el-step__icon {
+      background-color: #67C23A;
+      color: #fff;
+      border-color: #67C23A;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: bold;
+      display: inline-flex; /* 修复居中 */
+      align-items: center;
+      justify-content: center;
+    }
+
+    .el-step__line {
+      /* 注意：这里不能写颜色，颜色由上面的 step-line-success 控制 */
+    }
+  }
+
+  /* 4. 失败状态图标 (红底白叉) */
+
+  ::v-deep .el-step__head.is-error {
+    .el-step__icon {
+      background-color: #F56C6C;
+      color: #fff;
+      border-color: #F56C6C;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: bold;
+      display: inline-flex; /* 修复居中 */
+      align-items: center;
+      justify-content: center;
+    }
+
+    .el-step__title {
+      color: #F56C6C;
+    }
+
+    .el-step__description {
+      color: #F56C6C;
+    }
+  }
+
+  /* 5. 进行中状态 (无边框 Loading) */
+
+  ::v-deep .el-step__head.is-process {
+    .el-step__icon {
+      background-color: #fff;
+      border: none;
+      color: #409EFF;
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+      display: inline-flex; /* 修复居中 */
+      align-items: center;
+      justify-content: center;
+    }
+
+    .el-step__icon-inner {
+      font-weight: normal;
+    }
+  }
+
+  /* 6. 等待状态 */
+
+  ::v-deep .el-step__head.is-wait {
+    .el-step__icon {
+      width: 24px;
+      height: 24px;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
   .step-error {
     color: #F56C6C;
     font-size: 12px;
+    margin-top: 5px;
+    display: block;
+    font-weight: bold;
   }
 }
 
-/* 2. 模块卡片头 */
 .card-header-flex {
   display: flex;
   justify-content: space-between;
@@ -476,12 +645,16 @@ export default {
     font-weight: bold;
     color: #303133;
 
-    i { margin-right: 6px; }
-    .text-success { color: #67C23A; }
+    i {
+      margin-right: 6px;
+    }
+
+    .text-success {
+      color: #67C23A;
+    }
   }
 }
 
-/* 3. 工具栏 */
 .toolbar-container {
   margin-bottom: 15px;
   display: flex;
@@ -494,7 +667,6 @@ export default {
   }
 }
 
-/* 4. 日志抽屉列表 */
 .log-list {
   padding: 20px;
 
@@ -521,7 +693,9 @@ export default {
       gap: 4px;
     }
 
-    .text-danger { color: #F56C6C; }
+    .text-danger {
+      color: #F56C6C;
+    }
   }
 }
 </style>
