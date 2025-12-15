@@ -105,7 +105,7 @@ import hljs from 'highlight.js'
 // 关键修改：使用深色主题 (atom-one-dark) 以符合 IDE 风格
 import 'highlight.js/styles/atom-one-dark.css'
 
-import { getApplicationInfo, modifyApplication } from "@/views/applicationManagement/applicationList/api";
+import { getApplicationById, modifyApplication } from "@/views/applicationManagement/applicationList/api";
 import { queryList } from "@/views/applicationManagement/applicationGroup/api";
 
 export default {
@@ -193,12 +193,12 @@ export default {
       })
     },
 
-    fetchApplicationInfo(applicationId) {
-      if (!applicationId) return;
+    fetchApplication(id) {
+      if (!id) return;
       // 开启全屏 loading 或卡片 loading
       const loadingInstance = this.$loading({ target: '.app-container', lock: true, text: '加载配置中...' });
 
-      getApplicationInfo({ applicationId: applicationId }).then(res => {
+      getApplicationById(id).then(res => {
         if (res.data.code === 2000) {
           this.modifyApplicationForm = res.data.body;
         }
@@ -263,7 +263,7 @@ export default {
       this.applicationId = pid;
       // 更新 localStorage
       localStorage.setItem('applicationId', JSON.stringify(pid));
-      this.fetchApplicationInfo(pid);
+      this.fetchApplication(pid);
     } else {
       this.$message.warning('参数丢失，无法加载项目信息');
     }

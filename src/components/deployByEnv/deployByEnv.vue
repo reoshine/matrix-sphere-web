@@ -9,7 +9,6 @@
               :title="step.title"
               :icon="getStepIcon(step)"
               :status="step.status"
-              :class="{ 'step-line-success': isLineSuccess(index) }"
           >
             <template slot="description">
               <span v-if="step.description" class="step-error">{{ step.description }}</span>
@@ -150,26 +149,23 @@ const STEP_STATUS_MAP = {
 export default {
   name: "deployByEnv",
   props : {
-    env: String,
-    applicationId: {
-      type: [String, Number],
-      required: true
-    }
+    env: { type: String, required: true },
+    applicationId: { type: [String, Number], required: true }
   },
   data() {
     return {
       isDisabled: true,
       deployBranchBtnIsDisabled: true,
       deployMaster: {},
-      deployInfo: { featureBranchList: [] },
+      deployInfo: {featureBranchList: []},
       unDeployedBranchList: [],
 
       deployProcessActive: 0,
       steps: [
-        { id: 'merge', title: '分支合并', status: 'wait', icon: 'el-icon-files' },
-        { id: 'build', title: '代码构建', status: 'wait', icon: 'el-icon-cpu' },
-        { id: 'publish', title: '容器部署', status: 'wait', icon: 'el-icon-upload' },
-        { id: 'finish', title: '完成上线', status: 'wait', icon: 'el-icon-video-play' }
+        {id: 'merge', title: '分支合并', status: 'wait', icon: ''},
+        {id: 'build', title: '代码构建', status: 'wait', icon: ''},
+        {id: 'publish', title: '容器部署', status: 'wait', icon: ''},
+        {id: 'finish', title: '完成上线', status: 'wait', icon: ''}
       ],
 
       dialog: false,
@@ -181,65 +177,47 @@ export default {
     };
   },
 
-  computed: {
-    deployEnvironment() {
-      return this.env;
-    }
-  },
-
   methods: {
     getStepIcon(step) {
-      if (step.status === 'error') return 'el-icon-close';
       if (step.status === 'process') return 'el-icon-loading';
       if (step.status === 'success') return 'el-icon-check';
+      if (step.status === 'error') return 'el-icon-close';
       return step.icon;
-    },
-
-    // 修改点 2: 判断线条是否应该变绿
-    // 逻辑：当前步骤成功 且 下一步骤也成功
-    isLineSuccess(index) {
-      const currentStep = this.steps[index];
-      const nextStep = this.steps[index + 1];
-
-      // 如果没有下一步（最后一步），不需要关心线
-      if (!nextStep) return false;
-
-      // 只有两端都 success，线才变绿
-      return currentStep.status === 'success' && nextStep.status === 'success';
     },
 
     updateStepState(item) {
       const index = this.steps.findIndex(s => s.id === item.stepCode);
       if (index === -1) return;
 
-      const currentStep = { ...this.steps[index] };
       const statusKey = Number(item.stepStatus);
       const newStatus = STEP_STATUS_MAP[statusKey] || 'wait';
+      const errorMessage = (newStatus === 'error') ? item.errorMessage : '';
 
-      currentStep.status = newStatus;
-      currentStep.description = (newStatus === 'error') ? item.errorMessage : '';
+      const updatedStep = {
+        ...this.steps[index],
+        status: newStatus,
+        description: errorMessage
+      };
+      this.$set(this.steps, index, updatedStep);
 
-      this.$set(this.steps, index, currentStep);
-
-      if (newStatus === 'error') {
-        this.deployProcessActive = index;
-        this.closeResources();
-        this.refreshData();
-        return;
-      }
-
+      // 链式激活：如果当前成功且不是最后一步，预判下一步为 process
       if (newStatus === 'success' && index < this.steps.length - 1) {
         const nextIndex = index + 1;
-        const nextStep = { ...this.steps[nextIndex] };
+        const nextStep = this.steps[nextIndex];
         if (nextStep.status === 'wait') {
-          nextStep.status = 'process';
-          this.$set(this.steps, nextIndex, nextStep);
+          this.$set(this.steps, nextIndex, {...nextStep, status: 'process'});
         }
       }
 
       this.recalcActiveIndex();
 
-      if (item.stepCode === 'finish' && newStatus === 'success') {
+      // ★★★ 优化逻辑：防止SSE连上的一瞬间接收到旧的成功消息导致误关 ★★★
+      // 只有当前步是最后一步，且状态是成功时，才关闭
+      // 或者是 Error 状态
+      if (newStatus === 'error') {
+        this.closeResources();
+        this.refreshData();
+      } else if (item.stepCode === 'finish' && newStatus === 'success') {
         this.closeResources();
         this.refreshData();
       }
@@ -270,33 +248,40 @@ export default {
       }));
     },
 
-    // === 资源管理 ===
     createSseConnect(applicationId) {
       this.closeResources();
+      // 使用后端提供的SSE接口
       const sseUrl = `http://192.168.0.10:7002/matrix-sphere/sse/connect/${applicationId}`;
+      console.log('SSE 连接中...', sseUrl);
 
-      this.eventSource = new EventSourcePolyfill(sseUrl, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
-          heartbeatTimeout: 3600000
-        }
-      });
+      try {
+        this.eventSource = new EventSourcePolyfill(sseUrl, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
+            heartbeatTimeout: 3600000
+          }
+        });
 
-      this.eventSource.addEventListener('connect', () => console.log("SSE Connected"));
+        this.eventSource.onopen = () => {
+          console.log('SSE 连接成功');
+        };
 
-      this.eventSource.onmessage = (res => {
-        try {
-          const data = JSON.parse(res.data);
-          this.updateStepState(data);
-        } catch (e) {
-          console.error("SSE Parse Error:", e);
-        }
-      });
+        this.eventSource.onmessage = (res) => {
+          try {
+            console.log('SSE 收到消息:', res.data);
+            this.updateStepState(JSON.parse(res.data));
+          } catch (e) {
+            console.error(e);
+          }
+        };
 
-      this.eventSource.onerror = (err) => {
-        console.warn("SSE Error -> Polling", err);
-        this.handleSseError();
-      };
+        this.eventSource.onerror = (err) => {
+          console.error('SSE 错误', err);
+          this.handleSseError();
+        };
+      } catch (e) {
+        this.startPolling();
+      }
     },
 
     handleSseError() {
@@ -309,6 +294,7 @@ export default {
 
     startPolling() {
       if (this.pollingTimer) return;
+      console.log('降级为轮询模式');
       this.pollCurrentStatus();
       this.pollingTimer = setInterval(() => {
         this.pollCurrentStatus();
@@ -317,21 +303,21 @@ export default {
 
     pollCurrentStatus() {
       this.getDeployStepList();
-      getDeployMaster({
-        applicationId: this.applicationId,
-        deployEnvironment: this.deployEnvironment
-      }).then(res => {
+      // 这里调用 Master 状态检查，如果是最终状态则结束轮询
+      getDeployMaster({applicationId: this.applicationId, env: this.env}).then(res => {
         if (res.data.code === 2000 && res.data.body) {
           const status = res.data.body.deployStatus;
+          // 2:成功, 3:失败
           if (status === 2 || status === 3) {
             this.closeResources();
             this.refreshData();
           }
         }
-      }).catch(() => {});
+      });
     },
 
     closeResources() {
+      console.log('正在关闭 SSE 和轮询资源');
       if (this.eventSource) {
         this.eventSource.close();
         this.eventSource = null;
@@ -340,21 +326,27 @@ export default {
         clearInterval(this.pollingTimer);
         this.pollingTimer = null;
       }
-      sseClose(this.applicationId).catch(() => {});
+      // 通知后端关闭连接 (可选，视后端逻辑而定)
+      sseClose(this.applicationId).catch(() => {
+      });
     },
 
-    // === API Calls ===
     refreshData() {
+      console.log('刷新数据...');
       this.getUnDeployedBranchList(this.applicationId);
+      // 务必确保这里使用的是最新的 deployMaster.id
       if (this.deployMaster && this.deployMaster.id) {
+        console.log('刷新部署详情, ID:', this.deployMaster.id);
         this.getDeployRecord(this.deployMaster.id);
       }
     },
 
+    // --- API Calls ---
+
     getDeployStepList() {
       getDeployStepList({
         applicationId: this.applicationId,
-        deployEnvironment: this.deployEnvironment
+        env: this.env
       }).then(res => {
         if (res.data.code === 2000 && CollUtils.isNotEmpty(res.data.body)) {
           this.processStepList(res.data.body);
@@ -363,40 +355,30 @@ export default {
     },
 
     async getDeployMaster(applicationId, activeName) {
-      let result;
       try {
-        const res = await getDeployMaster({ applicationId, deployEnvironment: activeName });
+        const res = await getDeployMaster({applicationId, env: activeName});
         if (res.data.code === 2000) {
-          this.deployMaster = res.data.body;
-          result = res.data.body;
+          this.deployMaster = res.data.body || {};
+          return this.deployMaster;
         }
-      } catch (e) { console.error(e) }
-
-      if (result) {
-        await this.getDeployRecord(result.id);
-      } else {
-        this.$emit('deployInfoUpdated', { deployInfo: {}, featureBranchList: [] });
+      } catch (e) {
+        console.error(e);
       }
-      return result;
+      return null;
     },
 
     async getDeployRecord(deployMasterId) {
-      let result;
-      await getDeployRecord({ deployMasterId }).then(res => {
+      if (!deployMasterId) return;
+      await getDeployRecord(deployMasterId).then(res => {
         if (res.data.code === 2000) {
           this.deployInfo = res.data.body;
-          result = res.data.body;
           this.$emit('deployInfoUpdated', this.deployInfo);
         }
       });
-      return result;
     },
 
     getUnDeployedBranchList(applicationId) {
-      getUnDeployedBranchList({
-        applicationId: applicationId,
-        deployEnvironment: this.deployEnvironment
-      }).then(res => {
+      getUnDeployedBranchList({applicationId, env: this.env}).then(res => {
         if (res.data.code === 2000) {
           this.unDeployedBranchList = res.data.body;
         }
@@ -405,19 +387,18 @@ export default {
 
     getDepLoyLogList() {
       this.dialog = true;
-      getDepLoyLogList({
-        applicationId: this.applicationId,
-        deployEnvironment: this.deployEnvironment,
-      }).then(res => {
-        if (res.data.code === 2000) {
-          this.deployLogList = res.data.body;
-        }
+      getDepLoyLogList({applicationId: this.applicationId, env: this.env}).then(res => {
+        if (res.data.code === 2000) this.deployLogList = res.data.body;
       });
     },
 
+    // --- Action Handlers (★★★ 核心修复区域 ★★★) ---
+
     async executeDeployAction(actionType) {
+      // 1. 先把UI状态重置
       this.clearDeployStatus();
-      this.createSseConnect(this.applicationId);
+
+      // 注意：这里不要先调用 createSseConnect，否则会收到旧的消息！
 
       let ids = [];
       if (actionType === '提交分支部署') {
@@ -425,39 +406,61 @@ export default {
       } else if (actionType === 'main分支部署') {
         ids = [];
       } else {
+        // 重新部署
         ids = this.deployedBranchIds;
       }
 
       try {
+        // 2. 先请求接口创建部署
         const res = await deploy({
           applicationId: this.applicationId,
           branchIds: ids,
-          deployEnvironment: this.deployEnvironment,
+          env: this.env,
           deployType: actionType
         });
 
         if (res.data.code === 2000) {
           const result = res.data.body;
-          await this.getUnDeployedBranchList(result.application.id);
-          await this.getDeployRecord(result.deployMaster.id);
+
+          // 3. 关键修复：确保先更新 deployMaster，拿到新的ID
+          if (result && result.deployMaster) {
+            this.deployMaster = result.deployMaster;
+            console.log('新部署创建成功，ID:', this.deployMaster.id);
+          }
+
+          // 4. 清空选中状态
           if (this.$refs.selectedStatus) this.$refs.selectedStatus.clearSelection();
+
+          // 5. ★★★ 只有在新部署创建成功后，才开始建立 SSE 连接 ★★★
+          // 这样保证连上后收到的都是新 ID 的消息
+          this.createSseConnect(this.applicationId);
+
         } else {
           this.$message.error(res.data.message);
-          this.closeResources();
+          // 失败了就不连SSE了，重置UI
+          this.deployProcessActive = 0;
+          this.steps.forEach(s => s.status = 'wait');
         }
       } catch (err) {
+        console.error(err);
         this.$message.error('操作失败: ' + err);
         this.closeResources();
       }
     },
 
-    deploy() { this.executeDeployAction('提交分支部署'); },
-    withdrawBranch() { this.executeDeployAction('退出分支部署'); },
+    deploy() {
+      this.executeDeployAction('提交分支部署');
+    },
+    withdrawBranch() {
+      this.executeDeployAction('退出分支部署');
+    },
     reDeploy() {
       if (!this.deployedBranchIds.length) return this.$message.warning('请选择要重部署的分支');
       this.executeDeployAction('重新部署');
     },
-    deployMain() { this.executeDeployAction('main分支部署'); },
+    deployMain() {
+      this.executeDeployAction('main分支部署');
+    },
 
     getUnDeployBranchIds(val) {
       this.unDeployedBranchIds = val.map(i => i.id);
@@ -467,25 +470,31 @@ export default {
       this.deployedBranchIds = val.map(i => i.id);
       this.isDisabled = this.deployedBranchIds.length <= 0;
     },
-
     getDeployStatusType(status) {
-      const map = { 0: 'info', 1: 'primary', 2: 'success', 3: 'danger' };
+      const map = {0: 'info', 1: 'primary', 2: 'success', 3: 'danger'};
       return map[status] || 'info';
     },
     getDeployStatusText(status) {
-      const map = { 0: '初始化', 1: '部署中', 2: '成功', 3: '失败'};
+      const map = {0: '初始化', 1: '部署中', 2: '成功', 3: '失败'};
       return map[status] || '未知';
     }
   },
 
   mounted() {
     this.getUnDeployedBranchList(this.applicationId);
-    this.getDeployMaster(this.applicationId, this.deployEnvironment).then(data => {
-      if (data && data.deployStatus === 1) {
-        this.createSseConnect(this.applicationId);
+
+    // 获取步骤条状态
+    this.getDeployStepList();
+
+    // 初始化检查：如果页面刷新时正在部署中，则恢复连接
+    this.getDeployMaster(this.applicationId, this.env).then(master => {
+      if (master) {
+        if (master.deployStatus === 1) {
+          this.createSseConnect(this.applicationId);
+        }
+        this.getDeployRecord(master.id);
       }
     });
-    this.getDeployStepList();
   },
 
   beforeDestroy() {
@@ -495,6 +504,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+/* 你的样式保持不变 */
 .deploy-container {
   padding: 0 10px;
 }
@@ -521,109 +531,61 @@ export default {
     padding: 10px 20px;
   }
 
-  /* * =========================================
-   * 核心样式修复与线条颜色接管
-   * =========================================
-   */
-
-  /* 1. 全局强制重置线条颜色为灰色 */
-  /* 去掉 Element UI 默认的进度条填充效果，完全由我们控制背景色 */
-
-  ::v-deep .el-step__line-inner {
-    display: none !important;
-  }
-
   ::v-deep .el-step__line {
-    background-color: #C0C4CC !important; /* 默认灰 */
+    background-color: #C0C4CC !important;
   }
 
-  /* 2. 只有当父级有 step-line-success 类时，线条才变绿 */
-
-  ::v-deep .el-step.step-line-success {
-    .el-step__line {
-      background-color: #67C23A !important; /* 成功绿 */
-    }
+  ::v-deep .el-step__head.is-success .el-step__icon {
+    background-color: #67C23A;
+    color: #fff;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    line-height: 24px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
   }
 
-  /* 3. 成功状态图标 (绿底白钩) */
-
-  ::v-deep .el-step__head.is-success {
-    .el-step__icon {
-      background-color: #67C23A;
-      color: #fff;
-      border-color: #67C23A;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      font-size: 14px;
-      font-weight: bold;
-      display: inline-flex; /* 修复居中 */
-      align-items: center;
-      justify-content: center;
-    }
-
-    .el-step__line {
-      /* 注意：这里不能写颜色，颜色由上面的 step-line-success 控制 */
-    }
+  ::v-deep .el-step__head.is-error .el-step__icon {
+    background-color: #F56C6C;
+    color: #fff;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    line-height: 24px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
   }
 
-  /* 4. 失败状态图标 (红底白叉) */
-
-  ::v-deep .el-step__head.is-error {
-    .el-step__icon {
-      background-color: #F56C6C;
-      color: #fff;
-      border-color: #F56C6C;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      font-size: 14px;
-      font-weight: bold;
-      display: inline-flex; /* 修复居中 */
-      align-items: center;
-      justify-content: center;
-    }
-
-    .el-step__title {
-      color: #F56C6C;
-    }
-
-    .el-step__description {
-      color: #F56C6C;
-    }
+  ::v-deep .el-step__head.is-error .el-step__title,
+  ::v-deep .el-step__head.is-error .el-step__description {
+    color: #F56C6C;
   }
 
-  /* 5. 进行中状态 (无边框 Loading) */
-
-  ::v-deep .el-step__head.is-process {
-    .el-step__icon {
-      background-color: #fff;
-      border: none;
-      color: #409EFF;
-      width: 24px;
-      height: 24px;
-      font-size: 24px;
-      display: inline-flex; /* 修复居中 */
-      align-items: center;
-      justify-content: center;
-    }
-
-    .el-step__icon-inner {
-      font-weight: normal;
-    }
+  ::v-deep .el-step__head.is-process .el-step__icon {
+    background-color: #fff;
+    border: 2px solid #303133;
+    color: #303133;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    line-height: 20px;
+    text-align: center;
+    font-size: 14px;
   }
 
-  /* 6. 等待状态 */
-
-  ::v-deep .el-step__head.is-wait {
-    .el-step__icon {
-      width: 24px;
-      height: 24px;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
+  ::v-deep .el-step__head.is-wait .el-step__icon {
+    border: 2px solid #C0C4CC;
+    color: #C0C4CC;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    line-height: 20px;
+    text-align: center;
   }
 
   .step-error {
@@ -685,12 +647,6 @@ export default {
       font-size: 13px;
       font-weight: bold;
       color: #606266;
-    }
-
-    .tag-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
     }
 
     .text-danger {

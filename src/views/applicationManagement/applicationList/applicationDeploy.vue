@@ -173,9 +173,9 @@ export default {
     },
 
     // 获取项目详情
-    getApplication(applicationId) {
+    getApplication(id) {
       const loading = this.$loading({ target: '.info-card', text: '加载应用信息...' });
-      getApplicationById({ applicationId: applicationId }).then(res => {
+      getApplicationById(id).then(res => {
         if (res.data.code === 2000) {
           this.applicationInfo = res.data.body;
 

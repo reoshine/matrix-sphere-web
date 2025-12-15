@@ -13,10 +13,10 @@ export function add(data) {
     return sphere.post('/applicationGroup/add', data)
 }
 
-export function modifyById(data) {
-    return sphere.post('/applicationGroup/modifyById', data)
+export function modify(data) {
+    return sphere.post('/applicationGroup/modify', data)
 }
 
-export function removeById(data) {
-    return sphere.post(`/applicationGroup/removeById/${data}`)
+export function remove(data) {
+    return sphere.post(`/applicationGroup/remove/${data}`)
 }

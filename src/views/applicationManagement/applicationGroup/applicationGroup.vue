@@ -77,7 +77,7 @@
             layout="total, sizes, prev, pager, next, jumper"
             :total="total"
             :current-page.sync="queryParams.pageNum"
-            :page-size.sync="queryParams.pageCount"
+            :page-size.sync="queryParams.pageSize"
             :page-sizes="pageSizes"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
@@ -117,7 +117,7 @@
 </template>
 
 <script>
-import { modifyById, queryPage, add, removeById } from "@/views/applicationManagement/applicationGroup/api";
+import { modify, queryPage, add, remove } from "@/views/applicationManagement/applicationGroup/api";
 
 export default {
   name: "applicationGroup",
@@ -130,7 +130,7 @@ export default {
       // 搜索参数（整合到一个对象中）
       queryParams: {
         pageNum: 1,
-        pageCount: 10,
+        pageSize: 10,
         searchText: '',
         enableStatus: '' // 默认为空，代表查询所有
       },
@@ -178,7 +178,7 @@ export default {
       // 注意：这里修正了原代码中 searchText 传值不一致的问题
       const params = {
         pageNum: this.queryParams.pageNum,
-        pageCount: this.queryParams.pageCount,
+        pageSize: this.queryParams.pageSize,
         searchText: this.queryParams.searchText,
         enableStatus: this.queryParams.enableStatus || undefined // 如果为空字符串则传undefined或后端约定的值
       };
@@ -187,7 +187,7 @@ export default {
         if (res.data.code === 2000) {
           const result = res.data.body;
           this.total = result.total || 0;
-          this.applicationGroupList = result.data || [];
+          this.applicationGroupList = result.list || [];
         } else {
           this.$message.error(res.data.message || '查询失败');
         }
@@ -213,7 +213,7 @@ export default {
 
     /** 分页操作 */
     handleSizeChange(val) {
-      this.queryParams.pageCount = val;
+      this.queryParams.pageSize = val;
       this.getList();
     },
     handleCurrentChange(val) {
@@ -263,7 +263,7 @@ export default {
 
           // 根据是否有ID判断是新增还是修改
           const isEdit = !!this.form.id;
-          const apiCall = isEdit ? modifyById : add;
+          const apiCall = isEdit ? modify : add;
 
           // 构建参数 (新增时不需要ID)
           const params = isEdit ? {
@@ -300,7 +300,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        return removeById(id);
+        return remove(id);
       }).then(res => {
         if (res.data.code === 2000) {
           this.$message.success('删除成功');
@@ -316,7 +316,7 @@ export default {
       // 这里需要注意：如果后端API失败，需要把 Switch 的状态改回去
       const originalStatus = newValue === '启用' ? '停用' : '启用';
 
-      modifyById({
+      modify({
         id: row.id,
         enableStatus: newValue
       }).then(res => {

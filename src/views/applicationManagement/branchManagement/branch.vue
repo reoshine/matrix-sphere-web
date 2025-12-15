@@ -172,10 +172,9 @@
 import {
   createBranch,
   modifyBranch,
-  getApplicationById,
   getUnDeployedBranchList,
   removeBranch,
-  getApplicationInfo
+  getApplicationById
 } from '@/views/applicationManagement/applicationList/api';
 import { queryList } from '@/views/applicationManagement/applicationGroup/api';
 
@@ -227,7 +226,7 @@ export default {
         return;
       }
       const loading = this.$loading({target: '.app-container'});
-      getApplicationInfo({searchText: this.searchText}).then(res => {
+      getApplicationById({searchText: this.searchText}).then(res => {
         if (res.data.code === 2000) {
           this.applicationInfo = res.data.body;
           if (this.applicationInfo.id) {
@@ -242,7 +241,7 @@ export default {
     },
 
     getApplication(applicationId) {
-      getApplicationById({applicationId: applicationId}).then(res => {
+      getApplicationById(applicationId).then(res => {
         if (res.data.code === 2000) {
           this.applicationInfo = res.data.body;
           this.searchText = this.applicationInfo.applicationCode;

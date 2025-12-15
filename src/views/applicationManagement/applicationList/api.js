@@ -1,8 +1,8 @@
 import { sphere } from '@/axios'
 
 // ====================================== 应用列表 ======================================
-export function queryApplicationPage(data) {
-    return sphere.post('/application/queryListPage', data)
+export function queryPage(data) {
+    return sphere.post('/application/queryPage', data)
 }
 
 export function queryList(data) {
@@ -17,15 +17,15 @@ export function exportApplicationTemplate() {
 }
 
 export function saveApplication(data) {
-    return sphere.post('/application/saveApplication', data)
+    return sphere.post('/application/save', data)
 }
 
 export function modifyApplication(data) {
-    return sphere.post('/application/modifyApplication', data)
+    return sphere.post('/application/modify', data)
 }
 
-export function getApplicationInfo(data) {
-    return sphere.post('/application/getApplicationInfo', data)
+export function getApplicationById(data) {
+    return sphere.get(`/application/getById/${data}`)
 }
 
 export function removeApplication(data) {
@@ -41,9 +41,6 @@ export function importFile(data, config) {
 }
 
 // ====================================== 分支管理 ======================================
-export function getApplicationById(data) {
-    return sphere.post('/application/getApplicationInfo', data)
-}
 
 export function getUnDeployedBranchList(data) {
     return sphere.post('/branch/getUnDeployedBranchList', data)
@@ -63,7 +60,7 @@ export function getDeployMaster(data) {
 }
 
 export function getDeployRecord(data) {
-    return sphere.post('/deploy/getDeployRecord', data)
+    return sphere.get(`/deploy/getDeployRecord/${data}`)
 }
 
 export function withdrawBranch(data) {

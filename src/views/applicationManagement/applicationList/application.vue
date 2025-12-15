@@ -125,7 +125,7 @@
                       配置流水线
                     </el-dropdown-item>
 
-                    <el-dropdown-item icon="el-icon-edit" @click.native="modifyApplicationInfo(application.id)">
+                    <el-dropdown-item icon="el-icon-edit" @click.native="modify(application.id)">
                       修改基础信息
                     </el-dropdown-item>
 
@@ -149,7 +149,7 @@
           @size-change="handleSizeChange"
           :current-page="pageNum"
           :page-sizes="pageSizes"
-          :page-size="pageCount"
+          :page-size="pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="total">
       </el-pagination>
@@ -218,11 +218,12 @@
 import {
   enableChange,
   exportApplicationTemplate,
-  getApplicationInfo,
+  getApplicationById,
   importFile,
-  queryApplicationPage,
+  queryPage,
   removeApplication,
-  saveApplication
+  saveApplication,
+  modifyApplication
 } from "@/views/applicationManagement/applicationList/api";
 import {queryList} from "@/views/applicationManagement/applicationGroup/api";
 
@@ -274,7 +275,7 @@ export default {
       applicationList: [],
       total: 0,
       pageNum: 1,
-      pageCount: 16, // 卡片布局下每页多一点比较好看
+      pageSize: 16, // 卡片布局下每页多一点比较好看
       pageSizes: [12, 16, 24, 48], // 适配栅格系统(每行4个)
     };
   },
@@ -288,7 +289,7 @@ export default {
     },
 
     handleSizeChange(val) {
-      this.pageCount = val;
+      this.pageSize = val;
       this.queryApplicationPage();
     },
 
@@ -306,9 +307,9 @@ export default {
 
     //分页查询
     queryApplicationPage() {
-      queryApplicationPage({
+      queryPage({
         pageNum: this.pageNum,
-        pageCount: this.pageCount,
+        pageSize: this.pageSize,
         searchText: this.searchText,
         enableStatus: this.enableStatus || undefined,
         applicationGroupCode: this.applicationGroupCode || undefined
@@ -316,7 +317,7 @@ export default {
         if (res.data.code === 2000) {
           const result = res.data.body;
           this.total = result.total;
-          this.applicationList = result.data || [];
+          this.applicationList = result.list || [];
         }
       }).catch(err => {
         this.$message.error('查询失败：' + err);
@@ -335,9 +336,9 @@ export default {
       });
     },
 
-    modifyApplicationInfo(applicationId) {
+    modify(id) {
       // 先获取详情再打开
-      getApplicationInfo({ applicationId: applicationId }).then(res => {
+      getApplicationById(id).then(res => {
         if (res.data.code === 2000) {
           this.saveApplicationForm = res.data.body;
           this.dialog = true;
@@ -407,18 +408,36 @@ export default {
     saveApplication() {
       this.$refs.saveApplicationFormRef.validate((valid) => {
         if (valid) {
-          saveApplication({
-            ...this.saveApplicationForm,
-            shouldAddJenkinsJob: true
-          }).then(res => {
+          this.loading = true; // 开启 loading 防止重复点击
+
+          // 1. 判断操作类型
+          const isEdit = !!this.saveApplicationForm.id;
+
+          // 2. 准备请求 Promise
+          let requestPromise;
+          if (isEdit) {
+            // --- 修改逻辑 ---
+            // 注意：根据之前的后端定义，修改接口不需要 shouldAddJenkinsJob 参数
+            // 且后端 modifyApplication(ApplicationModifyRequest request) 需要 id
+            requestPromise = modifyApplication(this.saveApplicationForm);
+          } else {
+            // --- 新增逻辑 ---
+            requestPromise = saveApplication({
+              ...this.saveApplicationForm,
+              shouldAddJenkinsJob: true // 新增时才需要这个标志
+            });
+          }
+
+          // 3. 执行请求
+          requestPromise.then(res => {
             if (res.data.code === 2000) {
               this.$message({
-                message: '添加项目成功！',
+                message: isEdit ? '修改应用成功！' : '添加应用成功！',
                 type: 'success',
                 duration: 1000,
                 onClose: () => {
-                  this.cancelForm()
-                  this.queryApplicationPage()
+                  this.cancelForm();
+                  this.queryApplicationPage();
                 }
               });
             } else {
@@ -430,12 +449,13 @@ export default {
             }
           }).catch(err => {
             this.$message({
-              message: '查询部署信息失败，原因：' + err,
+              message: (isEdit ? '修改' : '新增') + '失败，原因：' + err,
               type: 'error',
               duration: 2000,
             });
-            this.loading = false
-          })
+          }).finally(() => {
+            this.loading = false; // 关闭 loading
+          });
         }
       });
     },
