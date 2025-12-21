@@ -92,35 +92,67 @@
         :visible.sync="dialog"
         direction="rtl"
         size="600px"
+        :with-header="true"
         custom-class="log-drawer"
     >
-      <div class="log-list">
-        <div v-for="(deployLog, index) in deployLogList" :key="index" class="log-item">
-          <el-card shadow="hover" class="log-card">
-            <div slot="header" class="log-header">
-              <span class="log-time"><i class="el-icon-time"></i> {{ deployLog.deployTime }}</span>
-              <el-tag size="small" effect="dark" :type="getDeployStatusType(deployLog.deployStatus)">
-                {{ getDeployStatusText(deployLog.deployStatus) }}
-              </el-tag>
-            </div>
-
-            <el-descriptions :column="1" border size="mini">
-              <el-descriptions-item label="操作人">{{ deployLog.deployByName }}</el-descriptions-item>
-              <el-descriptions-item label="类型">{{ deployLog.deployType }}</el-descriptions-item>
-              <el-descriptions-item label="Release 分支" v-if="deployLog.releaseBranchName">
-                {{ deployLog.releaseBranchName }}
-              </el-descriptions-item>
-              <el-descriptions-item label="Feature 分支">
-                <div class="tag-group">
-                  <el-tag v-for="item in deployLog.featureBranchNameList" :key="item" size="mini" type="info">{{ item }}</el-tag>
+      <div class="drawer-content">
+        <el-timeline v-if="deployLogList && deployLogList.length > 0">
+          <el-timeline-item
+              v-for="(log, index) in deployLogList"
+              :key="index"
+              :timestamp="formatTime(log.deployTime)"
+              placement="top"
+              :color="getStatusColor(log.deployStatus)"
+              size="large"
+              :icon="getStatusIcon(log.deployStatus)"
+          >
+            <el-card shadow="hover" class="timeline-card">
+              <div class="card-header">
+                <div class="user-info">
+                  <i class="el-icon-user-solid"></i>
+                  <span class="username">{{ log.deployByName }}</span>
+                  <span class="action-text">执行了</span>
+                  <span :class="['action-type', getDeployTypeColorClass(log.deployType)]">
+                    {{ log.deployType }}
+                  </span>
                 </div>
-              </el-descriptions-item>
-              <el-descriptions-item label="失败原因" v-if="deployLog.deployStatus === 3">
-                <span class="text-danger">{{ deployLog.errorMessage }}</span>
-              </el-descriptions-item>
-            </el-descriptions>
-          </el-card>
-        </div>
+
+                <el-tag size="mini" effect="dark" :type="getStatusType(log.deployStatus)">
+                  {{ getDeployStatusText(log.deployStatus) }}
+                </el-tag>
+              </div>
+
+              <div class="card-body">
+                <div v-if="log.releaseBranchName" class="branch-row">
+                  <span class="label">Release:</span>
+                  <span class="branch-name release-tag">{{ log.releaseBranchName }}</span>
+                </div>
+
+                <div v-if="log.featureBranchNameList && log.featureBranchNameList.length > 0" class="branch-section">
+                  <div class="label-title">包含 Feature 分支 ({{ log.featureBranchNameList.length }}):</div>
+                  <div class="tag-container">
+                    <el-tag
+                        v-for="branch in log.featureBranchNameList"
+                        :key="branch"
+                        type="info"
+                        size="mini"
+                        class="branch-tag"
+                    >
+                      <i class="el-icon-git-branch"></i> {{ branch }}
+                    </el-tag>
+                  </div>
+                </div>
+
+                <div v-if="log.deployStatus === 3 && log.errorMessage" class="error-alert">
+                  <div class="error-title"><i class="el-icon-warning"></i> 部署失败原因:</div>
+                  <div class="error-content">{{ log.errorMessage }}</div>
+                </div>
+              </div>
+            </el-card>
+          </el-timeline-item>
+        </el-timeline>
+
+        <el-empty v-else description="暂无历史记录"></el-empty>
       </div>
     </el-drawer>
   </div>
@@ -386,10 +418,69 @@ export default {
     },
 
     getDepLoyLogList() {
+      // 1. 参数校验 (修复之前的 Bug)
+      if (!this.applicationId || !this.env) {
+        this.$message.error('无法获取历史：缺少应用ID或环境参数');
+        return;
+      }
+
       this.dialog = true;
-      getDepLoyLogList({applicationId: this.applicationId, env: this.env}).then(res => {
-        if (res.data.code === 2000) this.deployLogList = res.data.body;
+      // 给个 loading 状态（可选，如果在 data 里定义了 loading）
+      // this.loading = true;
+
+      getDepLoyLogList({
+        applicationId: this.applicationId,
+        env: this.env
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.deployLogList = res.data.body || [];
+        } else {
+          // 捕获后端逻辑错误 (如 code 4001)
+          this.$message.error(res.data.message || '获取历史记录失败');
+        }
+      }).catch(e => {
+        console.error(e);
+        this.$message.error('网络请求异常');
       });
+    },
+
+    // --- 以下是 Timeline 需要的辅助方法 ---
+
+    formatTime(val) {
+      if (!val) return '';
+      return val.replace('T', ' ');
+    },
+
+    getStatusColor(status) {
+      // 1:进行中(蓝), 2:成功(绿), 3:失败(红)
+      const map = { 1: '#409EFF', 2: '#67C23A', 3: '#F56C6C' };
+      return map[status] || '#909399';
+    },
+
+    getStatusIcon(status) {
+      if (status === 1) return 'el-icon-loading';
+      if (status === 2) return 'el-icon-check';
+      if (status === 3) return 'el-icon-close';
+      return '';
+    },
+
+    // 这里我们增加一个专门针对“部署类型”文字颜色的方法
+    getDeployTypeColorClass(typeText) {
+      if (typeText === '重新部署') return 'text-warning';
+      if (typeText === 'main分支部署') return 'text-danger';
+      if (typeText === '退出分支部署') return 'text-info';
+      return 'text-primary'; // 提交分支部署
+    },
+
+    // 这里的 deployStatus 逻辑保持不变 (0,1,2,3)
+    getStatusType(status) {
+      const map = { 1: 'primary', 2: 'success', 3: 'danger' };
+      return map[status] || 'info';
+    },
+
+    getDeployStatusText(status) {
+      const map = { 0: '初始化', 1: '部署中', 2: '部署成功', 3: '部署失败' };
+      return map[status] || '未知';
     },
 
     // --- Action Handlers (★★★ 核心修复区域 ★★★) ---
@@ -470,14 +561,6 @@ export default {
       this.deployedBranchIds = val.map(i => i.id);
       this.isDisabled = this.deployedBranchIds.length <= 0;
     },
-    getDeployStatusType(status) {
-      const map = {0: 'info', 1: 'primary', 2: 'success', 3: 'danger'};
-      return map[status] || 'info';
-    },
-    getDeployStatusText(status) {
-      const map = {0: '初始化', 1: '部署中', 2: '成功', 3: '失败'};
-      return map[status] || '未知';
-    }
   },
 
   mounted() {
@@ -651,6 +734,125 @@ export default {
 
     .text-danger {
       color: #F56C6C;
+    }
+  }
+}
+
+/* Drawer 内容滚动区 */
+.drawer-content {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto; /* 确保内容多时可以滚动 */
+}
+
+/* 时间戳样式微调 */
+::v-deep .el-timeline-item__timestamp {
+  font-weight: bold;
+  color: #303133;
+  font-size: 13px;
+}
+
+/* Timeline 卡片样式 */
+.timeline-card {
+  border: 1px solid #ebeef5;
+  background-color: #fff;
+
+  ::v-deep .el-card__body {
+    padding: 12px 15px; /* 紧凑一点 */
+  }
+
+  /* 头部 */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #e4e7ed;
+    margin-bottom: 10px;
+
+    .user-info {
+      font-size: 13px;
+      color: #606266;
+      display: flex;
+      align-items: center;
+
+      i { margin-right: 4px; font-size: 14px; }
+      .username { font-weight: bold; color: #303133; margin-right: 4px; }
+      .action-text { margin-right: 4px; }
+
+      /* ★★★ 修复点开始 ★★★ */
+      .action-type {
+        font-weight: bold;
+        margin-left: 2px;
+        /* 注意：这里不要写 color，让下面的动态类去控制颜色 */
+      }
+
+      /* 必须显式定义这几个颜色类，否则 JS 返回了类名也没效果 */
+      .text-primary { color: #409EFF; } /* 默认蓝 */
+      .text-warning { color: #E6A23C; } /* 重新部署 - 橙色 */
+      .text-danger  { color: #F56C6C; } /* Main部署 - 红色 */
+      .text-info    { color: #909399; } /* 退出部署 - 灰色 */
+      /* ★★★ 修复点结束 ★★★ */
+    }
+  }
+
+  /* 内容主体 */
+  .card-body {
+    font-size: 13px;
+
+    .branch-row {
+      margin-bottom: 8px;
+      .label { color: #909399; margin-right: 8px; }
+      .release-tag {
+        font-family: monospace;
+        background-color: #ecf5ff;
+        color: #409EFF;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+    }
+
+    .branch-section {
+      margin-bottom: 8px;
+      .label-title {
+        color: #909399;
+        font-size: 12px;
+        margin-bottom: 5px;
+      }
+      .tag-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        .branch-tag {
+          border: none;
+          background-color: #f4f4f5;
+          color: #606266;
+          font-family: monospace; /* 代码风格字体 */
+        }
+      }
+    }
+
+    /* 错误提示框 - 重点优化 */
+    .error-alert {
+      margin-top: 12px;
+      background-color: #fef0f0;
+      border-radius: 4px;
+      padding: 10px;
+      border-left: 4px solid #F56C6C; /* 左侧红线强调 */
+
+      .error-title {
+        color: #F56C6C;
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 12px;
+      }
+      .error-content {
+        color: #5e6d82;
+        font-size: 12px;
+        line-height: 1.5;
+        word-break: break-all; /* 防止长报错撑破布局 */
+      }
     }
   }
 }
