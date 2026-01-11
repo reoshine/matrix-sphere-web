@@ -7,6 +7,7 @@
       </div>
 
       <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+        <el-tab-pane label="Jenkins Job配置 (XML)" name="JOB_CONFIG_XML"></el-tab-pane>
         <el-tab-pane label="Jenkinsfile" name="JENKINSFILE"></el-tab-pane>
         <el-tab-pane label="Dockerfile" name="DOCKERFILE"></el-tab-pane>
         <el-tab-pane label="部署脚本 (deploy.sh)" name="DEPLOY_SCRIPT"></el-tab-pane>
@@ -52,24 +53,24 @@ import templateEditorDialog from './templateEditorDialog'
 export default {
   name: 'templateManage',
   components: { templateEditorDialog },
-  props: {
-    applicationId: {
-      type: [Number, String],
-      required: true
-    }
-  },
+  // props: {
+  //   applicationId: {
+  //     type: [Number, String],
+  //     required: true
+  //   }
+  // },
   data() {
     return {
       loading: false,
       list: [],
-      activeTab: 'JENKINSFILE',
+      // 默认选中 Job XML，因为它是最基础的配置
+      activeTab: 'JOB_CONFIG_XML',
       dialogVisible: false,
       isEdit: false,
       currentData: {}
     }
   },
   computed: {
-    // 根据当前选中的 Tab 过滤数据
     filteredList() {
       return this.list.filter(item => item.templateType === this.activeTab)
     }
@@ -88,7 +89,7 @@ export default {
       }).catch(() => { this.loading = false })
     },
     handleTabClick(tab, event) {
-      // console.log(tab, event);
+      // 切换 Tab 时无需额外操作，filteredList 会自动计算
     },
     handleAdd() {
       this.isEdit = false
@@ -97,7 +98,6 @@ export default {
     },
     handleEdit(row) {
       this.isEdit = true
-      // 深拷贝避免修改影响表格
       this.currentData = JSON.parse(JSON.stringify(row))
       this.dialogVisible = true
     },

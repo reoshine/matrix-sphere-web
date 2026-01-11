@@ -65,6 +65,11 @@ function buildDynamicRoutes(apiMenus) {
                 path: menu.menuUrl,
                 component: loadView(menu.menuUrl), // [新] 直接用 menuUrl 加载
                 name: menu.menuCode, // [保留] 依然推荐用 menuCode 作为 'name'
+                // ---------------------------------------------------
+                // [核心修复] 开启 Props 传参模式
+                // 这样 URL 中的 query (applicationId=1) 就会变成组件的 prop
+                // ---------------------------------------------------
+                props: (route) => Object.assign({}, route.query, route.params),
                 meta: {
                     title: menu.menuName,
                     icon: menu.icon,

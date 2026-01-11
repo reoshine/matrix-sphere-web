@@ -8,88 +8,87 @@
     </div>
 
     <el-row :gutter="20" class="content-wrapper">
-      <el-col :xs="24" :sm="24" :md="10" :lg="9" :xl="8">
-      </el-col>
 
-      <el-col :xs="24" :sm="24" :md="14" :lg="15" :xl="16">
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="20" class="content-wrapper">
-      <el-col :xs="24" :sm="24" :md="10" :lg="9" :xl="8">
+      <el-col :xs="24" :sm="24" :md="10" :lg="9" :xl="8" class="full-height-col">
         <el-card shadow="never" class="config-card">
-          <div slot="header" class="clearfix">
+          <div slot="header" class="clearfix card-header-content">
             <span class="card-title">基础参数配置</span>
-            <el-tag size="small" :type="modifyApplicationForm.enableStatus === '启用' ? 'success' : 'danger'" style="float: right">
+            <el-tag size="small" :type="modifyApplicationForm.enableStatus === '启用' ? 'success' : 'danger'">
               {{ modifyApplicationForm.enableStatus || '未知状态' }}
             </el-tag>
           </div>
 
-          <el-form
-              :model="modifyApplicationForm"
-              :rules="rules"
-              ref="modifyApplicationFormRef"
-              label-position="top"
-              size="medium"
-          >
-            <el-form-item prop="applicationCode" label="项目编码">
-              <el-input v-model="modifyApplicationForm.applicationCode" placeholder="唯一标识，如 user-service" disabled>
-                <template slot="prepend">CODE</template>
-              </el-input>
-            </el-form-item>
-
-            <el-form-item prop="applicationName" label="项目名称">
-              <el-input v-model="modifyApplicationForm.applicationName" placeholder="应用显示名称" />
-            </el-form-item>
-
-            <el-row :gutter="10">
-              <el-col :span="12">
-                <el-form-item prop="applicationGroupId" label="所属分组">
-                  <el-select v-model="modifyApplicationForm.applicationGroupId" placeholder="请选择" style="width: 100%">
-                    <el-option
-                        v-for="item in applicationGroupList"
-                        :key="item.id"
-                        :label="item.applicationGroupName"
-                        :value="item.id">
-                    </el-option>
-                  </el-select>
+          <div class="card-body-flex">
+            <div class="scrollable-form-area custom-scrollbar">
+              <el-form
+                  :model="modifyApplicationForm"
+                  :rules="rules"
+                  ref="modifyApplicationFormRef"
+                  label-position="top"
+                  size="medium"
+                  class="config-form"
+              >
+                <el-form-item prop="applicationCode" label="项目编码">
+                  <el-input v-model="modifyApplicationForm.applicationCode" placeholder="唯一标识，如 user-service" disabled>
+                    <template slot="prepend">CODE</template>
+                  </el-input>
                 </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item prop="enableStatus" label="应用状态">
-                  <el-select v-model="modifyApplicationForm.enableStatus" placeholder="请选择" style="width: 100%">
-                    <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
-                  </el-select>
+
+                <el-form-item prop="applicationName" label="项目名称">
+                  <el-input v-model="modifyApplicationForm.applicationName" placeholder="应用显示名称" />
                 </el-form-item>
-              </el-col>
-            </el-row>
 
-            <el-form-item prop="gitUrl" label="Git 仓库地址">
-              <el-input
-                  type="textarea"
-                  :rows="3"
-                  v-model="modifyApplicationForm.gitUrl"
-                  placeholder="git@github.com:..."
-                  resize="none"
-              />
-            </el-form-item>
-          </el-form>
+                <el-row :gutter="10">
+                  <el-col :span="12">
+                    <el-form-item prop="applicationGroupId" label="所属分组">
+                      <el-select v-model="modifyApplicationForm.applicationGroupId" placeholder="请选择" style="width: 100%">
+                        <el-option
+                            v-for="item in applicationGroupList"
+                            :key="item.id"
+                            :label="item.applicationGroupName"
+                            :value="item.id">
+                        </el-option>
+                      </el-select>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item prop="enableStatus" label="应用状态">
+                      <el-select v-model="modifyApplicationForm.enableStatus" placeholder="请选择" style="width: 100%">
+                        <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
+                      </el-select>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
 
-          <div class="form-actions">
-            <el-button @click="cancelForm">返 回</el-button>
-            <el-button type="primary" @click="modifyApplication" :loading="loading" icon="el-icon-check">保存配置</el-button>
+                <el-form-item prop="gitUrl" label="Git 仓库地址">
+                  <el-input
+                      type="textarea"
+                      :rows="3"
+                      v-model="modifyApplicationForm.gitUrl"
+                      placeholder="git@github.com:..."
+                      resize="none"
+                  />
+                </el-form-item>
+
+              </el-form>
+            </div>
+
+            <div class="form-actions-footer">
+              <el-button @click="cancelForm">返 回</el-button>
+              <el-button type="primary" @click="modifyApplication" :loading="loading" icon="el-icon-check">保存配置</el-button>
+            </div>
           </div>
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :sm="24" :md="14" :lg="15" :xl="16">
-        <el-card shadow="never" class="code-card" :body-style="{ padding: 0, height: '100%' }">
+      <el-col :xs="24" :sm="24" :md="14" :lg="15" :xl="16" class="full-height-col">
+        <el-card shadow="never" class="code-card" :body-style="{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }">
           <div class="code-toolbar">
             <span class="toolbar-title"><i class="el-icon-s-cooperation"></i> Jenkins Job Config (XML)</span>
             <el-button type="text" icon="el-icon-document-copy" size="small" @click="copyCode">复制配置</el-button>
           </div>
 
-          <div class="code-editor-container">
+          <div class="code-editor-container custom-scrollbar">
             <el-empty v-if="!modifyApplicationForm.jobXml" description="暂无流水线配置信息"></el-empty>
             <pre v-else class="hljs-container"><code class="xml" ref="codeBlock">{{ prettyXmlContent }}</code></pre>
           </div>
@@ -102,9 +101,9 @@
 <script>
 import beautify from 'vkbeautify'
 import hljs from 'highlight.js'
-// 关键修改：使用深色主题 (atom-one-dark) 以符合 IDE 风格
 import 'highlight.js/styles/atom-one-dark.css'
 
+// 请根据您项目的实际 api 路径修改以下引用
 import { getApplicationById, modifyApplication } from "@/views/applicationManagement/applicationList/api";
 import { queryList } from "@/views/applicationManagement/applicationGroup/api";
 
@@ -117,7 +116,7 @@ export default {
 
       // 表单数据
       modifyApplicationForm: {
-        id: '', // 确保 ID 存在
+        id: '',
         applicationCode: '',
         applicationName: '',
         applicationGroupId: '',
@@ -153,11 +152,9 @@ export default {
   },
 
   computed: {
-    // 使用计算属性处理格式化，逻辑更清晰
     prettyXmlContent() {
       if (!this.modifyApplicationForm.jobXml) return '';
       try {
-        // vkbeautify 可能会报错，加个 try-catch
         return beautify.xml(this.modifyApplicationForm.jobXml);
       } catch (e) {
         console.warn('XML format error', e);
@@ -166,14 +163,12 @@ export default {
     }
   },
 
-  // 监听 XML 变化以触发高亮
   watch: {
     prettyXmlContent: {
       handler(val) {
         if (val) {
           this.$nextTick(() => {
             if (this.$refs.codeBlock) {
-              // 移除旧的高亮属性，重新高亮
               this.$refs.codeBlock.removeAttribute('data-highlighted');
               hljs.highlightElement(this.$refs.codeBlock);
             }
@@ -195,7 +190,6 @@ export default {
 
     fetchApplication(id) {
       if (!id) return;
-      // 开启全屏 loading 或卡片 loading
       const loadingInstance = this.$loading({ target: '.app-container', lock: true, text: '加载配置中...' });
 
       getApplicationById(id).then(res => {
@@ -216,8 +210,6 @@ export default {
           modifyApplication({ ...this.modifyApplicationForm }).then(res => {
             if (res.data.code === 2000) {
               this.$message.success('配置保存成功');
-              // 保存后不需要刷新整个页面，只需要刷新数据或返回
-              // location.reload(); // 不建议直接 reload
               this.cancelForm();
             } else {
               this.$message.error(res.data.message || '保存失败');
@@ -249,10 +241,7 @@ export default {
 
   created () {
     this.getGroupList();
-
-    // 优先使用 vue-router 参数，其次 localStorage (保持原有兼容逻辑)
     let pid = this.$route.params.applicationId || this.$route.query.applicationId;
-
     if (!pid && localStorage.getItem('applicationId')) {
       try {
         pid = JSON.parse(localStorage.getItem('applicationId'));
@@ -261,54 +250,64 @@ export default {
 
     if (pid) {
       this.applicationId = pid;
-      // 更新 localStorage
       localStorage.setItem('applicationId', JSON.stringify(pid));
       this.fetchApplication(pid);
     } else {
       this.$message.warning('参数丢失，无法加载项目信息');
     }
-  },
-
-  destroyed () {
-    // 建议: 离开页面时是否清除 localStorage 取决于业务，
-    // 如果用户刷新页面需要保持状态，则不应该清除。
-    // localStorage.removeItem('applicationId')
   }
 }
 </script>
 
 <style lang="less" scoped>
+/* 定义滚动条样式 Mixin */
+.custom-scrollbar() {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c0c4cc;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 .app-container {
   padding: 20px;
   background-color: #f0f2f5;
-  min-height: calc(100vh - 84px);
+  /* 关键点1：固定整个容器高度，减去 Top Navbar 的高度 */
+  height: calc(100vh - 189px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* 禁止全局滚动 */
 }
 
-/* 修改 css (less) */
 .page-header-wrapper {
   background: #fff;
-  padding: 20px 24px; /* 增加一点高度，显得更从容 */
+  padding: 15px 24px;
   border-radius: 4px;
-  margin-bottom: 20px;
-  border-left: 5px solid #409EFF; /* 左侧加一道蓝线，强调这是“MatrixSphere”风格的标题 */
+  margin-bottom: 15px; /* 减小间距 */
+  border-left: 5px solid #409EFF;
   box-shadow: 0 1px 4px rgba(0,21,41,.08);
+  /* 不设置 flex: 1，让它保持自然高度 */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
 }
 
 .page-title {
   display: flex;
-  flex-direction: column; /* 上下排列主副标题 */
-
+  flex-direction: column;
   .main-title {
     font-size: 18px;
     font-weight: 600;
     color: #303133;
     line-height: 1.4;
   }
-
   .sub-title {
     font-size: 13px;
     color: #909399;
@@ -316,40 +315,83 @@ export default {
   }
 }
 
+/* 关键点2：内容区域弹性伸缩，填满剩余高度 */
 .content-wrapper {
-  flex: 1; /* 撑满剩余高度 */
+  flex: 1;
+  min-height: 0; /* 允许子元素高度小于内容高度（开启滚动的前提） */
+  margin: 0 !important; /* 修正 el-row 的负 margin */
+  width: 100%;
 }
 
-/* 左侧配置卡片 */
+.full-height-col {
+  height: 100%;
+  padding-bottom: 0 !important; /* 防止底部 padding 导致溢出 */
+}
+
+/* === 左侧配置卡片 === */
 .config-card {
   height: 100%;
   display: flex;
   flex-direction: column;
+  border: none;
 
-  .card-title {
-    font-size: 16px;
-    font-weight: bold;
-    color: #303133;
+  /* 穿透修改 el-card__body，使其变成 Flex 容器 */
+  /deep/ .el-card__body {
+    flex: 1;
+    padding: 0; /* 清除默认 padding，由内部控制 */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 
-  .form-actions {
-    margin-top: 30px;
+  .card-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .card-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #303133;
+    }
+  }
+
+  /* 自定义内部 Flex 结构 */
+  .card-body-flex {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .scrollable-form-area {
+    flex: 1; /* 占据中间所有空间 */
+    overflow-y: auto; /* 仅此处滚动 */
+    padding: 20px 20px 0 20px;
+    .custom-scrollbar(); /* 应用自定义滚动条 */
+  }
+
+  .form-actions-footer {
+    flex-shrink: 0; /* 不允许压缩 */
+    padding: 15px 20px;
     text-align: right;
     border-top: 1px solid #ebeef5;
-    padding-top: 20px;
+    background: #fff;
+    z-index: 10;
   }
 }
 
-/* 右侧代码卡片 */
+/* === 右侧代码卡片 === */
 .code-card {
-  height: calc(100vh - 180px); /* 固定高度，让内部滚动 */
-  min-height: 500px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   border: 1px solid #dcdfe6;
+  /* body 样式已经在 template 中通过 :body-style 设置为 flex */
 
   .code-toolbar {
-    background-color: #282c34; /* 与 atom-one-dark 一致 */
+    flex-shrink: 0;
+    background-color: #282c34;
     padding: 10px 15px;
     border-bottom: 1px solid #3e4451;
     display: flex;
@@ -365,18 +407,16 @@ export default {
 
     .el-button--text {
       color: #61afef;
-
-      &:hover {
-        color: #409EFF;
-      }
+      &:hover { color: #409EFF; }
     }
   }
 
   .code-editor-container {
-    flex: 1;
-    background-color: #282c34; /* 深色背景 */
-    overflow: auto; /* 内部滚动 */
+    flex: 1; /* 占据剩余空间 */
+    background-color: #282c34;
+    overflow: auto; /* 双向滚动 */
     position: relative;
+    .custom-scrollbar();
 
     .hljs-container {
       margin: 0;
@@ -386,7 +426,7 @@ export default {
       line-height: 1.5;
 
       code {
-        background: transparent !important; /* 移除 hljs 默认背景，使用容器背景 */
+        background: transparent !important;
         padding: 0;
       }
     }

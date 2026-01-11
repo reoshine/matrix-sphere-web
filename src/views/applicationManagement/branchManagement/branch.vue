@@ -404,7 +404,7 @@ export default {
 .app-container {
   padding: 20px;
   background-color: #f0f2f5;
-  min-height: calc(100vh - 84px);
+  min-height: calc(100vh - 230px);
 }
 
 /* 通用卡片标题 */
