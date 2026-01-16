@@ -25,7 +25,7 @@ export function createTemplate(data) {
 
 // 更新模板
 export function updateTemplate(data) {
-    return sphere.post(`/deployTemplate/update/${data.id}`, data)
+    return sphere.post(`/deployTemplate/update`, data)
 }
 
 // 删除模板
