@@ -72,7 +72,7 @@ export function deploy(data) {
 }
 
 export function removeBranch(data) {
-    return sphere.post('/branch/removeBranch', data)
+    return sphere.post(`/branch/remove/${data}`)
 }
 
 export function mergeBranch(data) {

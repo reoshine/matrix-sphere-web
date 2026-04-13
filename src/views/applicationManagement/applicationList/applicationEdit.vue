@@ -70,6 +70,17 @@
                   />
                 </el-form-item>
 
+                <el-form-item prop="initTemplateId" label="初始化模板">
+                  <el-select v-model="modifyApplicationForm.initTemplateId" placeholder="请选择初始化模板" style="width: 100%">
+                    <el-option
+                        v-for="item in templateList"
+                        :key="item.id"
+                        :label="item.templateName"
+                        :value="item.id">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+
               </el-form>
             </div>
 
@@ -84,13 +95,13 @@
       <el-col :xs="24" :sm="24" :md="14" :lg="15" :xl="16" class="full-height-col">
         <el-card shadow="never" class="code-card" :body-style="{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }">
           <div class="code-toolbar">
-            <span class="toolbar-title"><i class="el-icon-s-cooperation"></i> Jenkins Job Config (XML)</span>
+            <span class="toolbar-title"><i class="el-icon-s-cooperation"></i> Jenkins Pipeline (Groovy)</span>
             <el-button type="text" icon="el-icon-document-copy" size="small" @click="copyCode">复制配置</el-button>
           </div>
 
           <div class="code-editor-container custom-scrollbar">
-            <el-empty v-if="!modifyApplicationForm.jobXml" description="暂无流水线配置信息"></el-empty>
-            <pre v-else class="hljs-container"><code class="xml" ref="codeBlock">{{ prettyXmlContent }}</code></pre>
+            <el-empty v-if="!modifyApplicationForm.pipelineScript" description="暂无流水线配置信息"></el-empty>
+            <pre v-else class="hljs-container"><code class="groovy" ref="codeBlock">{{ modifyApplicationForm.pipelineScript }}</code></pre>
           </div>
         </el-card>
       </el-col>
@@ -99,13 +110,13 @@
 </template>
 
 <script>
-import beautify from 'vkbeautify'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-dark.css'
 
 // 请根据您项目的实际 api 路径修改以下引用
 import { getApplicationById, modifyApplication } from "@/views/applicationManagement/applicationList/api";
 import { queryList } from "@/views/applicationManagement/applicationGroup/api";
+import { queryList as queryTemplateList } from "@/views/applicationManagement/deployTemplate/api";
 
 export default {
   name: "applicationEdit",
@@ -123,11 +134,14 @@ export default {
         applicationGroupCode: '',
         gitUrl: '',
         enableStatus: '',
-        jobXml: ''
+        jobXml: '',
+        pipelineScript: '',
+        initTemplateId: ''
       },
 
       // 字典数据
       applicationGroupList: [],
+      templateList: [],
       enableStatusList: ['启用', '停用'],
 
       // 校验规则
@@ -146,25 +160,16 @@ export default {
         ],
         enableStatus: [
           { required: true, message: '请选择状态', trigger: 'change' }
+        ],
+        initTemplateId: [
+          { required: true, message: '请选择初始化模板', trigger: 'change' }
         ]
       }
     }
   },
 
-  computed: {
-    prettyXmlContent() {
-      if (!this.modifyApplicationForm.jobXml) return '';
-      try {
-        return beautify.xml(this.modifyApplicationForm.jobXml);
-      } catch (e) {
-        console.warn('XML format error', e);
-        return this.modifyApplicationForm.jobXml;
-      }
-    }
-  },
-
   watch: {
-    prettyXmlContent: {
+    'modifyApplicationForm.pipelineScript': {
       handler(val) {
         if (val) {
           this.$nextTick(() => {
@@ -184,6 +189,14 @@ export default {
       queryList({ searchText: '', enableStatus: '启用' }).then(res => {
         if (res.data.code === 2000) {
           this.applicationGroupList = res.data.body || []
+        }
+      })
+    },
+
+    getTemplateList() {
+      queryTemplateList({ searchText: '', enableStatus: '启用' }).then(res => {
+        if (res.data.code === 2000) {
+          this.templateList = res.data.body || []
         }
       })
     },
@@ -228,19 +241,20 @@ export default {
     },
 
     copyCode() {
-      if (!this.prettyXmlContent) return;
+      if (!this.modifyApplicationForm.pipelineScript) return;
       const input = document.createElement('textarea');
-      input.value = this.prettyXmlContent;
+      input.value = this.modifyApplicationForm.pipelineScript;
       document.body.appendChild(input);
       input.select();
       document.execCommand('Copy');
       document.body.removeChild(input);
-      this.$message.success('XML 配置已复制到剪贴板');
+      this.$message.success('Pipeline 配置已复制到剪贴板');
     }
   },
 
   created () {
     this.getGroupList();
+    this.getTemplateList();
     let pid = this.$route.params.applicationId || this.$route.query.applicationId;
     if (!pid && localStorage.getItem('applicationId')) {
       try {

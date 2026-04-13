@@ -217,7 +217,7 @@
               </el-form-item>
             </el-col>
 
-            <el-col :span="24" v-if="!saveApplicationForm.id">
+            <el-col :span="24">
               <el-form-item prop="initTemplateId" label="初始化构建模板">
                 <el-select
                     v-model="saveApplicationForm.initTemplateId"
@@ -306,14 +306,14 @@ export default {
       dialog: false,
       loading: false,
       saveApplicationForm: {
-        id: undefined,
+        id: null,
         applicationCode: '',
         applicationName: '',
         applicationGroupId: '',
         applicationGroupCode: '',
         gitUrl: '',
         enableStatus: '启用',
-        initTemplateId: undefined
+        initTemplateId: null
       },
 
       rules: {
@@ -356,20 +356,25 @@ export default {
     fetchSystemTemplates() {
       if (this.templatesLoaded) return;
 
-      // 我们通常让用户选择 JOB_CONFIG_XML 类型的模板作为入口
-      getTemplateList({ applicationId: 0, scope: 'SYSTEM', templateType: 'JOB_CONFIG_XML' })
-          .then(res => {
-            if (res.data.code === 2000) {
-              this.systemTemplates = res.data.body || [];
-              this.templatesLoaded = true;
+      // 1. 调用 API (注意这里不需要传 applicationId)
+      getTemplateList({
+        scope: 'SYSTEM',
+        templateType: 'JENKINSFILE'
+      }).then(res => {
+        if (res.data.code === 2000) {
+          this.systemTemplates = res.data.body || [];
+          this.templatesLoaded = true;
 
-              // 可选：自动选中标记为 default 的模板
-              const defaultTemp = this.systemTemplates.find(t => t.isDefault);
-              if (defaultTemp && !this.form.initTemplateId) {
-                this.form.initTemplateId = defaultTemp.id;
-              }
-            }
-          });
+          // 2. [修复点] 自动选中默认模板
+          const defaultTemp = this.systemTemplates.find(t => t.isDefault);
+
+          // 错误写法: if (defaultTemp && !this.form.initTemplateId)
+          // 正确写法: ↓↓↓
+          if (defaultTemp && !this.saveApplicationForm.initTemplateId) {
+            this.saveApplicationForm.initTemplateId = defaultTemp.id;
+          }
+        }
+      });
     },
 
     handleSizeChange(val) {
@@ -436,6 +441,9 @@ export default {
         if (res.data.code === 2000) {
           this.saveApplicationForm = res.data.body;
           this.dialog = true;
+          // [修复] 编辑时也需要加载模板列表，否则下拉框是空的
+          this.templatesLoaded = false;
+          this.fetchSystemTemplates();
           if (this.applicationGroupList.length === 0) this.getGroupList();
         }
       });

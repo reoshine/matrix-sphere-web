@@ -345,10 +345,7 @@ export default {
         confirmButtonText: '确认删除',
         confirmButtonClass: 'el-button--danger'
       }).then(() => {
-        return removeBranch({
-          applicationId: branch.applicationId,
-          branchId: branch.id
-        });
+        return removeBranch(branch.id);
       }).then(res => {
         if (res.data.code === 2000) {
           this.$message.success('删除成功');
