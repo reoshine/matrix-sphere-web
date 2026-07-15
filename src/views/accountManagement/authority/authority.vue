@@ -28,7 +28,7 @@
   <!-- 权限列表 -->
   <el-divider content-position="left">权限列表</el-divider>
   <el-empty v-show="authorityPage.total <= 0" description="无应用分组信息"></el-empty>
-  <el-table v-show="authorityPage.total > 0" :data="authorityPage.data" border>
+  <el-table v-show="authorityPage.total > 0" :data="authorityPage.list" border>
     <el-table-column type="index"></el-table-column>
     <el-table-column prop="authorityCode" label="权限编码"></el-table-column>
     <el-table-column prop="authorityDesc" label="权限名称"></el-table-column>
@@ -36,7 +36,7 @@
     <el-table-column prop="enabled" label="启用状态">
       <template slot-scope="scope">
         <el-switch
-            v-model="authorityPage.data[scope.$index].enabled"
+            v-model="authorityPage.list[scope.$index].enabled"
             @change="modifyAuthorityConfirm(scope.row)">
         </el-switch>
       </template>
@@ -167,8 +167,8 @@ export default {
         enabled: data.enabled,
         searchText: data.searchText
       }).then(res => {
-        if (res.data.code === 2000) {
-          this.authorityPage = res.data.body
+        if (res.code === 200) {
+          this.authorityPage = res.data
         }
       }).catch(err => {
         this.$message({
@@ -182,8 +182,8 @@ export default {
     //根据账号查询用户信息
     getAuthorityById(authorityId) {
       getAuthorityById(authorityId).then(res => {
-        if (res.data.code === 2000) {
-          this.saveAuthorityForm = res.data.body
+        if (res.code === 200) {
+          this.saveAuthorityForm = res.data
         }
       }).catch(err => {
         this.$message({
@@ -234,7 +234,7 @@ export default {
           addAuthority({
             ...saveAuthorityForm
           }).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message({
                 type: 'success',
                 message: '新增成功!',
@@ -280,7 +280,7 @@ export default {
       modifyAuthority({
         ...saveAuthorityForm
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message({
             type: 'success',
             message: '修改成功!',
@@ -314,7 +314,7 @@ export default {
         type: 'warning'
       }).then(() => {
         removeAuthority(authority.id).then(res => {
-          if (res.data.code === 2000) {
+          if (res.code === 200) {
             this.$message({
               type: 'success',
               message: '删除成功!',

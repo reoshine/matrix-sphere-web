@@ -248,8 +248,8 @@ export default {
         pageCount: this.pageCount,
         searchText: this.searchText
       }).then(res => {
-        if (res.data.code === 2000) {
-          const result = res.data.body;
+        if (res.code === 200) {
+          const result = res.data;
           this.total = result.total;
           this.credentialList = result.data || [];
         }

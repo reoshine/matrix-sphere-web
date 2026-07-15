@@ -36,7 +36,7 @@
     <el-card shadow="never" class="table-card" :body-style="{ padding: '0' }">
       <el-table
           v-loading="loading"
-          :data="accountPage.data"
+          :data="accountPage.list"
           border
           stripe
           highlight-current-row
@@ -284,8 +284,8 @@ export default {
       };
 
       getAccountPage(params).then(res => {
-        if (res.data.code === 2000) {
-          this.accountPage = res.data.body || { total: 0, data: [] };
+        if (res.code === 200) {
+          this.accountPage = res.data || { pageNum: 1, pageSize: 10, total: 0, list: [] };
         }
       }).catch(err => {
         this.$message.error('查询失败: ' + err);
@@ -314,8 +314,8 @@ export default {
       this.accountModifyDialog = true;
       // 回显数据
       getById(account.id).then(res => {
-        if (res.data.code === 2000) {
-          this.saveAccountForm = res.data.body;
+        if (res.code === 200) {
+          this.saveAccountForm = res.data;
         }
       });
     },
@@ -328,12 +328,12 @@ export default {
           const api = isAdd ? addAccount : modifyAccount;
 
           api(this.saveAccountForm).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success(isAdd ? '新增成功' : '修改成功');
               this.accountModifyDialog = false;
               this.getAccountPage();
             } else {
-              this.$message.error(res.data.message);
+              this.$message.error(res.message);
             }
           }).catch(err => {
             this.$message.error('操作失败: ' + err);
@@ -347,11 +347,11 @@ export default {
     // 列表中的开关切换
     modifyAccountStatus(row) {
       modifyAccount(row).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('状态已更新');
         } else {
           row.enabled = !row.enabled; // 失败回滚
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
         }
       }).catch(() => {
         row.enabled = !row.enabled; // 失败回滚
@@ -366,11 +366,11 @@ export default {
         type: 'warning'
       }).then(() => {
         removeAccount(account.id).then(res => {
-          if (res.data.code === 2000) {
+          if (res.code === 200) {
             this.$message.success('删除成功');
             this.getAccountPage();
           } else {
-            this.$message.error(res.data.message);
+            this.$message.error(res.message);
           }
         });
       }).catch(() => {});
@@ -384,8 +384,8 @@ export default {
       // 1. 获取所有角色
       try {
         const roleRes = await getRoleList();
-        if (roleRes.data.code === 2000) {
-          this.roleList = roleRes.data.body.map(item => ({
+        if (roleRes.code === 200) {
+          this.roleList = roleRes.data.map(item => ({
             key: item.id,
             label: `${item.roleName} (${item.roleCode})`, // 优化显示
             disabled: !item.enabled // 假设禁用角色不可选
@@ -399,8 +399,8 @@ export default {
       // 2. 获取已分配角色
       try {
         const allocatedRes = await getAccountRoleByAccountId(account.id);
-        if (allocatedRes.data.code === 2000) {
-          this.allocationRoleId = allocatedRes.data.body.map(item => item.roleId);
+        if (allocatedRes.code === 200) {
+          this.allocationRoleId = allocatedRes.data.map(item => item.roleId);
         } else {
           this.allocationRoleId = [];
         }
@@ -421,10 +421,10 @@ export default {
         // addAccountRole: 传入 roleIdList 为需要绑定的
         // removeAccountRole: 传入 roleIdList 为需要解绑的
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success(direction === 'right' ? '分配成功' : '移除成功');
         } else {
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
           // 这里其实应该回滚穿梭框状态，但比较复杂，一般让用户重试
         }
       }).catch(err => {

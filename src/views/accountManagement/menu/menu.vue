@@ -9,21 +9,6 @@
           </div>
 
           <div class="tree-tools">
-            <el-select
-                v-model="applicationId"
-                placeholder="请选择所属应用"
-                @change="handleApplicationChange"
-                style="width: 100%; margin-bottom: 10px"
-                size="small"
-            >
-              <el-option
-                  v-for="item in applicationList"
-                  :key="item.id"
-                  :label="item.applicationName"
-                  :value="item.id">
-              </el-option>
-            </el-select>
-
             <el-input
                 placeholder="输入关键字过滤菜单"
                 v-model="filterText"
@@ -144,7 +129,6 @@
 
 <script>
 import { getMenuById, getMenuList, modifyMenu, addMenu, deleteMenu } from "@/views/accountManagement/api";
-import { queryList } from "@/views/applicationManagement/applicationList/api";
 
 export default {
   name: "MenuManagement",
@@ -193,29 +177,11 @@ export default {
       return data.menuName.indexOf(value) !== -1;
     },
 
-    // 加载项目列表
-    queryApplicationList() {
-      queryList({}).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationList = res.data.body || [];
-          if (this.applicationList.length > 0) {
-            this.applicationId = this.applicationList[0].id;
-            this.handleApplicationChange();
-          }
-        }
-      });
-    },
-
-    // 切换项目 -> 加载菜单树
-    handleApplicationChange() {
-      if (!this.applicationId) return;
-      this.currentMenuId = ''; // 重置选中
-      this.menu = {}; // 重置表单
-      this.cannotEdit = true;
-
-      getMenuList(this.applicationId).then(res => {
-        if (res.data.code === 2000) {
-          this.menuList = res.data.body || [];
+    // 加载菜单树
+    loadMenuTree() {
+      getMenuList().then(res => {
+        if (res.code === 200) {
+          this.menuList = res.data || [];
         }
       });
     },
@@ -230,8 +196,8 @@ export default {
     // 获取详情
     getMenuDetail(id) {
       getMenuById(id).then(res => {
-        if (res.data.code === 2000) {
-          this.menu = res.data.body;
+        if (res.code === 200) {
+          this.menu = res.data;
         }
       });
     },
@@ -255,12 +221,12 @@ export default {
       // const api = this.menu.id ? modifyMenu : addMenu;
 
       modifyMenu(this.menu).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('保存成功');
           this.cannotEdit = true;
           this.handleApplicationChange(); // 刷新树
         } else {
-          this.$message.error(res.data.message || '保存失败');
+          this.$message.error(res.message || '保存失败');
         }
       }).catch(err => {
         this.$message.error('保存异常: ' + err);
@@ -320,7 +286,7 @@ export default {
     }
   },
   created() {
-    this.queryApplicationList();
+    this.loadMenuTree();
   }
 };
 </script>

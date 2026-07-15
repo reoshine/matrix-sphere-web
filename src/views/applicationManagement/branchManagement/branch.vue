@@ -227,23 +227,23 @@ export default {
       }
       const loading = this.$loading({target: '.app-container'});
       getApplicationById({searchText: this.searchText}).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationInfo = res.data.body;
+        if (res.code === 200) {
+          this.applicationInfo = res.data;
           if (this.applicationInfo.id) {
             this.applicationId = this.applicationInfo.id;
             localStorage.setItem('applicationId', JSON.stringify(this.applicationId));
             this.getBranchListByApplicationId(this.applicationId);
           }
         } else {
-          this.$message.error(res.data.message || '查询应用失败');
+          this.$message.error(res.message || '查询应用失败');
         }
       }).finally(() => loading.close());
     },
 
     getApplication(applicationId) {
       getApplicationById(applicationId).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationInfo = res.data.body;
+        if (res.code === 200) {
+          this.applicationInfo = res.data;
           this.searchText = this.applicationInfo.applicationCode;
         }
       });
@@ -251,8 +251,8 @@ export default {
 
     getBranchListByApplicationId(applicationId) {
       getUnDeployedBranchList({applicationId: applicationId}).then(res => {
-        if (res.data.code === 2000) {
-          this.branchList = res.data.body || [];
+        if (res.code === 200) {
+          this.branchList = res.data || [];
         }
       });
     },
@@ -274,12 +274,12 @@ export default {
             sourceBranch: 'main',
             branchType: '1'
           }).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success('创建分支成功');
               this.resetCreateForm();
               this.refreshList();
             } else {
-              this.$message.error(res.data.message || '创建失败');
+              this.$message.error(res.message || '创建失败');
             }
           }).catch(err => {
             this.$message.error('创建异常: ' + err);
@@ -324,12 +324,12 @@ export default {
             description: this.editBranchForm.description,
             isProtected: this.editBranchForm.isProtected
           }).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success('修改成功');
               this.modifyBranchDialogVisible = false;
               this.refreshList();
             } else {
-              this.$message.error(res.data.message);
+              this.$message.error(res.message);
             }
           }).finally(() => {
             this.modifyLoading = false;
@@ -347,11 +347,11 @@ export default {
       }).then(() => {
         return removeBranch(branch.id);
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('删除成功');
           this.refreshList();
         } else {
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
         }
       }).catch(() => {
       });
@@ -359,8 +359,8 @@ export default {
 
     getGroupList() {
       queryList({searchText: '', enableStatus: '启用'}).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationGroupList = res.data.body || [];
+        if (res.code === 200) {
+          this.applicationGroupList = res.data || [];
         }
       });
     },

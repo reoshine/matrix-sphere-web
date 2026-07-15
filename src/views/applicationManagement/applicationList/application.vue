@@ -346,8 +346,8 @@ export default {
   methods: {
     getGroupList() {
       queryList({ searchText: '', enableStatus: '启用' }).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationGroupList = res.data.body || []
+        if (res.code === 200) {
+          this.applicationGroupList = res.data || []
         }
       })
     },
@@ -361,8 +361,8 @@ export default {
         scope: 'SYSTEM',
         templateType: 'JENKINSFILE'
       }).then(res => {
-        if (res.data.code === 2000) {
-          this.systemTemplates = res.data.body || [];
+        if (res.code === 200) {
+          this.systemTemplates = res.data || [];
           this.templatesLoaded = true;
 
           // 2. [修复点] 自动选中默认模板
@@ -402,8 +402,8 @@ export default {
         enableStatus: this.enableStatus || undefined,
         applicationGroupCode: this.applicationGroupCode || undefined
       }).then(res => {
-        if (res.data.code === 2000) {
-          const result = res.data.body;
+        if (res.code === 200) {
+          const result = res.data;
           this.total = result.total;
           this.applicationList = result.list || [];
         }
@@ -438,8 +438,8 @@ export default {
 
     modify(id) {
       getApplicationById(id).then(res => {
-        if (res.data.code === 2000) {
-          this.saveApplicationForm = res.data.body;
+        if (res.code === 200) {
+          this.saveApplicationForm = res.data;
           this.dialog = true;
           // [修复] 编辑时也需要加载模板列表，否则下拉框是空的
           this.templatesLoaded = false;
@@ -456,11 +456,11 @@ export default {
         type: 'warning'
       }).then(() => {
         removeApplication(applicationId).then(res => {
-          if (res.data.code === 2000) {
+          if (res.code === 200) {
             this.$message.success('删除成功!');
             this.queryApplicationPage();
           } else {
-            this.$message.error(res.data.message);
+            this.$message.error(res.message);
           }
         })
       }).catch(() => {});
@@ -471,11 +471,11 @@ export default {
         applicationId: application.id,
         enableStatus: $event
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('状态已更新');
         } else {
           application.enableStatus = $event === '启用' ? '停用' : '启用';
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
         }
       })
     },
@@ -497,12 +497,12 @@ export default {
           }
 
           requestPromise.then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success(isEdit ? '应用配置已更新' : '新应用创建成功');
               this.cancelForm();
               this.queryApplicationPage();
             } else {
-              this.$message.error(res.data.message);
+              this.$message.error(res.message);
             }
           }).catch(err => {
             this.$message.error((isEdit ? '修改' : '新增') + '失败：' + err);
@@ -558,11 +558,11 @@ export default {
       importFile({ file: content.file }, {
         headers: {'Content-Type':'multipart/form-data'}
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('应用导入成功！');
           this.queryApplicationPage();
         } else {
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
         }
       })
     },

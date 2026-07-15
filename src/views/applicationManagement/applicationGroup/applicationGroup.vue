@@ -184,12 +184,12 @@ export default {
       };
 
       queryPage(params).then(res => {
-        if (res.data.code === 2000) {
-          const result = res.data.body;
+        if (res.code === 200) {
+          const result = res.data;
           this.total = result.total || 0;
           this.applicationGroupList = result.list || [];
         } else {
-          this.$message.error(res.data.message || '查询失败');
+          this.$message.error(res.message || '查询失败');
         }
       }).catch(err => {
         this.$message.error('网络错误：' + err);
@@ -277,12 +277,12 @@ export default {
           };
 
           apiCall(params).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success(isEdit ? '修改成功' : '添加成功');
               this.dialogVisible = false;
               this.getList();
             } else {
-              this.$message.error(res.data.message || '操作失败');
+              this.$message.error(res.message || '操作失败');
             }
           }).catch(err => {
             this.$message.error('请求异常：' + err);
@@ -302,11 +302,11 @@ export default {
       }).then(() => {
         return remove(id);
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('删除成功');
           this.getList();
         } else {
-          this.$message.error(res.data.message || '删除失败');
+          this.$message.error(res.message || '删除失败');
         }
       }).catch(() => {});
     },
@@ -320,10 +320,10 @@ export default {
         id: row.id,
         enableStatus: newValue
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success(newValue === '启用' ? '已启用' : '已停用');
         } else {
-          this.$message.error(res.data.message || '状态修改失败');
+          this.$message.error(res.message || '状态修改失败');
           row.enableStatus = originalStatus; // 恢复界面显示
         }
       }).catch(err => {

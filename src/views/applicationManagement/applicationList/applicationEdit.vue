@@ -187,16 +187,16 @@ export default {
   methods: {
     getGroupList() {
       queryList({ searchText: '', enableStatus: '启用' }).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationGroupList = res.data.body || []
+        if (res.code === 200) {
+          this.applicationGroupList = res.data || []
         }
       })
     },
 
     getTemplateList() {
       queryTemplateList({ searchText: '', enableStatus: '启用' }).then(res => {
-        if (res.data.code === 2000) {
-          this.templateList = res.data.body || []
+        if (res.code === 200) {
+          this.templateList = res.data || []
         }
       })
     },
@@ -206,8 +206,8 @@ export default {
       const loadingInstance = this.$loading({ target: '.app-container', lock: true, text: '加载配置中...' });
 
       getApplicationById(id).then(res => {
-        if (res.data.code === 2000) {
-          this.modifyApplicationForm = res.data.body;
+        if (res.code === 200) {
+          this.modifyApplicationForm = res.data;
         }
       }).catch(err => {
         this.$message.error('获取详情失败：' + err);
@@ -221,11 +221,11 @@ export default {
         if (valid) {
           this.loading = true;
           modifyApplication({ ...this.modifyApplicationForm }).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success('配置保存成功');
               this.cancelForm();
             } else {
-              this.$message.error(res.data.message || '保存失败');
+              this.$message.error(res.message || '保存失败');
             }
           }).catch(err => {
             this.$message.error('系统异常：' + err);

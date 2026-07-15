@@ -28,7 +28,7 @@
   <!-- 角色列表 -->
   <el-divider content-position="left">角色列表</el-divider>
   <el-empty v-show="rolePage.total <= 0" description="无应用分组信息"></el-empty>
-  <el-table v-show="rolePage.total > 0" :data="rolePage.data" border>
+  <el-table v-show="rolePage.total > 0" :data="rolePage.list" border>
     <el-table-column type="index"></el-table-column>
     <el-table-column prop="roleCode" label="角色编码"></el-table-column>
     <el-table-column prop="roleName" label="角色名称"></el-table-column>
@@ -36,7 +36,7 @@
     <el-table-column prop="enabled" label="启用状态">
       <template slot-scope="scope">
         <el-switch
-            v-model="rolePage.data[scope.$index].enabled"
+            v-model="rolePage.list[scope.$index].enabled"
             @change="modifyRoleConfirm(scope.row)">
         </el-switch>
       </template>
@@ -163,8 +163,8 @@ export default {
         enabled: data.enabled,
         searchText: data.searchText
       }).then(res => {
-        if (res.data.code === 2000) {
-          this.rolePage = res.data.body
+        if (res.code === 200) {
+          this.rolePage = res.data
         }
       }).catch(err => {
         this.$message({
@@ -178,8 +178,8 @@ export default {
     //根据账号查询用户信息
     getById(roleId) {
       getRoleById(roleId).then(res => {
-        if (res.data.code === 2000) {
-          this.saveRoleForm = res.data.body
+        if (res.code === 200) {
+          this.saveRoleForm = res.data
         }
       }).catch(err => {
         this.$message({
@@ -230,7 +230,7 @@ export default {
           addRole({
             ...saveRoleForm
           }).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message({
                 type: 'success',
                 message: '新增成功!',
@@ -276,7 +276,7 @@ export default {
       modifyRole({
         ...saveRoleForm
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message({
             type: 'success',
             message: '修改成功!',
@@ -310,7 +310,7 @@ export default {
         type: 'warning'
       }).then(() => {
         removeRole(role.id).then(res => {
-          if (res.data.code === 2000) {
+          if (res.code === 200) {
             this.$message({
               type: 'success',
               message: '删除成功!',

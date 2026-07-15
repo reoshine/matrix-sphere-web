@@ -10,7 +10,7 @@
       <template v-for="menu in menuList">
 
         <template v-if="hasVisibleChildren(menu.children)">
-          <el-submenu :index="menu.menuCode" :key="menu.menuCode">
+          <el-submenu :index="String(menu.id)" :key="menu.id">
             <template slot="title">
               <i :class="menu.icon"></i>
               <span slot="title">{{ menu.menuName }}</span>
@@ -20,8 +20,8 @@
 
               <el-submenu
                   v-if="hasVisibleChildren(subMenu.children)"
-                  :index="subMenu.menuCode"
-                  :key="subMenu.menuCode">
+                  :index="String(subMenu.id)"
+                  :key="subMenu.id">
                 <template slot="title">{{ subMenu.menuName }}</template>
 
                 <template v-for="subSubMenu in subMenu.children">

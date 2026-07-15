@@ -108,8 +108,8 @@ export default {
         searchText: this.searchText,
         enabled: this.enabled
       }).then(res => {
-        if (res.data.code === 2000) {
-          this.sysParamList = res.data.body
+        if (res.code === 200) {
+          this.sysParamList = res.data
         }
       }).catch(err => {
         this.$message({
@@ -124,8 +124,8 @@ export default {
       getSysParamOptionList({
         paramCode: 'canDeploy'
       }).then(res => {
-        if (res.data.code === 2000) {
-          this.sysParamOptionList = res.data.body
+        if (res.code === 200) {
+          this.sysParamOptionList = res.data
         }
       }).catch(err => {
         this.$message({
@@ -150,7 +150,7 @@ export default {
         paramType: sysParam.paramType,
         enabled: sysParam.enabled
       }).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message({
             message: '参数修改成功！',
             type: 'success',

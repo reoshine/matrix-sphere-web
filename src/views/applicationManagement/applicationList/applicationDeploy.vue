@@ -176,8 +176,8 @@ export default {
     getApplication(id) {
       const loading = this.$loading({ target: '.info-card', text: '加载应用信息...' });
       getApplicationById(id).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationInfo = res.data.body;
+        if (res.code === 200) {
+          this.applicationInfo = res.data;
 
           // 更新 PageHeader
           bus.$emit('set-page-title', this.applicationInfo.applicationName);
@@ -192,8 +192,8 @@ export default {
     // 获取分组列表
     getGroupList() {
       queryList({ searchText: '', enableStatus: '启用' }).then(res => {
-        if (res.data.code === 2000) {
-          this.applicationGroupList = res.data.body || [];
+        if (res.code === 200) {
+          this.applicationGroupList = res.data || [];
         }
       });
     }

@@ -36,7 +36,7 @@
     <el-card shadow="never" class="table-card" :body-style="{ padding: '0' }">
       <el-table
           v-loading="loading"
-          :data="rolePage.data"
+          :data="rolePage.list"
           border
           stripe
           highlight-current-row
@@ -262,8 +262,8 @@ export default {
       };
 
       getRolePage(params).then(res => {
-        if (res.data.code === 2000) {
-          this.rolePage = res.data.body || { total: 0, data: [] };
+        if (res.code === 200) {
+          this.rolePage = res.data || { pageNum: 1, pageSize: 10, total: 0, list: [] };
         }
       }).catch(err => {
         this.$message.error('查询角色失败: ' + err);
@@ -292,8 +292,8 @@ export default {
       this.showDrawer = true;
       // 获取详情回显
       getRoleById(role.id).then(res => {
-        if (res.data.code === 2000) {
-          this.saveRoleForm = res.data.body;
+        if (res.code === 200) {
+          this.saveRoleForm = res.data;
         }
       });
     },
@@ -307,12 +307,12 @@ export default {
           const api = isAdd ? addRole : modifyRole;
 
           api(this.saveRoleForm).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success(isAdd ? '新增成功' : '修改成功');
               this.showDrawer = false;
               this.getRolePage();
             } else {
-              this.$message.error(res.data.message);
+              this.$message.error(res.message);
             }
           }).catch(err => {
             this.$message.error('操作失败: ' + err);
@@ -327,10 +327,10 @@ export default {
     modifyRoleConfirm(row) {
       // 可以在这里加一个 Loading 状态防止连点
       modifyRole(row).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('状态更新成功');
         } else {
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
           row.enabled = !row.enabled; // 回滚状态
         }
       }).catch(() => {
@@ -344,11 +344,11 @@ export default {
         type: 'warning'
       }).then(() => {
         removeRole(role.id).then(res => {
-          if (res.data.code === 2000) {
+          if (res.code === 200) {
             this.$message.success('删除成功');
             this.getRolePage();
           } else {
-            this.$message.error(res.data.message);
+            this.$message.error(res.message);
           }
         });
       }).catch(() => {});
@@ -368,11 +368,11 @@ export default {
       // 2. 获取当前角色已有的菜单
       this.roleMenu.menuIdList = []; // 先清空，防止闪烁
       getRoleMenuByRoleId(role.id).then(res => {
-        if (res.data.code === 2000 && res.data.body) {
-          this.roleMenu = res.data.body;
+        if (res.code === 200 && res.data) {
+          this.roleMenu = res.data;
           this.roleMenuSave = {
             roleId: role.id,
-            menuIdList: res.data.body.menuIdList || []
+            menuIdList: res.data.menuIdList || []
           };
           // 设置树的选中状态
           this.$nextTick(() => {
@@ -400,11 +400,11 @@ export default {
       }
 
       addRoleMenu(this.roleMenuSave).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('权限保存成功');
           this.showRoleMenuDrawer = false;
         } else {
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
         }
       }).catch(err => {
         this.$message.error('保存失败: ' + err);
@@ -416,8 +416,8 @@ export default {
     getMenuList() {
       // 假设传1获取所有菜单
       return getMenuList(1).then(res => {
-        if (res.data.code === 2000) {
-          this.menuList = res.data.body || [];
+        if (res.code === 200) {
+          this.menuList = res.data || [];
         }
       });
     },

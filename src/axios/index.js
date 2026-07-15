@@ -1,115 +1,112 @@
 import axios from 'axios'
-import swal from 'sweetalert2'
-import router from "@/router"
+import router from '@/router'
+import { Message, MessageBox } from 'element-ui'
 
-// 创建实例工厂函数
-const createRequest = (baseURL = '/') => {
+let isRefreshing = false
+let requestQueue = []
+
+function createAxiosInstance(baseURL) {
     const instance = axios.create({
-        baseURL,
-        timeout: 1500000,
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        baseURL: baseURL,
+        timeout: 10000
     })
 
-    // 请求拦截器
-    instance.interceptors.request.use(config => {
-        const token = localStorage.getItem('adpSsoToken')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-        return config
-    })
+    instance.interceptors.request.use(
+        config => {
+            const token = localStorage.getItem('adpSsoToken')
+            if (token) config.headers['Authorization'] = `Bearer ${token}`
+            return config
+        },
+        error => Promise.reject(error)
+    )
 
-    // 响应拦截器（关键修正点）
     instance.interceptors.response.use(
         response => {
-            if (response.config.url === '/client/login') {
-                services.sphere.get('/client/login')
-                return response
+            const res = response.data
+            if (res.code && res.code !== 200) {
+                Message.error(res.msg || res.message || '系统异常')
+                return Promise.reject(new Error(res.msg || 'Error'))
             }
-            if (response?.data?.code === 4003) {
-                removeToken()
-                return refreshToken(response.config, instance)
+            return res
+        },
+        async error => {
+            if (!error.response) return Promise.reject(error)
+            const { status, config } = error.response
+
+            if (status === 401) {
+                const refreshToken = localStorage.getItem('adpSsoRefreshToken')
+                if (!refreshToken) return triggerSsoLogin(config.url)
+
+                if (isRefreshing) {
+                    return new Promise(resolve => {
+                        requestQueue.push((newToken) => {
+                            config.headers['Authorization'] = `Bearer ${newToken}`
+                            resolve(instance(config))
+                        })
+                    })
+                }
+
+                isRefreshing = true
+                try {
+                    const refreshRes = await axios.post('/oauth2/token',
+                        new URLSearchParams({
+                            grant_type: 'refresh_token',
+                            refresh_token: refreshToken
+                        }),
+                        { headers: { 'Authorization': 'Basic ' + btoa('matrix-sphere:matrix-sphere-secret') } }
+                    )
+
+                    const newToken = refreshRes.data.access_token
+                    const newRefreshToken = refreshRes.data.refresh_token
+
+                    localStorage.setItem('adpSsoToken', newToken)
+                    if (newRefreshToken) localStorage.setItem('adpSsoRefreshToken', newRefreshToken)
+
+                    requestQueue.forEach(cb => cb(newToken))
+                    requestQueue = []
+
+                    config.headers['Authorization'] = `Bearer ${newToken}`
+                    return instance(config)
+
+                } catch (refreshError) {
+                    requestQueue = []
+                    return triggerSsoLogin(config.url)
+                } finally {
+                    isRefreshing = false
+                }
             }
-            return response
+            return Promise.reject(error)
         }
     )
 
     return instance
 }
 
-// 创建各业务模块实例
-const services = {
-    sso: createRequest('/matrix-sphere-sso'),
-    manage: createRequest('/matrix-sphere-management'),
-    sphere: createRequest('/matrix-sphere')
-}
-
-// 统一刷新token逻辑（修改版）
-async function refreshToken(config, currentInstance) {
-    const refreshToken = localStorage.getItem("adpSsoRefreshToken")
-    if (!refreshToken) {
-        toLogin()
-        return Promise.reject('无刷新令牌')
-    }
-
-    try {
-        // 使用sso实例刷新token
-        const refreshRes = await services.sso.post('/oauth2/token',
-            new URLSearchParams({
-                grant_type: 'refresh_token',
-                refresh_token: refreshToken
-            }),
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': 'Basic ' + btoa('matrix-sphere:matrix-sphere-secret')
-                }
-            }
-        )
-
-        // 更新所有实例的token（关键修改）
-        //const newAccessToken = refreshRes.data.access_token
-        //updateAllInstancesToken(newAccessToken)
-
-        // 重试原始请求
-        //config.headers.Authorization = `Bearer ${newAccessToken}`
-        return currentInstance(config)
-
-    } catch (refreshError) {
-        removeToken()
-        toLogin()
-        return Promise.reject(refreshError)
-    }
-}
-
-// 更新所有实例的token（新增工具方法）
-function updateAllInstancesToken(newToken) {
-    Object.values(services).forEach(instance => {
-        instance.defaults.headers.common.Authorization = `Bearer ${newToken}`
-    })
-}
-
-// 工具函数
-function removeToken() {
+function triggerSsoLogin(failedUrl) {
     localStorage.removeItem('adpSsoToken')
     localStorage.removeItem('adpSsoRefreshToken')
+
+    // 静默跳转到 OAuth2 授权端点，不弹窗
+    sessionStorage.setItem('target_route', router.currentRoute.fullPath)
+    const SSO_CONFIG = {
+        clientId: 'matrix-sphere',
+        authorizeUrl: 'http://192.168.0.10:7002/oauth2/authorize',
+        redirectUri: 'http://192.168.0.10:8081/callback',
+    }
+    const authUrl = `${SSO_CONFIG.authorizeUrl}?response_type=code&client_id=${SSO_CONFIG.clientId}&redirect_uri=${encodeURIComponent(SSO_CONFIG.redirectUri)}&scope=message.read`
+    window.location.href = authUrl
+
+    // 返回一个 pending 的 Promise，阻止后续请求
+    return new Promise(() => {})
 }
 
-function toLogin() {
-    swal.fire({
-        title: '登录已失效，请重新登录！',
-        icon: 'error',
-        timer: 2500,
-        showConfirmButton: false,
-        showCancelButton: false
-    }).finally(() => {
-        // router.push({path: '/login'})
-        router.push({path: '/matrix-sphere/client/login'})
-        window.location.reload()
-        //services.sphere.get('/client/login')
-    })
+// 统一 API 实例，通过代理前缀区分模块
+const services = {
+    api: createAxiosInstance(''),
+    sso: createAxiosInstance('/matrix-sphere-sso'),
+    manage: createAxiosInstance('/matrix-sphere-management'),
+    sphere: createAxiosInstance('/matrix-sphere')
 }
 
-export const {sso, manage, sphere} = services
+export const { api, sso, manage, sphere } = services
+export default services

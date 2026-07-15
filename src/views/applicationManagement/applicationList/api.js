@@ -2,93 +2,93 @@ import { sphere } from '@/axios'
 
 // ====================================== 应用列表 ======================================
 export function queryPage(data) {
-    return sphere.post('/application/queryPage', data)
+    return sphere.post('/application/v1/page', data)
 }
 
 export function queryList(data) {
-    return sphere.post('/application/queryList', data)
+    return sphere.post('/application/v1/list', data)
 }
 
 export function exportApplicationTemplate() {
-    return sphere.get('/application/exportApplicationTemplate', {
+    return sphere.get('/application/v1/exportApplicationTemplate', {
         params: {},
         responseType: 'blob'
     })
 }
 
 export function saveApplication(data) {
-    return sphere.post('/application/save', data)
+    return sphere.post('/application/v1/create', data)
 }
 
 export function modifyApplication(data) {
-    return sphere.post('/application/modify', data)
+    return sphere.post('/application/v1/modify', data)
 }
 
 export function getApplicationById(data) {
-    return sphere.get(`/application/getById/${data}`)
+    return sphere.get(`/application/v1/${data}`)
 }
 
 export function removeApplication(data) {
-    return sphere.post(`/application/remove/${data}`)
+    return sphere.post(`/application/v1/remove/${data}`)
 }
 
 export function enableChange(data) {
-    return sphere.post('/application/updateEnableStatus', data)
+    return sphere.post('/application/v1/updateEnableStatus', data)
 }
 
 export function importFile(data, config) {
-    return sphere.post('/application/importApplication', data, config)
+    return sphere.post('/application/v1/importApplication', data, config)
 }
 
 // ====================================== 分支管理 ======================================
 
 export function getUnDeployedBranchList(data) {
-    return sphere.post('/branch/getUnDeployedBranchList', data)
+    return sphere.post('/branch/v1/list', data)
 }
 
 export function createBranch(data) {
-    return sphere.post('/branch/createBranch', data)
+    return sphere.post('/branch/v1/create', data)
 }
 
 export function modifyBranch(data) {
-    return sphere.post('/branch/modifyBranch', data)
+    return sphere.post('/branch/v1/modify', data)
 }
 
 // ====================================== 应用部署 ======================================
 export function getDeployMaster(data) {
-    return sphere.post('/deploy/getDeployMaster', data)
+    return sphere.post('/deploy/v1/getDeployMaster', data)
 }
 
 export function getDeployRecord(data) {
-    return sphere.get(`/deploy/getDeployRecord/${data}`)
+    return sphere.get(`/deploy/v1/getDeployRecord/${data}`)
 }
 
 export function withdrawBranch(data) {
-    return sphere.post('/deploy/cancelDeploy', data)
+    return sphere.post('/deploy/v1/cancelDeploy', data)
 }
 
 export function deploy(data) {
-    return sphere.post('/deploy/createDeploy', data)
+    return sphere.post('/deploy/v1/createDeploy', data)
 }
 
 export function removeBranch(data) {
-    return sphere.post(`/branch/remove/${data}`)
+    return sphere.post(`/branch/v1/remove/${data}`)
 }
 
 export function mergeBranch(data) {
-    return sphere.post('/deploy/mergeBranch', data)
+    return sphere.post('/deploy/v1/mergeBranch', data)
 }
 
 export function build(data) {
-    return sphere.post('/deploy/build', data)
+    return sphere.post('/deploy/v1/build', data)
 }
 
 export function getDepLoyLogList(data) {
-    return sphere.post('/deploy/getDepLoyLogList', data)
+    return sphere.post('/deploy/v1/getDepLoyLogList', data)
 }
 
 export function getDeployStepList(data) {
-    return sphere.post('/deployStep/getDeployStepList', data)
+    return sphere.post('/deployStep/v1/getDeployStepList', data)
 }
 
 export function sseClose(data) {

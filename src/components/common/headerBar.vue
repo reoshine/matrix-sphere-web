@@ -47,7 +47,7 @@
 
 <script>
 import bus from '@/util/bus';
-import {logout} from "@/views/login/api";
+import { sso } from '@/axios';
 
 export default {
   name: "headerBar",
@@ -72,33 +72,42 @@ export default {
       this.collapseChange();
     }
   },
-  // 事件处理
+
   methods: {
     // 用户名下拉菜单选择事件
-    handleCommand(command) {
+    async handleCommand(command) {
       if (command === 'loginOut') {
-        logout().then(res => {
+        try {
+          // 2. 使用封装的 request 发送请求，它会自动带上 localStorage 里的 Token
+          await sso.post('/authentication/logout', {}, {
+            withCredentials: true
+          });
+        } catch (error) {
+          console.error('SSO注销请求异常，强制执行本地清理', error);
+        } finally {
+          // 清理本地存储并跳转
+          localStorage.removeItem("adpSsoToken");
+          localStorage.removeItem("adpSsoRefreshToken");
+          localStorage.removeItem("ms_username");
+
           this.$swal({
             title: "退出成功！",
             type: "success",
-            timer: "2000",
-            confirmButtonText: '确定',
-            showCancelButton: false,
+            timer: 1500,
+            showConfirmButton: false,
           }).then(() => {
-            localStorage.removeItem("adpSsoToken")
-            window.location.href = '/matrix-sphere/client/login';
+            this.$router.push('/login');
           });
-        }).catch(err => {
-          localStorage.removeItem("adpSsoToken")
-          window.location.href = '/matrix-sphere/client/login';
-        })
+        }
       }
     },
+
     // 侧边栏折叠
     collapseChange() {
       this.collapse = !this.collapse;
       bus.$emit('collapse', this.collapse);
     },
+
     // 全屏事件
     handleFullScreen() {
       let element = document.documentElement;
@@ -128,7 +137,6 @@ export default {
     }
   },
 };
-
 </script>
 
 <style scoped lang='less'>

@@ -16,7 +16,7 @@
     <div class="form-section">
       <div class="form-header">
         <div class="form-title">账号登录</div>
-        <div class="form-subtitle">请使用您的账号访问控制台</div>
+        <div class="form-subtitle">请使用管理员账号访问控制台</div>
       </div>
 
       <el-form :model="loginForm" ref="loginForm" @submit.native.prevent="handleLogin">
@@ -59,7 +59,7 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      loginForm: {username: 'roshine', password: '123456'},
+      loginForm: {username: '', password: ''},
       loading: false
     }
   },
@@ -67,23 +67,26 @@ export default {
     async handleLogin() {
       this.loading = true
       try {
-        const res = await axios.post('/api/v1/auth/login', this.loginForm, {
-          headers: {'Content-Type': 'application/json'}
+        // 构建表单数据
+        const params = new URLSearchParams()
+        params.append('username', this.loginForm.username)
+        params.append('password', this.loginForm.password)
+
+        // 发送到 SSO 后端的认证接口
+        const res = await axios.post('http://192.168.0.10:8081/matrix-sphere-sso/authentication/login', params, {
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          withCredentials: true // 极其重要：跨域携带 Cookie
         })
 
-        if (res.data.code === 200 && res.data.data) {
-          const { access_token } = res.data.data
-          localStorage.setItem('adpSsoToken', access_token || 'local-dev-token')
-
-          this.$message.success('登录成功')
-          const targetRoute = sessionStorage.getItem('target_route') || '/'
-          sessionStorage.removeItem('target_route')
-          this.$router.push(targetRoute)
-        } else {
-          this.$message.error(res.message || '登录失败')
+        if (res.data.code === 200) {
+          this.$message.success('认证成功，正在跳转...')
+          // 核心逻辑：登录成功后，跳回 SSO 最初的授权页面（即 /oauth2/authorize）
+          // 因为 Spring 会在 Session 中记录 SavedRequest，直接重新访问 SSO 即可
+          window.location.href = 'http://192.168.0.10:8081/matrix-sphere-sso/oauth2/authorize?response_type=code&client_id=matrix-sphere'
+          // 提示：上面的 URL 建议从之前的路由参数中动态获取
         }
       } catch (error) {
-        this.$message.error(error.response?.data?.message || '登录失败，请检查网络连接')
+        this.$message.error(error.response?.data?.msg || '登录失败')
       } finally {
         this.loading = false
       }
@@ -93,6 +96,7 @@ export default {
 </script>
 
 <style scoped>
+/* 1. 布局容器 - 居中显示 */
 .login-wrapper {
   display: flex;
   width: 960px;
@@ -101,6 +105,7 @@ export default {
   border-radius: 8px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  /* 强制在页面正中心 */
   position: fixed;
   top: 50%;
   left: 50%;
@@ -108,6 +113,7 @@ export default {
   z-index: 1000;
 }
 
+/* 2. 左侧：品牌视觉区 (Matrix 风格) */
 .brand-section {
   width: 50%;
   background: linear-gradient(135deg, #1e58ff 0%, #003eb3 100%);
@@ -159,6 +165,7 @@ export default {
   font-weight: 300;
 }
 
+/* 3. 右侧：表单区 */
 .form-section {
   width: 50%;
   padding: 60px 50px;
@@ -188,13 +195,15 @@ export default {
   margin-bottom: 24px;
 }
 
+/* 4. 核心：修改 Element UI 的输入框样式 */
+/* 使用 ::v-deep 穿透组件样式，确保自定义边框生效 */
 ::v-deep .el-input__inner {
   height: 42px;
   line-height: 42px;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   transition: all 0.3s;
-  padding-left: 40px;
+  padding-left: 40px; /* 为图标留位置 */
 }
 
 ::v-deep .el-input__inner:hover {
@@ -206,6 +215,7 @@ export default {
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
+/* 5. 按钮样式 */
 .submit-btn {
   width: 100%;
   height: 42px;
@@ -215,15 +225,17 @@ export default {
   letter-spacing: 1px;
 }
 
+/* 6. 处理浏览器自动填充导致的黄色背景 */
 ::v-deep input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
   -webkit-text-fill-color: #606266 !important;
 }
 
+/* 7. 页脚版权 */
 .footer-copyright {
   position: absolute;
   bottom: 20px;
-  right: 50px;
+  right: 50px; /* 在表单区下方 */
   color: #909399;
   font-size: 12px;
 }

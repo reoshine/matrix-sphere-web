@@ -82,8 +82,8 @@ export default {
     getList() {
       this.loading = true
       getTemplateList(this.applicationId).then(res => {
-        if (res.data.code === 2000) {
-          this.list = res.data.body || []
+        if (res.code === 200) {
+          this.list = res.data || []
         }
         this.loading = false
       }).catch(() => { this.loading = false })
@@ -103,11 +103,11 @@ export default {
     },
     handleDelete(row) {
       deleteTemplate(row.id).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           this.$message.success('删除成功')
           this.getList()
         } else {
-          this.$message.error(res.data.message)
+          this.$message.error(res.message)
         }
       })
     }

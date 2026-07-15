@@ -240,12 +240,12 @@ export default {
           const apiFunc = this.isEdit ? updateTemplate : createTemplate;
 
           apiFunc(payload).then(res => {
-            if (res.data.code === 2000) {
+            if (res.code === 200) {
               this.$message.success(this.isEdit ? '更新成功' : '创建成功');
               this.visibleDialog = false;
               this.$emit('refresh');
             } else {
-              this.$message.error(res.data.message);
+              this.$message.error(res.message);
             }
           }).finally(() => {
             this.submitting = false;
