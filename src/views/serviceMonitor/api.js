@@ -2,50 +2,58 @@ import { sphere } from '@/axios'
 
 /**
  * 获取服务器列表
- * GET /serverInfo/v1/list
+ * GET /server-info/v1/list
  */
 export function getServerList(params) {
-    return sphere.get(`/serverInfo/v1/list`, {
+    return sphere.get(`/server-info/v1/list`, {
         params: params
     })
 }
 
 /**
  * 获取服务器详情
- * GET /serverInfo/v1/{id}
+ * GET /server-info/v1/{id}
  */
 export function getServerDetail(id) {
-    return sphere.get(`/serverInfo/v1/${id}`)
+    return sphere.get(`/server-info/v1/${id}`)
 }
 
 /**
  * 新增服务器
- * POST /serverInfo/v1/create
+ * POST /server-info/v1/create
  */
 export function addServer(data) {
-    return sphere.post(`/serverInfo/v1/create`, data)
+    return sphere.post(`/server-info/v1/create`, data)
 }
 
 /**
  * 修改服务器
- * PUT /serverInfo/v1/modify
+ * PUT /server-info/v1/modify
  */
 export function updateServer(data) {
-    return sphere.put(`/serverInfo/v1/modify`, data)
+    return sphere.put(`/server-info/v1/modify`, data)
 }
 
 /**
  * 删除服务器
- * DELETE /serverInfo/v1/remove/{ids}
+ * DELETE /server-info/v1/remove/{ids}
  */
 export function deleteServer(ids) {
-    return sphere.delete(`/serverInfo/v1/remove/${ids}`)
+    return sphere.delete(`/server-info/v1/remove/${ids}`)
 }
 
 /**
  * 测试连接
- * POST /serverInfo/v1/test-conn
+ * POST /server-info/v1/test-connection
  */
 export function testServerConnection(data) {
-    return sphere.post(`/serverInfo/v1/test-conn`, data)
+    return sphere.post(`/server-info/v1/test-connection`, data)
+}
+
+/**
+ * 获取服务器实时资源指标
+ * GET /server-info/v1/metrics/{id}
+ */
+export function getServerMetrics(id) {
+    return sphere.get(`/server-info/v1/metrics/${id}`)
 }

@@ -107,6 +107,11 @@ export default {
       if (this.$route.meta.guidePath) {
         return this.$route.meta.jumpPath;
       }
+      // 如果当前路由是 hidden 页面（如部署、编辑等详情页），
+      // 高亮其对应的父级菜单项，避免侧边栏高亮丢失导致闪烁
+      if (this.$route.meta.hidden && this.$route.meta.parentPath) {
+        return this.$route.meta.parentPath;
+      }
       return this.$route.path;
     }
   },
@@ -137,6 +142,8 @@ export default {
   top: @header-height;
   bottom: 0;
   overflow-y: scroll;
+  /* 隔离渲染层，避免内容区变化时连带重绘 */
+  transform: translateZ(0);
 }
 
 .sidebar::-webkit-scrollbar {

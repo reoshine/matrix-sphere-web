@@ -39,14 +39,14 @@
           <span v-else>-</span>
         </el-descriptions-item>
 
-        <el-descriptions-item label="当前 Release 分支" :span="2">
+        <el-descriptions-item label="当前 Release 分支" :span="1">
           <el-tag v-if="deployedInfo.releaseBranchName" type="success" effect="light">
             <i class="el-icon-guide"></i> {{ deployedInfo.releaseBranchName }}
           </el-tag>
           <span v-else class="text-gray">暂无发布分支信息</span>
         </el-descriptions-item>
 
-        <el-descriptions-item label="包含 Feature 分支" :span="2">
+        <el-descriptions-item label="包含 Feature 分支" :span="3">
           <div v-if="deployedInfo.featureBranchList && deployedInfo.featureBranchList.length > 0" class="feature-tags">
             <el-tag
                 v-for="item in deployedInfo.featureBranchList"
@@ -191,7 +191,7 @@ export default {
 
     // 获取分组列表
     getGroupList() {
-      queryList({ searchText: '', enableStatus: '启用' }).then(res => {
+      queryList({ searchText: '', enableStatus: 1 }).then(res => {
         if (res.code === 200) {
           this.applicationGroupList = res.data || [];
         }
@@ -213,11 +213,18 @@ export default {
       // 更新缓存
       localStorage.setItem('applicationId', pid);
 
-      this.getApplication(this.applicationId);
       this.getGroupList();
     } else {
       this.$message.warning('丢失应用ID参数，请从列表页重新进入');
       this.$router.push('/applicationManagement/applicationList');
+    }
+  },
+
+  // 将 getApplication 从 created 移到 mounted，确保 this.$loading 的
+  // target 元素已存在于 DOM 中，避免 Element UI 回退到全屏 loading
+  mounted() {
+    if (this.applicationId) {
+      this.getApplication(this.applicationId);
     }
   },
 
@@ -239,6 +246,11 @@ export default {
 .info-card {
   margin-bottom: 20px;
   border: none;
+
+  ::v-deep .el-descriptions-item__label,
+  ::v-deep .el-descriptions-item__content {
+    vertical-align: middle;
+  }
 
   .card-title {
     font-size: 16px;

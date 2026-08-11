@@ -13,8 +13,8 @@
         <el-card shadow="never" class="config-card">
           <div slot="header" class="clearfix card-header-content">
             <span class="card-title">基础参数配置</span>
-            <el-tag size="small" :type="modifyApplicationForm.enableStatus === '启用' ? 'success' : 'danger'">
-              {{ modifyApplicationForm.enableStatus || '未知状态' }}
+            <el-tag size="small" :type="modifyApplicationForm.enableStatus === 1 ? 'success' : 'danger'">
+              {{ modifyApplicationForm.enableStatus === 1 ? '启用' : modifyApplicationForm.enableStatus === 0 ? '停用' : '未知状态' }}
             </el-tag>
           </div>
 
@@ -54,7 +54,7 @@
                   <el-col :span="12">
                     <el-form-item prop="enableStatus" label="应用状态">
                       <el-select v-model="modifyApplicationForm.enableStatus" placeholder="请选择" style="width: 100%">
-                        <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
+                        <el-option v-for="item in enableStatusList" :key="item.value" :label="item.label" :value="item.value" />
                       </el-select>
                     </el-form-item>
                   </el-col>
@@ -116,7 +116,7 @@ import 'highlight.js/styles/atom-one-dark.css'
 // 请根据您项目的实际 api 路径修改以下引用
 import { getApplicationById, modifyApplication } from "@/views/applicationManagement/applicationList/api";
 import { queryList } from "@/views/applicationManagement/applicationGroup/api";
-import { queryList as queryTemplateList } from "@/views/applicationManagement/deployTemplate/api";
+import { getTemplateList } from "@/views/applicationManagement/deployTemplate/api";
 
 export default {
   name: "applicationEdit",
@@ -133,7 +133,7 @@ export default {
         applicationGroupId: '',
         applicationGroupCode: '',
         gitUrl: '',
-        enableStatus: '',
+        enableStatus: null,
         jobXml: '',
         pipelineScript: '',
         initTemplateId: ''
@@ -142,7 +142,7 @@ export default {
       // 字典数据
       applicationGroupList: [],
       templateList: [],
-      enableStatusList: ['启用', '停用'],
+      enableStatusList: [{ label: '启用', value: 1 }, { label: '停用', value: 0 }],
 
       // 校验规则
       rules: {
@@ -186,7 +186,7 @@ export default {
 
   methods: {
     getGroupList() {
-      queryList({ searchText: '', enableStatus: '启用' }).then(res => {
+      queryList({ searchText: '', enableStatus: 1 }).then(res => {
         if (res.code === 200) {
           this.applicationGroupList = res.data || []
         }
@@ -194,7 +194,7 @@ export default {
     },
 
     getTemplateList() {
-      queryTemplateList({ searchText: '', enableStatus: '启用' }).then(res => {
+      getTemplateList().then(res => {
         if (res.code === 200) {
           this.templateList = res.data || []
         }

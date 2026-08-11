@@ -15,7 +15,7 @@
 
         <el-form-item label="启用状态">
           <el-select v-model="enableStatus" placeholder="全部" clearable style="width: 120px;">
-            <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
+            <el-option v-for="item in enableStatusList" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
 
@@ -64,13 +64,13 @@
           <el-button plain size="small" icon="el-icon-upload2">导入</el-button>
         </el-upload>
 
-        <el-dropdown trigger="click" style="margin-left: 10px;">
+        <el-dropdown trigger="click" style="margin-left: 10px;" @command="handleSyncRepo">
           <el-button plain size="small" icon="el-icon-connection">
             同步仓库 <i class="el-icon-arrow-down el-icon--right"></i>
           </el-button>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item icon="el-icon-loading">从 Gitee 同步</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-loading">从 GitLab 同步</el-dropdown-item>
+            <el-dropdown-item command="gitee" icon="el-icon-loading">从 Gitee 同步</el-dropdown-item>
+            <el-dropdown-item command="gitlab" icon="el-icon-loading">从 GitLab 同步</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -90,8 +90,8 @@
               </div>
               <el-switch
                   v-model="application.enableStatus"
-                  active-value="启用"
-                  inactive-value="停用"
+                  :active-value="1"
+                  :inactive-value="0"
                   active-color="#13ce66"
                   inactive-color="#ff4949"
                   @change="enableChange($event, application)"
@@ -212,7 +212,7 @@
             <el-col :span="12">
               <el-form-item prop="enableStatus" label="初始状态">
                 <el-select v-model="saveApplicationForm.enableStatus" style="width: 100%">
-                  <el-option v-for="item in enableStatusList" :key="item" :label="item" :value="item" />
+                  <el-option v-for="item in enableStatusList" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -293,8 +293,8 @@ export default {
       fileList: [],
 
       searchText: '',
-      enableStatus: '',
-      enableStatusList: ['启用', '停用'],
+      enableStatus: null,
+      enableStatusList: [{ label: '启用', value: 1 }, { label: '停用', value: 0 }],
 
       applicationGroupCode: '',
       applicationGroupList: [],
@@ -312,7 +312,7 @@ export default {
         applicationGroupId: '',
         applicationGroupCode: '',
         gitUrl: '',
-        enableStatus: '启用',
+        enableStatus: 1,
         initTemplateId: null
       },
 
@@ -344,8 +344,12 @@ export default {
     };
   },
   methods: {
+    handleSyncRepo(command) {
+      const label = command === 'gitee' ? 'Gitee' : 'GitLab'
+      this.$message.info(`从 ${label} 同步仓库功能正在开发中`)
+    },
     getGroupList() {
-      queryList({ searchText: '', enableStatus: '启用' }).then(res => {
+      queryList({ searchText: '', enableStatus: 1 }).then(res => {
         if (res.code === 200) {
           this.applicationGroupList = res.data || []
         }
@@ -389,7 +393,7 @@ export default {
 
     resetQuery() {
       this.searchText = '';
-      this.enableStatus = '';
+      this.enableStatus = null;
       this.applicationGroupCode = '';
       this.queryApplicationPage();
     },
@@ -399,7 +403,7 @@ export default {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
         searchText: this.searchText,
-        enableStatus: this.enableStatus || undefined,
+        enableStatus: this.enableStatus !== null ? this.enableStatus : undefined,
         applicationGroupCode: this.applicationGroupCode || undefined
       }).then(res => {
         if (res.code === 200) {
@@ -415,7 +419,7 @@ export default {
     async addApplication() {
       // [修改] 重置表单，显式包含 initTemplateId
       this.saveApplicationForm = {
-        enableStatus: '启用',
+        enableStatus: 1,
         initTemplateId: undefined
       };
 
@@ -474,7 +478,7 @@ export default {
         if (res.code === 200) {
           this.$message.success('状态已更新');
         } else {
-          application.enableStatus = $event === '启用' ? '停用' : '启用';
+          application.enableStatus = $event === 1 ? 0 : 1;
           this.$message.error(res.message);
         }
       })

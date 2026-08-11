@@ -14,7 +14,7 @@ export default new Router({
         },
         {
             path: '/',
-            component: () => import('@/components/common/home.vue'),
+            component: () => import('@/components/common/Home.vue'),
             meta: { title: 'MatrixSphere 系统' },
             children: [
                 // 项目管理（默认跳转到应用列表）
@@ -24,7 +24,7 @@ export default new Router({
                 { path: '/applicationManagement/applicationGroup/applicationGroup', component: () => import('@/views/applicationManagement/applicationGroup/applicationGroup.vue'), meta: { title: '应用分组' } },
                 { path: '/applicationManagement/applicationList/application', component: () => import('@/views/applicationManagement/applicationList/application.vue'), meta: { title: '应用列表' } },
                 { path: '/applicationManagement/applicationList/applicationEdit', component: () => import('@/views/applicationManagement/applicationList/applicationEdit.vue'), meta: { title: '应用编辑', hidden: true } },
-                { path: '/applicationManagement/applicationList/applicationDeploy', component: () => import('@/views/applicationManagement/applicationList/applicationDeploy.vue'), meta: { title: '应用部署', hidden: true } },
+                { path: '/applicationManagement/applicationList/applicationDeploy', component: () => import('@/views/applicationManagement/applicationList/applicationDeploy.vue'), meta: { title: '应用部署', hidden: true, parentPath: '/applicationManagement/applicationList/application' } },
                 { path: '/applicationManagement/branchManagement/branch/:applicationId?', name: 'branch', component: () => import('@/views/applicationManagement/branchManagement/branch.vue'), meta: { title: '分支管理', hidden: true } },
                 { path: '/applicationManagement/deployTemplate/templateManage', component: () => import('@/views/applicationManagement/deployTemplate/templateManage.vue'), meta: { title: '部署模板管理' } },
                 { path: '/applicationManagement/deployTemplate/templateEditorDialog', component: () => import('@/views/applicationManagement/deployTemplate/templateEditorDialog.vue'), meta: { title: '模板编辑', hidden: true } },

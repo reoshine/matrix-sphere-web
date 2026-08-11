@@ -16,9 +16,9 @@
           <el-select v-model="queryParams.enableStatus" placeholder="全部" clearable style="width: 120px;">
             <el-option
                 v-for="item in enableStatusList"
-                :key="item"
-                :label="item"
-                :value="item"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
             />
           </el-select>
         </el-form-item>
@@ -51,8 +51,8 @@
           <template slot-scope="scope">
             <el-switch
                 v-model="scope.row.enableStatus"
-                active-value="启用"
-                inactive-value="停用"
+                :active-value="1"
+                :inactive-value="0"
                 active-color="#13ce66"
                 inactive-color="#ff4949"
                 @change="enableChange($event, scope.row)"
@@ -132,13 +132,13 @@ export default {
         pageNum: 1,
         pageSize: 10,
         searchText: '',
-        enableStatus: '' // 默认为空，代表查询所有
+        enableStatus: null // 默认为空，代表查询所有
       },
       pageSizes: [10, 20, 50, 100],
       total: 0,
 
       // 字典数据
-      enableStatusList: ['启用', '停用'],
+      enableStatusList: [{ label: '启用', value: 1 }, { label: '停用', value: 0 }],
 
       // 表格数据
       applicationGroupList: [],
@@ -152,7 +152,7 @@ export default {
         id: undefined,
         applicationGroupCode: '',
         applicationGroupName: '',
-        enableStatus: '启用'
+        enableStatus: 1
       },
 
       // 表单校验
@@ -180,7 +180,7 @@ export default {
         pageNum: this.queryParams.pageNum,
         pageSize: this.queryParams.pageSize,
         searchText: this.queryParams.searchText,
-        enableStatus: this.queryParams.enableStatus || undefined // 如果为空字符串则传undefined或后端约定的值
+        enableStatus: this.queryParams.enableStatus !== null ? this.queryParams.enableStatus : undefined // 如果为空字符串则传undefined或后端约定的值
       };
 
       queryPage(params).then(res => {
@@ -207,7 +207,7 @@ export default {
     /** 重置按钮 */
     resetQuery() {
       this.queryParams.searchText = '';
-      this.queryParams.enableStatus = '';
+      this.queryParams.enableStatus = null;
       this.handleQuery();
     },
 
@@ -227,7 +227,7 @@ export default {
         id: undefined,
         applicationGroupCode: '',
         applicationGroupName: '',
-        enableStatus: '启用'
+        enableStatus: 1
       };
       this.$nextTick(() => {
         if (this.$refs.formRef) this.$refs.formRef.clearValidate();
@@ -273,7 +273,7 @@ export default {
           } : {
             applicationGroupCode: this.form.applicationGroupCode,
             applicationGroupName: this.form.applicationGroupName,
-            enableStatus: '启用' // 新增默认启用
+            enableStatus: 1 // 新增默认启用
           };
 
           apiCall(params).then(res => {
@@ -314,14 +314,14 @@ export default {
     /** 状态切换 */
     enableChange(newValue, row) {
       // 这里需要注意：如果后端API失败，需要把 Switch 的状态改回去
-      const originalStatus = newValue === '启用' ? '停用' : '启用';
+      const originalStatus = newValue === 1 ? 0 : 1;
 
       modify({
         id: row.id,
         enableStatus: newValue
       }).then(res => {
         if (res.code === 200) {
-          this.$message.success(newValue === '启用' ? '已启用' : '已停用');
+          this.$message.success(newValue === 1 ? '已启用' : '已停用');
         } else {
           this.$message.error(res.message || '状态修改失败');
           row.enableStatus = originalStatus; // 恢复界面显示

@@ -92,6 +92,11 @@
                     <el-input v-model="menu.menuUrl" placeholder="/system/user"></el-input>
                   </el-form-item>
                 </el-col>
+                <el-col :span="24">
+                  <el-form-item label="前端组件">
+                    <el-input v-model="menu.component" placeholder="如: accountManagement/account/account（叶子菜单必填）"></el-input>
+                  </el-form-item>
+                </el-col>
               </el-row>
 
               <el-divider content-position="left">样式与结构</el-divider>
@@ -152,6 +157,7 @@ export default {
         menuName: '',
         menuCode: '',
         menuUrl: '',
+        component: '',
         icon: '',
         sortNo: 0,
         menuLevel: '',

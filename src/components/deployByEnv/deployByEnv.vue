@@ -11,7 +11,22 @@
               :status="step.status"
           >
             <template slot="description">
-              <span v-if="step.description" class="step-error">{{ step.description }}</span>
+              <div v-if="step.description" class="step-desc">
+                <div class="step-desc-card" :class="{ 'is-waiting': step.rawStatus === 4, 'is-error': step.rawStatus === 3 }">
+                  <div class="step-desc-body">
+                    <template v-for="(line, lIdx) in step.description.split('\n')">
+                      <div v-if="isUrl(line)" :key="lIdx" class="step-desc-actions">
+                        <el-button type="warning" size="mini" icon="el-icon-link" class="action-btn"
+                                   @click.stop="openMrLink(line)">前往 GitLab 解决冲突</el-button>
+                        <el-button v-if="step.rawStatus === 4 && step.id === 'merge'"
+                                   type="primary" size="mini" icon="el-icon-refresh" class="action-btn"
+                                   @click.stop="handleRetry">重试</el-button>
+                      </div>
+                      <span v-else-if="line.trim()" :key="lIdx" class="step-desc-text">{{ line }}</span>
+                    </template>
+                  </div>
+                </div>
+              </div>
             </template>
           </el-step>
         </el-steps>
@@ -32,8 +47,8 @@
             <el-button type="warning"
                        plain
                        icon="el-icon-remove-outline"
-                       size="small" @click="withdrawBranch"
-                       :disabled="isDisabled"
+                       size="small" @click="confirmWithdraw"
+                       :disabled="isDisabled || isDeploying"
                        :loading="btnLoading">退出分支</el-button>
           </el-tooltip>
           <el-tooltip content="重新构建并部署选中分支" placement="top">
@@ -41,8 +56,8 @@
                        plain
                        icon="el-icon-refresh"
                        size="small"
-                       @click="reDeploy"
-                       :disabled="isDisabled"
+                       @click="confirmReDeploy"
+                       :disabled="isDisabled || isDeploying"
                        :loading="btnLoading">重新部署</el-button>
           </el-tooltip>
           <el-divider direction="vertical"></el-divider>
@@ -50,7 +65,8 @@
                      plain
                      icon="el-icon-s-flag"
                      size="small"
-                     @click="deployMain"
+                     @click="confirmDeployMain"
+                     :disabled="isDeploying"
                      :loading="btnLoading">紧急部署 Main 分支</el-button>
         </div>
       </div>
@@ -75,19 +91,24 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createByName" label="创建人" width="120" align="center" />
-        <el-table-column prop="gmtCreate" label="创建时间" width="170" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="170" align="center" :formatter="formatGmtCreate" />
       </el-table>
     </el-card>
 
     <el-card shadow="never" class="module-card">
       <div slot="header" class="card-header-flex">
         <span class="header-title"><i class="el-icon-time"></i> 待部署分支</span>
-        <el-button type="primary"
-                   size="small"
-                   icon="el-icon-upload2"
-                   @click="deploy"
-                   :disabled="deployBranchBtnIsDisabled"
-                   :loading="btnLoading">部署选中分支</el-button>
+      </div>
+
+      <div class="toolbar-container">
+        <div class="left-actions">
+          <el-button type="primary"
+                     size="small"
+                     icon="el-icon-upload2"
+                     @click="deploy"
+                     :disabled="deployBranchBtnIsDisabled || isDeploying"
+                     :loading="btnLoading">部署选中分支</el-button>
+        </div>
       </div>
 
       <el-table
@@ -110,7 +131,7 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createByName" label="创建人" width="120" align="center" />
-        <el-table-column prop="gmtCreate" label="创建时间" width="170" align="center" />
+        <el-table-column prop="gmtCreate" label="创建时间" width="170" align="center" :formatter="formatGmtCreate" />
       </el-table>
     </el-card>
 
@@ -140,7 +161,7 @@
                   <span class="username">{{ log.deployByName }}</span>
                   <span class="action-text">执行了</span>
                   <span :class="['action-type', getDeployTypeColorClass(log.deployType)]">
-                    {{ log.deployType }}
+                    {{ getDeployTypeDesc(log.deployType) }}
                   </span>
                 </div>
 
@@ -192,6 +213,7 @@ import {
   getDeployMaster,
   getDeployRecord,
   getUnDeployedBranchList,
+  retryDeploy,
   sseClose,
   getDeployStepList
 } from "@/views/applicationManagement/applicationList/api";
@@ -202,7 +224,15 @@ const STEP_STATUS_MAP = {
   0: 'wait',
   1: 'process',
   2: 'success',
-  3: 'error'
+  3: 'error',
+  4: 'wait'
+};
+
+const DEPLOY_TYPE_DESC = {
+  'SUBMIT_BRANCH': '提交分支部署',
+  'WITHDRAW_BRANCH': '退出分支部署',
+  'RE_DEPLOY': '重新部署',
+  'MAIN_BRANCH': 'main分支部署'
 };
 
 export default {
@@ -241,13 +271,38 @@ export default {
     };
   },
 
+  computed: {
+    isDeploying() {
+      return this.deployMaster && this.deployMaster.deployStatus === 1;
+    }
+  },
+
   methods: {
     // --- 步骤条逻辑 ---
     getStepIcon(step) {
+      if (step.rawStatus === 4) return 'el-icon-warning';
       if (step.status === 'process') return 'el-icon-loading';
       if (step.status === 'success') return 'el-icon-check';
       if (step.status === 'error') return 'el-icon-close';
       return step.icon;
+    },
+
+    isUrl(text) {
+      return /^https?:\/\/.+/.test(text);
+    },
+
+    formatGmtCreate(row, column, cellValue) {
+      if (!cellValue) return '-';
+      if (typeof cellValue === 'string') return cellValue;
+      if (Array.isArray(cellValue) && cellValue.length >= 6) {
+        const [y, m, d, h, min, s] = cellValue;
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+      return String(cellValue);
+    },
+
+    openMrLink(url) {
+      window.open(url, '_blank');
     },
 
     updateStepState(item) {
@@ -256,11 +311,14 @@ export default {
 
       const statusKey = Number(item.stepStatus);
       const newStatus = STEP_STATUS_MAP[statusKey] || 'wait';
-      const errorMessage = (newStatus === 'error') ? item.errorMessage : '';
+      const isWaiting = statusKey === 4;
+      const showDescription = (newStatus === 'error') || isWaiting;
+      const errorMessage = showDescription ? item.errorMessage : '';
 
       const updatedStep = {
         ...this.steps[index],
         status: newStatus,
+        rawStatus: statusKey,
         description: errorMessage
       };
       this.$set(this.steps, index, updatedStep);
@@ -276,9 +334,12 @@ export default {
 
       this.recalcActiveIndex();
 
+      // WAITING 状态下不关闭资源，继续接收 SSE/轮询更新
+      if (isWaiting) {
+        return;
+      }
       if (newStatus === 'error') {
         this.closeResources();
-        // 错误时也要刷新数据，确保状态一致
         this.refreshBranchData();
       } else if (item.stepCode === 'finish' && newStatus === 'success') {
         this.closeResources();
@@ -297,6 +358,11 @@ export default {
       stepOrder.forEach(code => {
         const stepData = stepList.find(item => item.stepCode === code);
         if (stepData) {
+          // 链式激活的 process 不被 DB 中的 INIT 数据覆盖
+          const currentStep = this.steps.find(s => s.id === code);
+          if (currentStep && currentStep.status === 'process' && Number(stepData.stepStatus) === 0) {
+            return;
+          }
           this.updateStepState(stepData);
         }
       });
@@ -312,20 +378,30 @@ export default {
     },
 
     // --- SSE & 轮询 ---
-    createSseConnect(applicationId) {
-      this.closeResources();
-      const sseUrl = `http://192.168.0.10:7002/matrix-sphere/sse/connect/${applicationId}`;
+    createSseConnect(applicationId, onReady) {
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
+      if (this.pollingTimer) {
+        clearInterval(this.pollingTimer);
+        this.pollingTimer = null;
+      }
+      const sseUrl = `http://192.168.0.10:7002/matrix-sphere/sse/v1/connect/${applicationId}`;
       console.log('SSE 连接中...', sseUrl);
 
       try {
         this.eventSource = new EventSourcePolyfill(sseUrl, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`,
-            heartbeatTimeout: 3600000
-          }
+            Authorization: `Bearer ${localStorage.getItem('adpSsoToken')}`
+          },
+          heartbeatTimeout: 3600000
         });
 
-        this.eventSource.onopen = () => console.log('SSE 连接成功');
+        this.eventSource.onopen = () => {
+          console.log('SSE 连接成功');
+          if (onReady) onReady();
+        };
         this.eventSource.onmessage = (res) => {
           try {
             console.log('SSE 收到消息:', res.data);
@@ -340,6 +416,7 @@ export default {
         };
       } catch (e) {
         this.startPolling();
+        if (onReady) onReady();
       }
     },
 
@@ -363,8 +440,8 @@ export default {
     pollCurrentStatus() {
       this.getDeployStepList();
       getDeployMaster({applicationId: this.applicationId, env: this.env}).then(res => {
-        if (res.data.code === 2000 && res.data.body) {
-          const status = res.data.body.deployStatus;
+        if (res.code === 200 && res.data) {
+          const status = res.data.deployStatus;
           if (status === 2 || status === 3) {
             this.closeResources();
             this.refreshBranchData();
@@ -402,8 +479,11 @@ export default {
         p2 = this.getDeployRecord(this.deployMaster.id);
       }
 
+      // 同步更新 deployMaster 状态，避免步骤失败后 isDeploying 未重置导致按钮禁用
+      const p3 = this.getDeployMaster(this.applicationId, this.env);
+
       try {
-        await Promise.all([p1, p2]);
+        await Promise.all([p1, p2, p3]);
       } catch (e) {
         console.error("数据刷新异常", e);
       } finally {
@@ -420,8 +500,8 @@ export default {
         applicationId: this.applicationId,
         env: this.env
       }).then(res => {
-        if (res.data.code === 2000 && CollUtils.isNotEmpty(res.data.body)) {
-          this.processStepList(res.data.body);
+        if (res.code === 200 && CollUtils.isNotEmpty(res.data)) {
+          this.processStepList(res.data);
         }
       });
     },
@@ -429,8 +509,8 @@ export default {
     async getDeployMaster(applicationId, activeName) {
       try {
         const res = await getDeployMaster({applicationId, env: activeName});
-        if (res.data.code === 2000) {
-          this.deployMaster = res.data.body || {};
+        if (res.code === 200) {
+          this.deployMaster = res.data || {};
           return this.deployMaster;
         }
       } catch (e) { console.error(e) }
@@ -441,9 +521,9 @@ export default {
     async getDeployRecord(deployMasterId) {
       if (!deployMasterId) return;
       return getDeployRecord(deployMasterId).then(res => {
-        if (res.data.code === 2000) {
+        if (res.code === 200) {
           // 【防崩坏处理】确保 featureBranchList 始终为数组
-          const data = res.data.body || {};
+          const data = res.data || {};
           if (!data.featureBranchList) data.featureBranchList = [];
 
           this.deployInfo = data;
@@ -455,8 +535,8 @@ export default {
     // 修改：返回 Promise 以便 refreshBranchData 调用
     getUnDeployedBranchList(applicationId) {
       return getUnDeployedBranchList({applicationId, env: this.env}).then(res => {
-        if (res.data.code === 2000) {
-          this.unDeployedBranchList = res.data.body || [];
+        if (res.code === 200) {
+          this.unDeployedBranchList = res.data || [];
         }
       });
     },
@@ -468,10 +548,10 @@ export default {
         applicationId: this.applicationId,
         env: this.env
       }).then(res => {
-        if (res.data.code === 2000) {
-          this.deployLogList = res.data.body || [];
+        if (res.code === 200) {
+          this.deployLogList = res.data || [];
         } else {
-          this.$message.error(res.data.message || '获取历史记录失败');
+          this.$message.error(res.message || '获取历史记录失败');
         }
       }).catch(e => {
         console.error(e);
@@ -479,6 +559,113 @@ export default {
     },
 
     // --- Actions ---
+
+    getSelectedBranchNames() {
+      if (!this.deployedBranchIds.length) return '';
+      const branches = this.deployInfo.featureBranchList || [];
+      return branches
+        .filter(b => this.deployedBranchIds.includes(b.id))
+        .map(b => b.branchName)
+        .join('、');
+    },
+
+    confirmWithdraw() {
+      if (!this.deployedBranchIds.length) return this.$message.warning('请选择要退出的分支');
+      const names = this.getSelectedBranchNames();
+      const msg = `<div class="deploy-confirm-box">
+        <div class="deploy-confirm-row">
+          <span class="deploy-confirm-label">部署环境</span>
+          <span class="deploy-confirm-tag deploy-confirm-tag--env">${this.env}</span>
+        </div>
+        <div class="deploy-confirm-row">
+          <span class="deploy-confirm-label">移除分支</span>
+          <span class="deploy-confirm-tag deploy-confirm-tag--danger">${names}</span>
+        </div>
+        <div class="deploy-confirm-hint">移除后，将用剩余分支自动重新部署。</div>
+      </div>`;
+      this.$confirm(msg, '退出分支', {
+        confirmButtonText: '确认退出',
+        cancelButtonText: '取消',
+        type: 'warning',
+        iconClass: 'el-icon-remove-outline',
+        dangerouslyUseHTMLString: true,
+        customClass: 'deploy-confirm-dialog'
+      }).then(() => { this.executeDeployAction('WITHDRAW_BRANCH'); })
+        .catch(() => {});
+    },
+
+    confirmReDeploy() {
+      if (!this.deployedBranchIds.length) return this.$message.warning('请选择要重部署的分支');
+      const names = this.getSelectedBranchNames();
+      const msg = `<div class="deploy-confirm-box">
+        <div class="deploy-confirm-row">
+          <span class="deploy-confirm-label">部署环境</span>
+          <span class="deploy-confirm-tag deploy-confirm-tag--env">${this.env}</span>
+        </div>
+        <div class="deploy-confirm-row">
+          <span class="deploy-confirm-label">选中分支</span>
+          <span class="deploy-confirm-tag">${names}</span>
+        </div>
+        <div class="deploy-confirm-hint">将跳过合并步骤，直接触发 Jenkins 构建。</div>
+      </div>`;
+      this.$confirm(msg, '重新部署', {
+        confirmButtonText: '确认部署',
+        cancelButtonText: '取消',
+        type: 'warning',
+        iconClass: 'el-icon-refresh',
+        dangerouslyUseHTMLString: true,
+        customClass: 'deploy-confirm-dialog'
+      }).then(() => { this.executeDeployAction('RE_DEPLOY'); })
+        .catch(() => {});
+    },
+
+    confirmDeployMain() {
+      const msg = `<div class="deploy-confirm-box">
+        <div class="deploy-confirm-row">
+          <span class="deploy-confirm-label">部署环境</span>
+          <span class="deploy-confirm-tag deploy-confirm-tag--env">${this.env}</span>
+        </div>
+        <div class="deploy-confirm-row">
+          <span class="deploy-confirm-label">部署分支</span>
+          <span class="deploy-confirm-tag deploy-confirm-tag--danger">main（紧急）</span>
+        </div>
+        <div class="deploy-confirm-warning">将覆盖当前所有 Feature 分支的部署</div>
+      </div>`;
+      this.$confirm(msg, '紧急部署 Main 分支', {
+        confirmButtonText: '确认部署',
+        cancelButtonText: '取消',
+        type: 'error',
+        iconClass: 'el-icon-s-flag',
+        dangerouslyUseHTMLString: true,
+        customClass: 'deploy-confirm-dialog'
+      }).then(() => { this.executeDeployAction('MAIN_BRANCH'); })
+        .catch(() => {});
+    },
+
+    handleRetry() {
+      if (!this.deployMaster || !this.deployMaster.id) {
+        this.$message.warning('未找到部署记录');
+        return;
+      }
+      const masterId = this.deployMaster.id;
+      const mergeStep = this.steps.find(s => s.id === 'merge');
+      if (mergeStep) {
+        const updated = { ...mergeStep, status: 'process', description: '重试中...' };
+        this.$set(this.steps, this.steps.findIndex(s => s.id === 'merge'), updated);
+      }
+      retryDeploy(masterId).then(res => {
+        if (res.code === 200) {
+          this.$message.success('重试已触发');
+          // 重新建立 SSE 连接接收状态更新
+          this.createSseConnect(this.applicationId, () => this.getDeployStepList());
+        } else {
+          this.$message.error(res.message || '重试失败');
+        }
+      }).catch(e => {
+        console.error('重试请求失败:', e);
+        this.$message.error('重试请求失败');
+      });
+    },
 
     async executeDeployAction(actionType) {
       // 1. 立即给用户反馈，锁定按钮
@@ -488,10 +675,10 @@ export default {
       this.clearDeployStatus();
 
       let ids = [];
-      if (actionType === '提交分支部署') {
+      if (actionType === 'SUBMIT_BRANCH') {
         const currentFeatures = this.deployInfo.featureBranchList || [];
         ids = this.unDeployedBranchIds.concat(currentFeatures.map(i => i.id));
-      } else if (actionType === 'main分支部署') {
+      } else if (actionType === 'MAIN_BRANCH') {
         ids = [];
       } else {
         ids = this.deployedBranchIds;
@@ -505,12 +692,12 @@ export default {
           deployType: actionType
         });
 
-        if (res.data.code === 2000) {
-          const result = res.data.body;
+        if (res.code === 200) {
+          const result = res.data;
 
-          // 更新 Master 信息
-          if (result && result.deployMaster) {
-            this.deployMaster = result.deployMaster;
+          // 更新 Master 信息（createDeploy 直接返回 DeployMasterVO）
+          if (result && result.id) {
+            this.deployMaster = result;
           }
 
           // 清理选中状态
@@ -518,24 +705,19 @@ export default {
           this.unDeployedBranchIds = [];
           this.deployedBranchIds = [];
 
-          // =======================================================
-          // 【核心优化点】
-          // 1. 接口通了立刻报喜，不要等表格刷新
           this.$message.success('请求已提交');
 
-          // 2. 移除 await！让表格刷新在后台进行（表格有自己的 v-loading）
-          // 这样界面就不会卡顿，表格转菊花的同时，步骤条也可以开始动了
           this.refreshBranchData();
 
-          // 3. 立即连接 SSE (如果需要)
-          // 这样步骤条能第一时间响应
+          // 仅部署中时才连接 SSE 实时推送
           if (this.deployMaster.deployStatus === 1) {
-            this.createSseConnect(this.applicationId);
+            this.createSseConnect(this.applicationId, () => this.getDeployStepList());
+          } else {
+            this.getDeployStepList();
           }
-          // =======================================================
 
         } else {
-          this.$message.error(res.data.message);
+          this.$message.error(res.message);
           // 恢复 UI 状态
           this.deployProcessActive = 0;
           this.steps.forEach(s => s.status = 'wait');
@@ -550,13 +732,13 @@ export default {
       }
     },
 
-    deploy() { this.executeDeployAction('提交分支部署'); },
-    withdrawBranch() { this.executeDeployAction('退出分支部署'); },
+    deploy() { this.executeDeployAction('SUBMIT_BRANCH'); },
+    withdrawBranch() { this.executeDeployAction('WITHDRAW_BRANCH'); },
     reDeploy() {
       if (!this.deployedBranchIds.length) return this.$message.warning('请选择要重部署的分支');
-      this.executeDeployAction('重新部署');
+      this.executeDeployAction('RE_DEPLOY');
     },
-    deployMain() { this.executeDeployAction('main分支部署'); },
+    deployMain() { this.executeDeployAction('MAIN_BRANCH'); },
 
     // --- Table Selection ---
     getUnDeployBranchIds(val) {
@@ -580,10 +762,14 @@ export default {
       if (status === 3) return 'el-icon-close';
       return '';
     },
+    getDeployTypeDesc(code) {
+      return DEPLOY_TYPE_DESC[code] || code;
+    },
     getDeployTypeColorClass(typeText) {
-      if (typeText === '重新部署') return 'text-warning';
-      if (typeText === 'main分支部署') return 'text-danger';
-      if (typeText === '退出分支部署') return 'text-info';
+      if (typeText === 'RE_DEPLOY') return 'text-warning';
+      if (typeText === 'MAIN_BRANCH' || typeText === 'Main 分支部署') return 'text-danger';
+      if (typeText === 'WITHDRAW_BRANCH') return 'text-info';
+      if (typeText === 'SUBMIT_BRANCH') return 'text-primary';
       return 'text-primary';
     },
     getStatusType(status) {
@@ -596,18 +782,15 @@ export default {
     }
   },
 
-  mounted() {
-    // 初始加载
-    this.refreshBranchData();
+  async mounted() {
+    const master = await this.getDeployMaster(this.applicationId, this.env);
 
+    this.refreshBranchData();
     this.getDeployStepList();
 
-    // 恢复 SSE
-    this.getDeployMaster(this.applicationId, this.env).then(master => {
-      if (master && master.deployStatus === 1) {
-        this.createSseConnect(this.applicationId);
-      }
-    });
+    if (master && master.deployStatus === 1) {
+      this.createSseConnect(this.applicationId);
+    }
   },
 
   beforeDestroy() {
@@ -634,6 +817,10 @@ export default {
 
   ::v-deep .el-card__body {
     padding: 20px;
+  }
+
+  ::v-deep .el-table td {
+    vertical-align: middle;
   }
 }
 
@@ -701,12 +888,37 @@ export default {
     text-align: center;
   }
 
-  .step-error {
-    color: #F56C6C;
+  /* 步骤描述卡片 */
+  .step-desc {
+    margin-top: 6px;
+  }
+  .step-desc-card {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid #E6A23C;
+    background: #fef7ee;
     font-size: 12px;
-    margin-top: 5px;
+    line-height: 1.6;
+    max-height: 280px;
+    overflow-y: auto;
+    word-break: break-all;
+  }
+  .step-desc-card.is-error {
+    border-left-color: #F56C6C;
+    background: #fef0f0;
+  }
+  .step-desc-text {
+    color: #606266;
     display: block;
-    font-weight: bold;
+  }
+  .step-desc-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .action-btn {
+    font-size: 12px;
   }
 }
 
@@ -884,6 +1096,96 @@ export default {
         word-break: break-all; /* 防止长报错撑破布局 */
       }
     }
+  }
+}
+</style>
+
+<style lang="less">
+/* 部署操作确认弹窗样式 */
+.deploy-confirm-dialog {
+  .el-message-box__header {
+    padding: 20px 24px 0;
+    .el-message-box__title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #303133;
+    }
+  }
+
+  .el-message-box__content {
+    padding: 16px 24px 0;
+  }
+
+  .el-message-box__message {
+    padding: 0;
+    color: #606266;
+    line-height: 1.6;
+  }
+
+  .el-message-box__btns {
+    padding: 16px 24px 20px;
+  }
+}
+
+.deploy-confirm-box {
+  .deploy-confirm-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .deploy-confirm-label {
+    font-size: 13px;
+    color: #909399;
+    width: 68px;
+    flex-shrink: 0;
+  }
+
+  .deploy-confirm-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', Consolas, monospace;
+    background: #f0f2f5;
+    color: #606266;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--env {
+      background: #ecf5ff;
+      color: #409EFF;
+      font-family: inherit;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    &--danger {
+      background: #fef0f0;
+      color: #F56C6C;
+    }
+  }
+
+  .deploy-confirm-hint {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #ebeef5;
+    font-size: 12px;
+    color: #909399;
+    line-height: 1.5;
+  }
+
+  .deploy-confirm-warning {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: #fef0f0;
+    border-left: 3px solid #F56C6C;
+    font-size: 13px;
+    color: #F56C6C;
+    line-height: 1.5;
   }
 }
 </style>

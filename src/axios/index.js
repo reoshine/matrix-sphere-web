@@ -90,7 +90,7 @@ function triggerSsoLogin(failedUrl) {
     sessionStorage.setItem('target_route', router.currentRoute.fullPath)
     const SSO_CONFIG = {
         clientId: 'matrix-sphere',
-        authorizeUrl: 'http://192.168.0.10:7002/oauth2/authorize',
+        authorizeUrl: 'http://192.168.0.10:7002/matrix-sphere/oauth2/authorize',
         redirectUri: 'http://192.168.0.10:8081/callback',
     }
     const authUrl = `${SSO_CONFIG.authorizeUrl}?response_type=code&client_id=${SSO_CONFIG.clientId}&redirect_uri=${encodeURIComponent(SSO_CONFIG.redirectUri)}&scope=message.read`

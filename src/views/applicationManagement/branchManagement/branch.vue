@@ -358,7 +358,7 @@ export default {
     },
 
     getGroupList() {
-      queryList({searchText: '', enableStatus: '启用'}).then(res => {
+      queryList({searchText: '', enableStatus: 1}).then(res => {
         if (res.code === 200) {
           this.applicationGroupList = res.data || [];
         }

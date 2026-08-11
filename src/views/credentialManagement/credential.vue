@@ -155,7 +155,7 @@
 </template>
 
 <script>
-import {page} from "@/views/credentialManagement/api";
+import {page, create, modify, remove} from "@/views/credentialManagement/api";
 
 export default {
   name: "credential",
@@ -201,12 +201,10 @@ export default {
         ]
       },
 
-      // 模拟字典数据 (原代码中 item.canPush 看起来是复制粘贴错误，这里修正为 label/value)
+      // 凭据类型下拉选项 (需与后端 CredentialType 枚举一致)
       credentialTypeList: [
-        {label: 'Gitlab/Github', value: 'GIT'},
-        {label: 'Jenkins', value: 'JENKINS'},
-        {label: 'Kubernetes', value: 'K8S'},
-        {label: 'Database', value: 'DB'}
+        {label: 'Gitlab', value: 'gitlab'},
+        {label: 'Jenkins', value: 'jenkins'},
       ],
     }
   },
@@ -242,7 +240,6 @@ export default {
 
     // 查询
     page() {
-      // 模拟 API 调用，请确保引入了正确的 API
       page({
         pageNum: this.pageNum,
         pageCount: this.pageCount,
@@ -251,7 +248,18 @@ export default {
         if (res.code === 200) {
           const result = res.data;
           this.total = result.total;
-          this.credentialList = result.data || [];
+          this.credentialList = (result.data || []).map(item => {
+            if (item.credentialConfig) {
+              try {
+                item.config = JSON.parse(item.credentialConfig);
+              } catch (e) {
+                item.config = {};
+              }
+            } else {
+              item.config = {};
+            }
+            return item;
+          });
         }
       }).catch(err => {
         this.$message.error('查询失败：' + err);
@@ -274,22 +282,36 @@ export default {
 
     // 打开编辑弹窗
     credentialEdit(credential) {
-      // 深拷贝，防止修改表单影响列表显示
-      this.modifyCredentialInfoForm = JSON.parse(JSON.stringify(credential));
-      // 确保 config 对象存在
-      if (!this.modifyCredentialInfoForm.config) {
-        this.modifyCredentialInfoForm.config = {};
-      }
+      this.modifyCredentialInfoForm = {
+        id: credential.id,
+        credentialType: credential.credentialType,
+        credentialDesc: credential.credentialDesc,
+        config: credential.config ? JSON.parse(JSON.stringify(credential.config)) : {user: '', url: '', token: '', credentialName: '', credentialDesc: '', expiresAt: ''}
+      };
       this.modifyCredentialDialogVisible = true;
     },
 
     modifyCredential() {
       this.$refs.modifyCredentialRef.validate(valid => {
         if (valid) {
-          console.log('Submit:', this.modifyCredentialInfoForm);
-          // 这里调用保存 API...
-          this.$message.success('保存逻辑待实现');
-          this.modifyCredentialDialogVisible = false;
+          const form = this.modifyCredentialInfoForm;
+          const requestData = {
+            id: form.id || null,
+            credentialType: form.credentialType,
+            credentialDesc: form.credentialDesc,
+            credentialConfig: form.config ? JSON.stringify(form.config) : null
+          };
+
+          const apiCall = form.id ? modify(requestData) : create(requestData);
+          apiCall.then(res => {
+            if (res.code === 200) {
+              this.$message.success(form.id ? '修改成功' : '新增成功');
+              this.modifyCredentialDialogVisible = false;
+              this.page();
+            }
+          }).catch(err => {
+            this.$message.error('操作失败：' + err);
+          });
         }
       });
     },
@@ -301,9 +323,15 @@ export default {
     removeCredential(id) {
       this.$confirm('确认删除该凭据吗？', '警告', {type: 'warning'})
           .then(() => {
-            // 调用删除 API
-            this.$message.success('删除逻辑待实现');
-          });
+            remove(id).then(res => {
+              if (res.code === 200) {
+                this.$message.success('删除成功');
+                this.page();
+              }
+            }).catch(err => {
+              this.$message.error('删除失败：' + err);
+            });
+          }).catch(() => {});
     },
 
     formatTime(time) {

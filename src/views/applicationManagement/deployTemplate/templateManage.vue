@@ -53,12 +53,12 @@ import templateEditorDialog from './templateEditorDialog'
 export default {
   name: 'templateManage',
   components: { templateEditorDialog },
-  // props: {
-  //   applicationId: {
-  //     type: [Number, String],
-  //     required: true
-  //   }
-  // },
+  props: {
+    applicationId: {
+      type: [Number, String],
+      required: true
+    }
+  },
   data() {
     return {
       loading: false,

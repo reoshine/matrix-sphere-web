@@ -9,11 +9,9 @@
       <div class="content">
         <pageHeader v-if="$route.meta.guidePath" />
 
-        <transition name="fade">
-          <keep-alive :include="tagsList">
-            <router-view :key="$route.fullPath"></router-view>
-          </keep-alive>
-        </transition>
+        <keep-alive :include="tagsList">
+          <router-view />
+        </keep-alive>
         <el-backtop target=".content"></el-backtop>
       </div>
 

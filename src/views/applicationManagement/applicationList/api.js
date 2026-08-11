@@ -33,7 +33,7 @@ export function removeApplication(data) {
 }
 
 export function enableChange(data) {
-    return sphere.post('/application/v1/updateEnableStatus', data)
+    return sphere.post('/application/v1/update-enable-status', data)
 }
 
 export function importFile(data, config) {
@@ -63,24 +63,12 @@ export function getDeployRecord(data) {
     return sphere.get(`/deploy/v1/getDeployRecord/${data}`)
 }
 
-export function withdrawBranch(data) {
-    return sphere.post('/deploy/v1/cancelDeploy', data)
-}
-
 export function deploy(data) {
     return sphere.post('/deploy/v1/createDeploy', data)
 }
 
 export function removeBranch(data) {
     return sphere.post(`/branch/v1/remove/${data}`)
-}
-
-export function mergeBranch(data) {
-    return sphere.post('/deploy/v1/mergeBranch', data)
-}
-
-export function build(data) {
-    return sphere.post('/deploy/v1/build', data)
 }
 
 export function getDepLoyLogList(data) {
@@ -91,6 +79,10 @@ export function getDeployStepList(data) {
     return sphere.post('/deployStep/v1/getDeployStepList', data)
 }
 
+export function retryDeploy(data) {
+    return sphere.post(`/deploy/v1/retryDeploy/${data}`)
+}
+
 export function sseClose(data) {
-    return sphere.get(`/sse/close/${data}`)
+    return sphere.get(`/sse/v1/close/${data}`)
 }

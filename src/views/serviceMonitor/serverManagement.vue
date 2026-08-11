@@ -235,14 +235,11 @@ export default {
     getList() {
       this.loading = true;
       getServerList(this.queryParams).then(response => {
-        // 适配后端返回结构 {code: 200, data: { rows: [], total: 0 }}
-        if (response.data && response.data.code === 200) {
-          const resData = response.data.data;
-          // 兼容分页对象或直接List
-          this.tableData = resData.rows || resData.records || [];
-          this.total = resData.total || 0;
+        if (response.code === 200) {
+          this.tableData = response.data || [];
+          this.total = this.tableData.length;
         } else {
-          this.$message.error(response.data.msg || '获取数据失败');
+          this.$message.error(response.message || '获取数据失败');
         }
         this.loading = false;
       }).catch(() => {
@@ -316,10 +313,10 @@ export default {
 
         this.testing = true;
         testServerConnection(this.form).then(response => {
-          if (response.data.code === 200) {
-            this.$message.success(response.data.msg || '连接测试成功');
+          if (response.code === 200) {
+            this.$message.success(response.data ? '连接测试成功' : '连接测试失败');
           } else {
-            this.$message.warning(response.data.msg || '连接测试失败');
+            this.$message.warning(response.message || '连接测试失败');
           }
           this.testing = false;
         }).catch(() => {
@@ -334,12 +331,12 @@ export default {
           this.submitLoading = true;
           if (this.form.id) {
             updateServer(this.form).then(response => {
-              if (response.data.code === 200) {
+              if (response.code === 200) {
                 this.$message.success("修改成功");
                 this.drawerVisible = false;
                 this.getList();
               } else {
-                this.$message.error(response.data.msg || "修改失败");
+                this.$message.error(response.message || "修改失败");
               }
               this.submitLoading = false;
             }).catch(() => {
@@ -347,12 +344,12 @@ export default {
             });
           } else {
             addServer(this.form).then(response => {
-              if (response.data.code === 200) {
+              if (response.code === 200) {
                 this.$message.success("接入成功");
                 this.drawerVisible = false;
                 this.getList();
               } else {
-                this.$message.error(response.data.msg || "接入失败");
+                this.$message.error(response.message || "接入失败");
               }
               this.submitLoading = false;
             }).catch(() => {
@@ -372,11 +369,11 @@ export default {
       }).then(() => {
         return deleteServer(ids);
       }).then(response => {
-        if (response.data.code === 200) {
+        if (response.code === 200) {
           this.getList();
           this.$message.success("删除成功");
         } else {
-          this.$message.error(response.data.msg);
+          this.$message.error(response.message);
         }
       }).catch(() => {
       });
@@ -391,7 +388,7 @@ export default {
       }).then(() => {
         return deleteServer(ids);
       }).then(response => {
-        if (response.data.code === 200) {
+        if (response.code === 200) {
           this.getList();
           this.$message.success("删除成功");
         }

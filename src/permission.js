@@ -5,7 +5,7 @@ import { manage } from '@/axios'
 // OAuth2 授权服务器配置
 const SSO_CONFIG = {
     clientId: 'matrix-sphere',
-    authorizeUrl: 'http://192.168.0.10:7002/oauth2/authorize',
+    authorizeUrl: 'http://192.168.0.10:7002/matrix-sphere/oauth2/authorize',
     redirectUri: 'http://192.168.0.10:8081/callback',
 }
 
