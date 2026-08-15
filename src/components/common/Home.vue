@@ -24,7 +24,7 @@
 import bus from '@/util/bus';
 import headerBar from "@/components/common/headerBar";
 import sidebar from "@/components/common/sidebar";
-import tags from "@/components/common/tags";
+import tags from "@/components/common/Tags";
 import pageHeader from "@/components/common/pageHeader.vue";
 
 export default {
