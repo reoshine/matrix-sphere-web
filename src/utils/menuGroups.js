@@ -1,7 +1,9 @@
 /**
  * 菜单分组映射工具
- * 将后端 /menu/tree 返回的扁平菜单映射到前端定义的分组结构
+ * 将后端 /menu/tree 返回的菜单映射到前端定义的分组结构
  * 后端零改动，前端做分组适配
+ *
+ * 注意：matchPaths 同时包含新旧路径，确保后端未迁移时也能正确分组
  */
 
 const GROUP_CONFIG = [
@@ -13,17 +15,17 @@ const GROUP_CONFIG = [
   {
     key: 'core',
     title: '核心业务',
-    matchPaths: ['/apps', '/deploy']
+    matchPaths: ['/apps', '/deploy', '/applicationManagement']
   },
   {
     key: 'ops',
     title: '运维支撑',
-    matchPaths: ['/monitor', '/resources']
+    matchPaths: ['/monitor', '/resources', '/serviceMonitor', '/repositoryManagement', '/credentialManagement']
   },
   {
     key: 'system',
     title: '系统',
-    matchPaths: ['/settings']
+    matchPaths: ['/settings', '/accountManagement', '/systemManagement']
   }
 ]
 
