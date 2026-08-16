@@ -93,12 +93,13 @@
       </el-pagination>
     </div>
 
-    <el-dialog
+    <FormDialog
         :title="modifyCredentialInfoForm.id ? '修改凭据' : '新增凭据'"
-        :close-on-click-modal="false"
         :visible.sync="modifyCredentialDialogVisible"
         width="500px"
-        custom-class="cred-dialog"
+        submit-text="确 定"
+        @submit="modifyCredential"
+        @cancel="cancelCredential"
     >
       <el-form
           class="modifyCredential"
@@ -146,11 +147,7 @@
           </el-date-picker>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button size="small" @click="cancelCredential">取 消</el-button>
-        <el-button size="small" type="primary" @click="modifyCredential">确 定</el-button>
-      </div>
-    </el-dialog>
+    </FormDialog>
   </PageContainer>
 </template>
 
@@ -158,12 +155,14 @@
 import {page, create, modify, remove} from "@/views/credentialManagement/api";
 import PageContainer from "@/components/common/PageContainer.vue";
 import FilterBar from "@/components/common/FilterBar.vue";
+import FormDialog from "@/components/common/FormDialog.vue";
 
 export default {
   name: "credential",
   components: {
     PageContainer,
-    FilterBar
+    FilterBar,
+    FormDialog
   },
   data() {
     return {
