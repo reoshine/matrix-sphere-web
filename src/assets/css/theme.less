@@ -1,24 +1,81 @@
 // src/assets/css/theme.less
+// Less 变量过渡期方案：引用 design-tokens.css 中的 CSS Custom Properties
+// 最终目标：逐步将组件中的 @less-variable 替换为 var(--css-variable)，最终移除本文件
 
-// -------- 品牌色 (MatrixSphere Theme) --------
-// 使用您登录页的主色调，保持品牌一致性
-@primary-color: #2c58b4;
+// -------- 品牌色 --------
+@primary-color: var(--color-primary);
+@primary-light: var(--color-primary-light);
+@primary-lighter: var(--color-primary-lighter);
+@primary-dark: var(--color-primary-dark);
+
+// -------- 语义色 --------
+@success-color: var(--color-success);
+@warning-color: var(--color-warning);
+@error-color: var(--color-error);
+@info-color: var(--color-info);
 
 // -------- 布局颜色 --------
-// 推荐 Header 和 Sidebar 使用统一的深色，增强整体感
-@bg-header: #242f42; // 您当前Header的颜色，不错
-@bg-sidebar: #242f42; // 统一使用 Header 色
-@bg-content: #f0f2f5; // 内容区域的浅灰色背景
-@bg-footer: #ffffff; // 页脚使用白色，更现代
+@bg-header: var(--color-bg-header);
+@bg-sidebar: var(--color-bg-sidebar);
+@bg-content: var(--color-bg-page);
+@bg-footer: var(--color-bg-surface);
 
 // -------- 侧边栏菜单颜色 --------
-@menu-text: #bfcbd9;
-@menu-active-text: @primary-color; // 激活时使用品牌色
-@menu-hover-bg: rgba(255, 255, 255, 0.1); // 鼠标悬停背景
+@menu-text: var(--sidebar-menu-text);
+@menu-active-text: var(--color-primary);
+@menu-hover-bg: var(--sidebar-menu-hover-bg);
 
 // -------- 布局尺寸 --------
-@header-height: 70px;
-@sidebar-width: 250px;
-@sidebar-width-collapse: 65px; // Element UI 折叠后的宽度
-@tags-height: 40px;
+@header-height: var(--header-height);
+@sidebar-width: var(--sidebar-width);
+@sidebar-width-collapse: var(--sidebar-width-collapsed);
+@tags-height: var(--tags-height);
 @footer-height: 60px;
+
+// -------- 文字色 --------
+@text-primary: var(--color-text-primary);
+@text-secondary: var(--color-text-secondary);
+@text-tertiary: var(--color-text-tertiary);
+
+// -------- 边框色 --------
+@border-color: var(--color-border);
+@border-color-light: var(--color-border-light);
+
+// -------- 字体 --------
+@font-family: var(--font-sans);
+@font-mono: var(--font-mono);
+
+// -------- 字号 --------
+@font-size-xs: var(--text-xs);
+@font-size-sm: var(--text-sm);
+@font-size-base: var(--text-base);
+@font-size-md: var(--text-md);
+@font-size-lg: var(--text-lg);
+@font-size-xl: var(--text-xl);
+@font-size-2xl: var(--text-2xl);
+@font-size-3xl: var(--text-3xl);
+
+// -------- 间距 --------
+@space-1: var(--space-1);
+@space-2: var(--space-2);
+@space-3: var(--space-3);
+@space-4: var(--space-4);
+@space-5: var(--space-5);
+@space-6: var(--space-6);
+@space-8: var(--space-8);
+@space-12: var(--space-12);
+
+// -------- 圆角 --------
+@border-radius: var(--radius-md);
+@border-radius-sm: var(--radius-sm);
+@border-radius-lg: var(--radius-lg);
+
+// -------- 阴影 --------
+@shadow-sm: var(--shadow-sm);
+@shadow-md: var(--shadow-md);
+@shadow-lg: var(--shadow-lg);
+
+// -------- 过渡 --------
+@transition-fast: var(--transition-fast);
+@transition-base: var(--transition-base);
+@transition-slow: var(--transition-slow);
