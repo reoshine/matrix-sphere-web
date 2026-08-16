@@ -48,6 +48,7 @@
 <script>
 import bus from '@/util/bus';
 import { sso } from '@/axios';
+import { Message } from 'element-ui';
 
 export default {
   name: "headerBar",
@@ -90,14 +91,10 @@ export default {
           localStorage.removeItem("adpSsoRefreshToken");
           localStorage.removeItem("ms_username");
 
-          this.$swal({
-            title: "退出成功！",
-            type: "success",
-            timer: 1500,
-            showConfirmButton: false,
-          }).then(() => {
+          Message.success('退出成功！');
+          setTimeout(() => {
             this.$router.push('/login');
-          });
+          }, 1500);
         }
       }
     },

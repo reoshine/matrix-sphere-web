@@ -11,7 +11,7 @@
 import axios from 'axios'
 import { manage } from '@/axios'
 import store from '@/store'
-import swal from 'sweetalert2'
+import { MessageBox } from 'element-ui'
 
 export default {
   name: 'SsoCallback',
@@ -71,10 +71,13 @@ export default {
 
       } catch (error) {
         console.error('获取Token失败', error)
-        swal.fire('认证失败', '授权码已过期或非法', 'error').then(() => {
-          // 换取失败，重新触发一次 SSO 登录
-          localStorage.removeItem('adpSsoToken')
-          window.location.reload()
+        MessageBox.alert('授权码已过期或非法', '认证失败', {
+          type: 'error',
+          callback: () => {
+            // 换取失败，重新触发一次 SSO 登录
+            localStorage.removeItem('adpSsoToken')
+            window.location.reload()
+          }
         })
       } finally {
         window.isProcessingToken = false; // 释放
