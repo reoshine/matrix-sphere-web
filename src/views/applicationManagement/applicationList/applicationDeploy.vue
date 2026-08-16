@@ -1,31 +1,24 @@
 <template>
-  <div class="app-container">
-    <el-card class="info-card" shadow="never">
-      <div slot="header" class="clearfix">
-        <span class="card-title"><i class="el-icon-s-operation"></i> 应用状态概览</span>
-        <el-tag
-            size="small"
-            effect="dark"
-            :type="activeName === 'PROD' ? 'danger' : 'primary'"
-            style="float: right"
-        >
-          当前控制台: {{ envMap[activeName] }}
-        </el-tag>
+  <PageContainer :title="applicationInfo.applicationName || '部署控制台'" subtitle="环境总览与部署操作">
+    <!-- 头部操作 -->
+    <template #header-actions>
+      <el-button size="small" icon="el-icon-back" @click="$router.push('/apps')">返回应用列表</el-button>
+    </template>
+
+    <!-- 应用状态概览 -->
+    <el-card class="overview-card" shadow="never">
+      <div slot="header" class="overview-header">
+        <span class="overview-title"><i class="el-icon-s-operation"></i> 应用状态概览</span>
+        <StatusDot :type="applicationInfo.enableStatus === 1 ? 'success' : 'error'" :label="applicationInfo.enableStatus === 1 ? '启用' : '停用'" />
       </div>
 
-      <el-descriptions class="margin-top" :column="4" border size="medium">
-        <el-descriptions-item label="应用名称">
-          <span class="text-bold">{{ applicationInfo.applicationName }}</span>
-        </el-descriptions-item>
-
+      <el-descriptions :column="4" border size="medium">
         <el-descriptions-item label="应用编码">
-          <el-tag size="small" type="info">{{ applicationInfo.applicationCode }}</el-tag>
+          <el-tag size="small" type="info">{{ applicationInfo.applicationCode || '-' }}</el-tag>
         </el-descriptions-item>
-
         <el-descriptions-item label="所属分组">
           {{ applicationGroupMap.get(applicationInfo.applicationGroupId) || '-' }}
         </el-descriptions-item>
-
         <el-descriptions-item label="Git 仓库">
           <el-link
               v-if="applicationInfo.gitUrl"
@@ -38,15 +31,13 @@
           </el-link>
           <span v-else>-</span>
         </el-descriptions-item>
-
-        <el-descriptions-item label="当前 Release 分支" :span="1">
-          <el-tag v-if="deployedInfo.releaseBranchName" type="success" effect="light">
+        <el-descriptions-item label="当前 Release 分支">
+          <el-tag v-if="deployedInfo.releaseBranchName" type="success" effect="light" size="small">
             <i class="el-icon-guide"></i> {{ deployedInfo.releaseBranchName }}
           </el-tag>
-          <span v-else class="text-gray">暂无发布分支信息</span>
+          <span v-else class="text-muted">暂无</span>
         </el-descriptions-item>
-
-        <el-descriptions-item label="包含 Feature 分支" :span="3">
+        <el-descriptions-item label="Feature 分支" :span="4">
           <div v-if="deployedInfo.featureBranchList && deployedInfo.featureBranchList.length > 0" class="feature-tags">
             <el-tag
                 v-for="item in deployedInfo.featureBranchList"
@@ -54,249 +45,391 @@
                 size="mini"
                 type="warning"
                 effect="plain"
-                class="feature-item"
             >
               {{ item.branchName }}
             </el-tag>
           </div>
-          <span v-else class="text-gray">无合并特性分支</span>
+          <span v-else class="text-muted">无合并特性分支</span>
         </el-descriptions-item>
       </el-descriptions>
     </el-card>
 
-    <el-card class="deploy-card" shadow="never" :body-style="{ padding: '0' }">
-      <el-tabs v-model="activeName" type="border-card" class="env-tabs">
-        <el-tab-pane name="DEV">
-          <span slot="label"><i class="el-icon-cpu"></i> 开发环境 (DEV)</span>
-          <div class="tab-content">
-            <deployByEnv
-                v-if="activeName === 'DEV'"
-                :applicationId="applicationId"
-                env="DEV"
-                @deployInfoUpdated="onDeployInfoUpdated"
-            />
+    <!-- 4 环境卡片并排 -->
+    <div class="env-grid">
+      <el-card
+          v-for="envItem in envList"
+          :key="envItem.name"
+          class="env-card"
+          shadow="never"
+          :body-style="{ padding: '0' }"
+      >
+        <div slot="header" class="env-card__header" :class="'env-card__header--' + envItem.name.toLowerCase()">
+          <div class="env-card__title">
+            <i :class="envItem.icon"></i>
+            <span>{{ envItem.label }}</span>
           </div>
-        </el-tab-pane>
+          <el-tag
+              size="mini"
+              :type="envItem.tagType"
+              effect="dark"
+          >
+            {{ envItem.name }}
+          </el-tag>
+        </div>
+        <div class="env-card__body">
+          <deployByEnv
+              :applicationId="applicationId"
+              :env="envItem.name"
+              @deployInfoUpdated="onDeployInfoUpdated"
+          />
+        </div>
+      </el-card>
+    </div>
 
-        <el-tab-pane name="TEST">
-          <span slot="label"><i class="el-icon-s-check"></i> 测试环境 (TEST)</span>
-          <div class="tab-content">
-            <deployByEnv
-                v-if="activeName === 'TEST'"
-                :applicationId="applicationId"
-                env="TEST"
-                @deployInfoUpdated="onDeployInfoUpdated"
-            />
-          </div>
-        </el-tab-pane>
+    <!-- 部署历史 -->
+    <el-card class="history-card" shadow="never">
+      <div slot="header" class="history-header">
+        <span class="history-title"><i class="el-icon-time"></i> 部署历史</span>
+        <el-select v-model="historyEnv" size="small" placeholder="选择环境" clearable style="width: 120px;" @change="loadDeployHistory">
+          <el-option v-for="e in envList" :key="e.name" :label="e.label" :value="e.name" />
+        </el-select>
+      </div>
 
-        <el-tab-pane name="POC">
-          <span slot="label"><i class="el-icon-monitor"></i> 演示环境 (POC)</span>
-          <div class="tab-content">
-            <deployByEnv
-                v-if="activeName === 'POC'"
-                :applicationId="applicationId"
-                env="POC"
-                @deployInfoUpdated="onDeployInfoUpdated"
-            />
-          </div>
-        </el-tab-pane>
-
-        <el-tab-pane name="PROD">
-          <span slot="label"><i class="el-icon-s-platform"></i> 生产环境 (PROD)</span>
-          <div class="tab-content">
-            <deployByEnv
-                v-if="activeName === 'PROD'"
-                :applicationId="applicationId"
-                env="PROD"
-                @deployInfoUpdated="onDeployInfoUpdated"
-            />
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+      <el-table
+          v-loading="historyLoading"
+          :data="deployHistoryList"
+          stripe
+          style="width: 100%"
+          empty-text="暂无部署历史记录"
+      >
+        <el-table-column prop="deployTime" label="时间" width="170" :formatter="formatTime" />
+        <el-table-column prop="env" label="环境" width="80" align="center">
+          <template slot-scope="{ row }">
+            <el-tag size="mini" :type="getEnvTagType(row.env)">{{ row.env }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="Release 分支" min-width="140">
+          <template slot-scope="{ row }">
+            <span v-if="row.releaseBranchName" class="branch-mono">{{ row.releaseBranchName }}</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Feature 分支" min-width="200">
+          <template slot-scope="{ row }">
+            <div v-if="row.featureBranchNameList && row.featureBranchNameList.length" class="feature-tags">
+              <el-tag v-for="b in row.featureBranchNameList" :key="b" size="mini" type="info" effect="plain">{{ b }}</el-tag>
+            </div>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="deployByName" label="操作人" width="100" align="center" />
+        <el-table-column label="状态" width="100" align="center">
+          <template slot-scope="{ row }">
+            <StatusDot :type="getDeployStatusType(row.deployStatus)" :label="getDeployStatusText(row.deployStatus)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="失败原因" min-width="200" show-overflow-tooltip>
+          <template slot-scope="{ row }">
+            <span v-if="row.deployStatus === 3 && row.errorMessage" class="text-error">{{ row.errorMessage }}</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+      </el-table>
     </el-card>
-  </div>
+  </PageContainer>
 </template>
 
 <script>
-import deployByEnv  from "@/components/deployByEnv/deployByEnv.vue";
-import { getApplicationById } from "@/views/applicationManagement/applicationList/api";
-import { queryList } from "@/views/applicationManagement/applicationGroup/api";
-import bus from "@/util/bus";
+import PageContainer from '@/components/common/PageContainer.vue'
+import StatusDot from '@/components/common/StatusDot.vue'
+import deployByEnv from '@/components/deployByEnv/deployByEnv.vue'
+import { getApplicationById, getDepLoyLogList } from '@/views/applicationManagement/applicationList/api'
+import { queryList } from '@/views/applicationManagement/applicationGroup/api'
+import bus from '@/util/bus'
 
 export default {
-  name: "applicationDeploy",
+  name: 'applicationDeploy',
   components: {
+    PageContainer,
+    StatusDot,
     deployByEnv
   },
   data() {
     return {
       applicationId: '',
-
-      // 当前激活环境
-      activeName: 'DEV',
-
-      // 字典映射 (用于右上角 Tag 显示)
-      envMap: {
-        'DEV': '开发环境',
-        'TEST': '测试环境',
-        'POC': '演示环境',
-        'PROD': '生产环境'
-      },
-
-      // 数据
       applicationGroupList: [],
       applicationInfo: {},
-      deployedInfo: {}, // 存储子组件传递回来的分支信息
-    };
-  },
+      deployedInfo: {},
 
-  computed: {
-    // 优化：使用 Map 提高查找效率
-    applicationGroupMap() {
-      const map = new Map();
-      if (this.applicationGroupList && this.applicationGroupList.length > 0) {
-        this.applicationGroupList.forEach(item => {
-          map.set(item.id, item.applicationGroupCode);
-        });
-      }
-      return map;
+      envList: [
+        { name: 'DEV', label: '开发环境', icon: 'el-icon-cpu', tagType: '' },
+        { name: 'TEST', label: '测试环境', icon: 'el-icon-s-check', tagType: 'warning' },
+        { name: 'POC', label: '演示环境', icon: 'el-icon-monitor', tagType: 'info' },
+        { name: 'PROD', label: '生产环境', icon: 'el-icon-s-platform', tagType: 'danger' }
+      ],
+
+      // 部署历史
+      historyEnv: '',
+      deployHistoryList: [],
+      historyLoading: false
     }
   },
-
+  computed: {
+    applicationGroupMap() {
+      const map = new Map()
+      if (this.applicationGroupList && this.applicationGroupList.length > 0) {
+        this.applicationGroupList.forEach(item => {
+          map.set(item.id, item.applicationGroupCode)
+        })
+      }
+      return map
+    }
+  },
   methods: {
-    // 接收子组件传来的部署信息 (release分支/feature分支)
     onDeployInfoUpdated(data) {
       if (data && Object.keys(data).length > 0) {
-        this.deployedInfo = data;
+        this.deployedInfo = data
       }
     },
 
-    // 获取项目详情
     getApplication(id) {
-      const loading = this.$loading({ target: '.info-card', text: '加载应用信息...' });
       getApplicationById(id).then(res => {
         if (res.code === 200) {
-          this.applicationInfo = res.data;
-
-          // 更新 PageHeader
-          bus.$emit('set-page-title', this.applicationInfo.applicationName);
+          this.applicationInfo = res.data
+          bus.$emit('set-page-title', this.applicationInfo.applicationName)
         }
       }).catch(err => {
-        this.$message.error('查询应用信息失败：' + err);
-      }).finally(() => {
-        loading.close();
-      });
+        this.$message.error('查询应用信息失败：' + err)
+      })
     },
 
-    // 获取分组列表
     getGroupList() {
       queryList({ searchText: '', enableStatus: 1 }).then(res => {
         if (res.code === 200) {
-          this.applicationGroupList = res.data || [];
+          this.applicationGroupList = res.data || []
         }
-      });
+      })
+    },
+
+    loadDeployHistory() {
+      if (!this.historyEnv) {
+        this.deployHistoryList = []
+        return
+      }
+      this.historyLoading = true
+      getDepLoyLogList({
+        applicationId: this.applicationId,
+        env: this.historyEnv
+      }).then(res => {
+        if (res.code === 200) {
+          this.deployHistoryList = res.data || []
+        }
+      }).catch(() => {
+        this.deployHistoryList = []
+      }).finally(() => {
+        this.historyLoading = false
+      })
+    },
+
+    formatTime(row, column, cellValue) {
+      if (!cellValue) return '-'
+      return String(cellValue).replace('T', ' ')
+    },
+
+    getEnvTagType(env) {
+      const map = { DEV: '', TEST: 'warning', POC: 'info', PROD: 'danger' }
+      return map[env] || 'info'
+    },
+
+    getDeployStatusType(status) {
+      const map = { 1: 'running', 2: 'success', 3: 'error' }
+      return map[status] || 'info'
+    },
+
+    getDeployStatusText(status) {
+      const map = { 0: '初始化', 1: '部署中', 2: '成功', 3: '失败' }
+      return map[status] || '未知'
     }
   },
 
   created() {
-    // 1. 优先从 Query 获取
-    let pid = this.$route.query.applicationId;
-
-    // 2. 其次从 LocalStorage 获取 (处理刷新)
+    let pid = this.$route.query.applicationId
     if (!pid) {
-      pid = localStorage.getItem('applicationId');
+      pid = localStorage.getItem('applicationId')
     }
 
     if (pid) {
-      this.applicationId = pid;
-      // 更新缓存
-      localStorage.setItem('applicationId', pid);
-
-      this.getGroupList();
+      this.applicationId = pid
+      localStorage.setItem('applicationId', pid)
+      this.getGroupList()
+      this.getApplication(pid)
     } else {
-      this.$message.warning('丢失应用ID参数，请从列表页重新进入');
-      this.$router.push('/applicationManagement/applicationList');
-    }
-  },
-
-  // 将 getApplication 从 created 移到 mounted，确保 this.$loading 的
-  // target 元素已存在于 DOM 中，避免 Element UI 回退到全屏 loading
-  mounted() {
-    if (this.applicationId) {
-      this.getApplication(this.applicationId);
+      this.$message.warning('丢失应用ID参数，请从列表页重新进入')
+      this.$router.push('/apps')
     }
   },
 
   beforeDestroy() {
-    // 重置标题
-    bus.$emit('set-page-title', null);
+    bus.$emit('set-page-title', null)
   }
-};
+}
 </script>
 
 <style lang="less" scoped>
-.app-container {
-  padding: 20px;
-  background-color: #f0f2f5;
-  min-height: calc(100vh - 240px);
-}
+@import "~@/assets/css/theme.less";
 
-/* 1. 顶部信息卡片 */
-.info-card {
-  margin-bottom: 20px;
-  border: none;
+/* 应用概览卡片 */
+.overview-card {
+  margin-bottom: @space-5;
+  border-radius: @border-radius;
 
-  ::v-deep .el-descriptions-item__label,
-  ::v-deep .el-descriptions-item__content {
-    vertical-align: middle;
+  /deep/ .el-card__header {
+    padding: @space-4 @space-5;
+    border-bottom: 1px solid @border-color-light;
   }
 
-  .card-title {
-    font-size: 16px;
-    font-weight: bold;
-    color: #303133;
-  }
-
-  .text-bold {
-    font-weight: 600;
-    color: #303133;
-  }
-
-  .text-gray {
-    color: #909399;
-    font-size: 12px;
-  }
-
-  .feature-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
+  /deep/ .el-card__body {
+    padding: @space-4 @space-5;
   }
 }
 
-/* 2. 部署 Tabs 卡片 */
-.deploy-card {
-  border: none;
-  min-height: 500px; /* 保证高度 */
+.overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-  /* 覆盖 Element UI Tabs 样式，使其更贴合 Card */
-  :deep(.el-tabs--border-card) {
-    border: none;
-    box-shadow: none;
+.overview-title {
+  font-size: @font-size-base;
+  font-weight: 600;
+  color: @text-primary;
+
+  i {
+    margin-right: @space-2;
+    color: @primary-color;
+  }
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: @space-2;
+}
+
+.text-muted {
+  color: @text-tertiary;
+  font-size: @font-size-sm;
+}
+
+/* 环境卡片网格 — 响应式 4→2→1 */
+.env-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: @space-4;
+  margin-bottom: @space-5;
+
+  @media (max-width: 1440px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  :deep(.el-tabs--border-card > .el-tabs__header) {
-    background-color: #f5f7fa;
-    border-bottom: 1px solid #e4e7ed;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.env-card {
+  border-radius: @border-radius;
+  overflow: hidden;
+
+  /deep/ .el-card__header {
+    padding: @space-3 @space-4;
+    border-bottom: 1px solid @border-color-light;
+  }
+}
+
+.env-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &--dev {
+    border-left: 3px solid @primary-color;
   }
 
-  :deep(.el-tabs--border-card > .el-tabs__content) {
-    padding: 0; /* 去除默认 padding，让子组件自己控制 */
+  &--test {
+    border-left: 3px solid @warning-color;
   }
 
-  .tab-content {
-    padding: 20px;
+  &--poc {
+    border-left: 3px solid @info-color;
   }
+
+  &--prod {
+    border-left: 3px solid @error-color;
+  }
+}
+
+.env-card__title {
+  display: flex;
+  align-items: center;
+  gap: @space-2;
+  font-size: @font-size-sm;
+  font-weight: 600;
+  color: @text-primary;
+
+  i {
+    color: @primary-color;
+  }
+}
+
+.env-card__body {
+  padding: 0;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* 部署历史卡片 */
+.history-card {
+  border-radius: @border-radius;
+
+  /deep/ .el-card__header {
+    padding: @space-4 @space-5;
+    border-bottom: 1px solid @border-color-light;
+  }
+
+  /deep/ .el-card__body {
+    padding: @space-4 @space-5;
+  }
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-title {
+  font-size: @font-size-base;
+  font-weight: 600;
+  color: @text-primary;
+
+  i {
+    margin-right: @space-2;
+    color: @primary-color;
+  }
+}
+
+.branch-mono {
+  font-family: @font-mono;
+  font-size: @font-size-xs;
+  color: @primary-color;
+  background: @primary-lighter;
+  padding: 2px 6px;
+  border-radius: @border-radius-sm;
+}
+
+.text-error {
+  color: @error-color;
+  font-size: @font-size-sm;
 }
 </style>

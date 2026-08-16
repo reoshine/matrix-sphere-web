@@ -800,13 +800,13 @@ export default {
 </script>
 
 <style lang="less" scoped>
-/* 你的样式保持不变 */
+/* 部署环境组件 — 适配卡片网格布局 */
 .deploy-container {
-  padding: 0 10px;
+  padding: 12px;
 }
 
 .process-card, .module-card {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   border: 1px solid #ebeef5;
 
   ::v-deep .el-card__header {
