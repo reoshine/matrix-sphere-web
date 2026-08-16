@@ -1,19 +1,23 @@
 <template>
-  <div class="wrapper">
-    <headerBar></headerBar>
-    <sidebar></sidebar>
+  <div class="layout">
+    <aside class="layout-sidebar" :class="{ 'is-collapsed': collapse }">
+      <sidebar />
+    </aside>
 
-    <div class="content-box" :style="contentStyle">
-      <tags></tags>
+    <div class="layout-main">
+      <header class="layout-header">
+        <headerBar />
+      </header>
 
-      <div class="content">
-        <pageHeader v-if="$route.meta.guidePath" />
+      <div class="layout-tabs">
+        <tags />
+      </div>
 
+      <main class="layout-content">
         <keep-alive :include="tagsList">
           <router-view />
         </keep-alive>
-        <el-backtop target=".content"></el-backtop>
-      </div>
+      </main>
     </div>
   </div>
 </template>
@@ -23,12 +27,10 @@ import bus from '@/util/bus';
 import headerBar from "@/components/common/headerBar";
 import sidebar from "@/components/common/sidebar";
 import tags from "@/components/common/Tags";
-import pageHeader from "@/components/common/pageHeader.vue";
 
 export default {
   name: "home",
   components: {
-    pageHeader,
     headerBar,
     sidebar,
     tags,
@@ -38,14 +40,6 @@ export default {
       tagsList: [],
       collapse: false
     };
-  },
-  computed: {
-    contentStyle() {
-      // 假设您在 theme.less 中定义了 @sidebar-width 和 @sidebar-width-collapse
-      // 这里的 '65px' 和 '250px' 应该与您的 theme.less 变量保持一致
-      const left = this.collapse ? '65px' : '250px';
-      return { left };
-    }
   },
   created() {
     bus.$on('collapse-content', msg => {
@@ -65,16 +59,45 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.content {
+@import "~@/assets/css/theme.less";
+
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout-sidebar {
+  flex-shrink: 0;
+  width: @sidebar-width;
+  transition: width @transition-slow;
+
+  &.is-collapsed {
+    width: @sidebar-width-collapse;
+  }
+}
+
+.layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; // 防止 flex 子元素溢出
+  overflow: hidden;
+}
+
+.layout-header {
+  flex-shrink: 0;
+}
+
+.layout-tabs {
+  flex-shrink: 0;
+}
+
+.layout-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  box-sizing: border-box;
-
-  // ---------------------------------
-  // 关键修复：
-  // ---------------------------------
-  // 1. 必须为 "交叉淡入淡出" 设置定位上下文
-  position: relative;
+  padding: @space-5;
+  background: @bg-content;
+  position: relative; // 为页面切换动画设置定位上下文
 }
 </style>
