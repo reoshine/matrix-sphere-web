@@ -14,8 +14,6 @@
         </keep-alive>
         <el-backtop target=".content"></el-backtop>
       </div>
-
-      <footer/>
     </div>
   </div>
 </template>
