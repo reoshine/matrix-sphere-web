@@ -27,6 +27,13 @@ export default new Router({
             meta: { title: 'MatrixSphere 系统' },
             children: [
 
+                // ---------- 工作台 ----------
+                {
+                    path: 'dashboard',
+                    component: () => import('@/views/dashboard/Dashboard.vue'),
+                    meta: { title: '工作台' }
+                },
+
                 // ---------- 应用中心（新语义路径） ----------
                 {
                     path: 'apps',
