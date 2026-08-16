@@ -1,23 +1,28 @@
 <template>
-  <div class="app-container">
-    <el-card class="filter-container" shadow="never">
-      <el-form :inline="true" size="small" @submit.native.prevent>
-        <el-form-item label="凭据搜索">
-          <el-input
-              v-model="searchText"
-              placeholder="请输入描述关键词"
-              prefix-icon="el-icon-search"
-              clearable
-              style="width: 300px;"
-              @keyup.enter.native="page"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-search" @click="page">查询</el-button>
-          <el-button type="success" plain icon="el-icon-plus" @click="addDialog">新增凭据</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+  <PageContainer title="凭据管理" subtitle="管理 Git、服务器、Docker Registry 等凭据">
+    <template #header-actions>
+      <el-button type="success" plain icon="el-icon-plus" @click="addDialog">新增凭据</el-button>
+    </template>
+
+    <template #filter>
+      <el-card class="filter-container" shadow="never">
+        <el-form :inline="true" size="small" @submit.native.prevent>
+          <el-form-item label="凭据搜索">
+            <el-input
+                v-model="searchText"
+                placeholder="请输入描述关键词"
+                prefix-icon="el-icon-search"
+                clearable
+                style="width: 300px;"
+                @keyup.enter.native="page"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" icon="el-icon-search" @click="page">查询</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </template>
 
     <el-empty v-show="credentialList.length <= 0" description="暂无凭据数据，请点击新增"></el-empty>
 
@@ -151,14 +156,18 @@
         <el-button size="small" type="primary" @click="modifyCredential">确 定</el-button>
       </div>
     </el-dialog>
-  </div>
+  </PageContainer>
 </template>
 
 <script>
 import {page, create, modify, remove} from "@/views/credentialManagement/api";
+import PageContainer from "@/components/common/PageContainer.vue";
 
 export default {
   name: "credential",
+  components: {
+    PageContainer
+  },
   data() {
     return {
       //分页参数
