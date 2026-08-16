@@ -1,239 +1,117 @@
 <template>
-  <div class="header">
-    <!-- 折叠按钮 -->
-    <div class="collapse-btn" @click="collapseChange">
-      <i v-if="!collapse" class="el-icon-s-fold"></i>
-      <i v-else class="el-icon-s-unfold"></i>
-    </div>
-    <div class="logo">matrix-sphere 运维部署平台</div>
-    <div class="header-right">
-      <div class="header-user-con">
-        <!-- 全屏显示 -->
-        <div class="btn-fullscreen" @click="handleFullScreen">
-          <el-tooltip effect="dark" :content="fullscreen?`取消全屏`:`全屏`" placement="bottom">
-            <i class="el-icon-rank"></i>
-          </el-tooltip>
-        </div>
-        <!-- 消息中心 -->
-        <div class="btn-bell">
-          <el-tooltip
-              effect="dark"
-              :content="message?`有${message}条未读消息`:`消息中心`"
-              placement="bottom">
-            <router-link to="/tabs">
-              <i class="el-icon-bell"></i>
-            </router-link>
-          </el-tooltip>
-          <span class="btn-bell-badge" v-if="message"></span>
-        </div>
-        <!-- 用户头像 -->
-        <div class="user-avator el-icon-user-solid"></div>
-        <!-- 用户名下拉菜单 -->
-        <el-dropdown class="user-name" trigger="click" @command="handleCommand">
-          <span class="el-dropdown-link">
-            {{ username }} | 研发中心 <i class="el-icon-caret-bottom"></i>
-          </span>
-          <el-dropdown-menu slot="dropdown">
-            <a href="https://github.com/lin-xin/vue-manage-system" target="_blank">
-              <el-dropdown-item>修改密码</el-dropdown-item>
-            </a>
-            <el-dropdown-item divided command="loginOut">退出登录</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
+  <div class="header-bar">
+    <!-- 左侧：折叠按钮 + 面包屑 -->
+    <div class="header-bar__left">
+      <div class="header-bar__collapse" @click="collapseChange">
+        <i v-if="!collapse" class="el-icon-s-fold"></i>
+        <i v-else class="el-icon-s-unfold"></i>
       </div>
+      <Breadcrumb />
+    </div>
+
+    <!-- 右侧：消息中心 -->
+    <div class="header-bar__right">
+      <el-tooltip
+        effect="dark"
+        :content="message ? `有${message}条未读消息` : '消息中心'"
+        placement="bottom"
+      >
+        <div class="header-bar__action">
+          <el-badge :value="message" :hidden="!message" :max="99">
+            <i class="el-icon-bell"></i>
+          </el-badge>
+        </div>
+      </el-tooltip>
     </div>
   </div>
 </template>
 
 <script>
 import bus from '@/util/bus';
-import { sso } from '@/axios';
-import { Message } from 'element-ui';
+import Breadcrumb from "@/components/common/Breadcrumb.vue";
 
 export default {
   name: "headerBar",
-  computed: {
-    username() {
-      let username = localStorage.getItem("ms_username");
-      return username ? username : this.name;
-    },
+  components: {
+    Breadcrumb
   },
-
   data() {
     return {
       collapse: false,
-      fullscreen: false,
-      name: "roshine",
-      message: 2
+      message: 0
     };
   },
-
   mounted() {
     if (document.body.clientWidth < 1500) {
       this.collapseChange();
     }
   },
-
   methods: {
-    // 用户名下拉菜单选择事件
-    async handleCommand(command) {
-      if (command === 'loginOut') {
-        try {
-          // 2. 使用封装的 request 发送请求，它会自动带上 localStorage 里的 Token
-          await sso.post('/authentication/logout', {}, {
-            withCredentials: true
-          });
-        } catch (error) {
-          console.error('SSO注销请求异常，强制执行本地清理', error);
-        } finally {
-          // 清理本地存储并跳转
-          localStorage.removeItem("adpSsoToken");
-          localStorage.removeItem("adpSsoRefreshToken");
-          localStorage.removeItem("ms_username");
-
-          Message.success('退出成功！');
-          setTimeout(() => {
-            this.$router.push('/login');
-          }, 1500);
-        }
-      }
-    },
-
-    // 侧边栏折叠
     collapseChange() {
       this.collapse = !this.collapse;
       bus.$emit('collapse', this.collapse);
-    },
-
-    // 全屏事件
-    handleFullScreen() {
-      let element = document.documentElement;
-      if (this.fullscreen) {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitCancelFullScreen) {
-          document.webkitCancelFullScreen();
-        } else if (document.mozCancelFullScreen) {
-          document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        }
-      } else {
-        if (element.requestFullscreen) {
-          element.requestFullscreen();
-        } else if (element.webkitRequestFullScreen) {
-          element.webkitRequestFullScreen();
-        } else if (element.mozRequestFullScreen) {
-          element.mozRequestFullScreen();
-        } else if (element.msRequestFullscreen) {
-          // IE11
-          element.msRequestFullscreen();
-        }
-      }
-      this.fullscreen = !this.fullscreen;
     }
-  },
+  }
 };
 </script>
 
-<style scoped lang='less'>
-@import "~@/assets/css/theme.less"; // 引入变量
+<style lang="less" scoped>
+@import "~@/assets/css/theme.less";
 
-.header {
-  height: @header-height;
-  background-color: @bg-header;
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  font-size: 22px;
-  color: #fff;
-}
-.collapse-btn {
-  line-height: @header-height;
-}
-.header .logo {
-  line-height: @header-height;
-}
-.header-user-con {
-  height: @header-height;
-}
-
-.collapse-btn {
-  float: left;
-  padding: 0 21px;
-  cursor: pointer;
-  line-height: 70px;
-}
-
-.header .logo {
-  float: left;
-  //width: 250px;
-  line-height: 70px;
-}
-
-.header-right {
-  float: right;
-  padding-right: 20px;
-}
-
-.header-user-con {
+.header-bar {
   display: flex;
-  height: 70px;
   align-items: center;
-}
+  justify-content: space-between;
+  height: @header-height;
+  padding: 0 @space-5;
+  background: @bg-header;
+  border-bottom: 1px solid @border-color;
 
-.btn-fullscreen {
-  transform: rotate(45deg);
-  margin-right: 5px;
-  font-size: 24px;
-}
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: @space-3;
+    min-width: 0;
+  }
 
-.btn-bell,
-.btn-fullscreen {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  text-align: center;
-  border-radius: 15px;
-  cursor: pointer;
-}
+  &__collapse {
+    cursor: pointer;
+    padding: @space-2;
+    border-radius: @border-radius;
+    transition: background @transition-fast;
+    flex-shrink: 0;
 
-.btn-bell-badge {
-  position: absolute;
-  right: 0;
-  top: -2px;
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background: #f56c6c;
-  color: #fff;
-}
+    &:hover {
+      background: @border-color-light;
+    }
 
-.btn-bell .el-icon-bell {
-  color: #fff;
-}
+    i {
+      font-size: @font-size-xl;
+      color: @text-secondary;
+    }
+  }
 
-.user-name {
-  margin-left: 10px;
-}
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: @space-3;
+    flex-shrink: 0;
+  }
 
-.user-avator {
-  margin-left: 20px;
-}
+  &__action {
+    cursor: pointer;
+    padding: @space-2;
+    border-radius: @border-radius;
+    transition: background @transition-fast;
 
-.user-avator img {
-  display: block;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
+    &:hover {
+      background: @border-color-light;
+    }
 
-.el-dropdown-link {
-  color: #fff;
-  cursor: pointer;
-}
-
-.el-dropdown-menu__item {
-  text-align: center;
+    i {
+      font-size: @font-size-xl;
+      color: @text-secondary;
+    }
+  }
 }
 </style>
