@@ -5,23 +5,18 @@
     </template>
 
     <template #filter>
-      <el-card class="filter-container" shadow="never">
-        <el-form :inline="true" size="small" @submit.native.prevent>
-          <el-form-item label="凭据搜索">
-            <el-input
-                v-model="searchText"
-                placeholder="请输入描述关键词"
-                prefix-icon="el-icon-search"
-                clearable
-                style="width: 300px;"
-                @keyup.enter.native="page"
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="el-icon-search" @click="page">查询</el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
+      <FilterBar @search="page" @reset="searchText = ''; page()">
+        <el-form-item label="凭据搜索">
+          <el-input
+              v-model="searchText"
+              placeholder="请输入描述关键词"
+              prefix-icon="el-icon-search"
+              clearable
+              style="width: 300px;"
+              @keyup.enter.native="page"
+          />
+        </el-form-item>
+      </FilterBar>
     </template>
 
     <el-empty v-show="credentialList.length <= 0" description="暂无凭据数据，请点击新增"></el-empty>
@@ -162,11 +157,13 @@
 <script>
 import {page, create, modify, remove} from "@/views/credentialManagement/api";
 import PageContainer from "@/components/common/PageContainer.vue";
+import FilterBar from "@/components/common/FilterBar.vue";
 
 export default {
   name: "credential",
   components: {
-    PageContainer
+    PageContainer,
+    FilterBar
   },
   data() {
     return {
