@@ -1,0 +1,150 @@
+/* ==================== design-tokens.css ==================== */
+/* MatrixSphere 设计 Token 体系                                  */
+/* 三层架构：基础 Token → 语义 Token → 组件 Token                 */
+/* 暗黑模式通过 [data-theme="dark"] 覆盖 Layer 2 + Layer 3       */
+/* ============================================================= */
+
+/* ---- Layer 1: 基础 Token（原始值） ---- */
+:root {
+  /* 色板 — 蓝色系 */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #2c58b4;   /* 品牌蓝 */
+  --color-blue-600: #1e3f8a;
+  --color-blue-700: #1e3a6e;
+  --color-blue-800: #1e3264;
+  --color-blue-900: #172554;
+
+  /* 色板 — 灰色系 */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* 色板 — 语义色 */
+  --color-green-500: #10b981;
+  --color-yellow-500: #f59e0b;
+  --color-red-500: #ef4444;
+
+  /* 间距 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+               'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+
+  /* 字号 */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+}
+
+/* ---- Layer 2: 语义 Token（引用基础 Token，定义用途） ---- */
+:root {
+  /* 品牌色 */
+  --color-primary: var(--color-blue-500);
+  --color-primary-light: var(--color-blue-400);
+  --color-primary-lighter: var(--color-blue-100);
+  --color-primary-dark: var(--color-blue-600);
+
+  /* 语义色 */
+  --color-success: var(--color-green-500);
+  --color-warning: var(--color-yellow-500);
+  --color-error: var(--color-red-500);
+  --color-info: var(--color-gray-500);
+
+  /* 表面色（亮色模式） */
+  --color-bg-page: var(--color-gray-100);
+  --color-bg-surface: #ffffff;
+  --color-bg-surface-elevated: #ffffff;
+  --color-bg-sidebar: #1a1f2e;
+  --color-bg-header: #ffffff;
+
+  /* 文字色 */
+  --color-text-primary: var(--color-gray-900);
+  --color-text-secondary: var(--color-gray-600);
+  --color-text-tertiary: var(--color-gray-400);
+  --color-text-inverse: #ffffff;
+
+  /* 边框色 */
+  --color-border: var(--color-gray-200);
+  --color-border-light: var(--color-gray-100);
+
+  /* 布局 */
+  --header-height: 56px;
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 64px;
+  --tags-height: 40px;
+
+  /* 过渡 */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+/* ---- Layer 3: 组件 Token（引用语义 Token） ---- */
+:root {
+  /* 表格 */
+  --table-header-bg: var(--color-gray-50);
+  --table-row-hover-bg: var(--color-primary-lighter);
+  --table-row-height: 48px;
+
+  /* 卡片 */
+  --card-border-radius: var(--radius-md);
+  --card-border-color: var(--color-border);
+  --card-shadow: var(--shadow-sm);
+  --card-padding: var(--space-5);
+
+  /* 输入框 */
+  --input-height: 36px;
+  --input-border-radius: var(--radius-sm);
+  --input-border-color: var(--color-border);
+  --input-focus-border-color: var(--color-primary);
+
+  /* 按钮 */
+  --button-border-radius: var(--radius-sm);
+  --button-primary-bg: var(--color-primary);
+
+  /* 弹窗 */
+  --dialog-border-radius: var(--radius-lg);
+  --dialog-header-padding: var(--space-5) var(--space-6);
+  --dialog-body-padding: var(--space-6);
+
+  /* 侧边栏菜单 */
+  --sidebar-menu-text: #a0aec0;
+  --sidebar-menu-hover-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-menu-active-bg: var(--color-primary);
+}
