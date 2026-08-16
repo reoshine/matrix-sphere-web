@@ -1,6 +1,10 @@
 import axios from 'axios'
 import router from '@/router'
 import { Message, MessageBox } from 'element-ui'
+import NProgress from 'nprogress'
+import 'nprogress/nprogress.css'
+
+NProgress.configure({ showSpinner: false })
 
 let isRefreshing = false
 let requestQueue = []
@@ -13,15 +17,20 @@ function createAxiosInstance(baseURL) {
 
     instance.interceptors.request.use(
         config => {
+            NProgress.start()
             const token = localStorage.getItem('adpSsoToken')
             if (token) config.headers['Authorization'] = `Bearer ${token}`
             return config
         },
-        error => Promise.reject(error)
+        error => {
+            NProgress.done()
+            return Promise.reject(error)
+        }
     )
 
     instance.interceptors.response.use(
         response => {
+            NProgress.done()
             const res = response.data
             if (res.code && res.code !== 200) {
                 Message.error(res.msg || res.message || '系统异常')
@@ -30,6 +39,7 @@ function createAxiosInstance(baseURL) {
             return res
         },
         async error => {
+            NProgress.done()
             if (!error.response) return Promise.reject(error)
             const { status, config } = error.response
 
