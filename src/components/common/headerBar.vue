@@ -1,31 +1,35 @@
 <template>
-  <div class="header-bar">
+  <div class="header-bar" role="banner">
     <!-- 左侧：折叠按钮 + 面包屑 -->
     <div class="header-bar__left">
-      <div class="header-bar__collapse" @click="collapseChange">
-        <i v-if="!collapse" class="el-icon-s-fold"></i>
-        <i v-else class="el-icon-s-unfold"></i>
-      </div>
+      <button
+        class="header-bar__collapse"
+        :aria-label="collapse ? '展开侧边栏' : '折叠侧边栏'"
+        @click="collapseChange"
+      >
+        <i v-if="!collapse" class="el-icon-s-fold" aria-hidden="true"></i>
+        <i v-else class="el-icon-s-unfold" aria-hidden="true"></i>
+      </button>
       <Breadcrumb />
     </div>
 
     <!-- 右侧：搜索 + 消息中心 -->
     <div class="header-bar__right">
       <el-tooltip effect="dark" content="全局搜索 (⌘K)" placement="bottom">
-        <div class="header-bar__action" @click="openGlobalSearch">
-          <i class="el-icon-search"></i>
-        </div>
+        <button class="header-bar__action" aria-label="全局搜索" @click="openGlobalSearch">
+          <i class="el-icon-search" aria-hidden="true"></i>
+        </button>
       </el-tooltip>
       <el-tooltip
         effect="dark"
         :content="message ? `有${message}条未读消息` : '消息中心'"
         placement="bottom"
       >
-        <div class="header-bar__action">
+        <button class="header-bar__action" aria-label="消息中心">
           <el-badge :value="message" :hidden="!message" :max="99">
-            <i class="el-icon-bell"></i>
+            <i class="el-icon-bell" aria-hidden="true"></i>
           </el-badge>
-        </div>
+        </button>
       </el-tooltip>
     </div>
   </div>

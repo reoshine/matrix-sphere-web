@@ -1,6 +1,9 @@
 <template>
   <div class="layout">
-    <aside class="layout-sidebar" :class="{ 'is-collapsed': collapse }">
+    <!-- 跳过链接（可访问性） -->
+    <SkipLink />
+
+    <aside class="layout-sidebar" :class="{ 'is-collapsed': collapse }" role="navigation" aria-label="主导航">
       <sidebar />
     </aside>
 
@@ -13,7 +16,7 @@
         <tags />
       </div>
 
-      <main class="layout-content">
+      <main id="main-content" class="layout-content" tabindex="-1">
         <transition name="fade-transform" mode="out-in">
           <keep-alive :include="tagsList">
             <router-view />
@@ -33,6 +36,7 @@ import headerBar from "@/components/common/headerBar";
 import sidebar from "@/components/common/sidebar";
 import tags from "@/components/common/Tags";
 import GlobalSearch from "@/components/common/GlobalSearch.vue";
+import SkipLink from "@/components/common/SkipLink.vue";
 
 export default {
   name: "home",
@@ -41,6 +45,7 @@ export default {
     sidebar,
     tags,
     GlobalSearch,
+    SkipLink,
   },
   data() {
     return {

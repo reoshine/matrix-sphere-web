@@ -2,27 +2,32 @@
   <nav class="sidebar-nav" aria-label="主导航">
     <!-- Logo + 折叠按钮 -->
     <div class="sidebar-nav__header">
-      <div class="sidebar-nav__logo" v-show="!collapse">
+      <div class="sidebar-nav__logo" v-show="!collapse" aria-hidden="true">
         <i class="el-icon-s-platform"></i>
         <span class="sidebar-nav__logo-text">MatrixSphere</span>
       </div>
-      <div class="sidebar-nav__logo sidebar-nav__logo--icon" v-show="collapse">
+      <div class="sidebar-nav__logo sidebar-nav__logo--icon" v-show="collapse" aria-hidden="true">
         <i class="el-icon-s-platform"></i>
       </div>
-      <div class="sidebar-nav__collapse" @click="collapseChange">
-        <i v-if="!collapse" class="el-icon-s-fold"></i>
-        <i v-else class="el-icon-s-unfold"></i>
-      </div>
+      <button
+        class="sidebar-nav__collapse"
+        :aria-label="collapse ? '展开侧边栏' : '折叠侧边栏'"
+        @click="collapseChange"
+      >
+        <i v-if="!collapse" class="el-icon-s-fold" aria-hidden="true"></i>
+        <i v-else class="el-icon-s-unfold" aria-hidden="true"></i>
+      </button>
     </div>
 
     <!-- 搜索框（未折叠时显示） -->
-    <div class="sidebar-nav__search" v-show="!collapse">
+    <div class="sidebar-nav__search" v-show="!collapse" role="search" aria-label="菜单搜索">
       <el-input
         v-model="searchQuery"
         placeholder="搜索菜单..."
         prefix-icon="el-icon-search"
         size="small"
         clearable
+        aria-label="搜索菜单"
       />
     </div>
 
@@ -100,8 +105,8 @@
     </div>
 
     <!-- 用户信息（底部） -->
-    <div class="sidebar-nav__user">
-      <el-avatar :size="32" class="sidebar-nav__user-avatar">
+    <div class="sidebar-nav__user" role="contentinfo" aria-label="用户信息">
+      <el-avatar :size="32" class="sidebar-nav__user-avatar" aria-hidden="true">
         {{ username.charAt(0).toUpperCase() }}
       </el-avatar>
       <div class="sidebar-nav__user-info" v-show="!collapse">
@@ -113,6 +118,7 @@
           type="text"
           icon="el-icon-switch-button"
           class="sidebar-nav__logout"
+          aria-label="退出登录"
           @click="logout"
         />
       </el-tooltip>
@@ -121,6 +127,7 @@
         type="text"
         icon="el-icon-switch-button"
         class="sidebar-nav__logout"
+        aria-label="退出登录"
         @click="logout"
       />
     </div>

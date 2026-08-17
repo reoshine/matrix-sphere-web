@@ -224,11 +224,11 @@
 - [x] Step 5: 提交
 
 ### Task 33: 可访问性增强
-- [ ] Step 1: 创建 SkipLink 组件
-- [ ] Step 2: 为侧边栏 nav 添加 aria-label
-- [ ] Step 3: 为图标按钮添加 aria-label
-- [ ] Step 4: 为状态指示器确保不仅用颜色
-- [ ] Step 5: 提交
+- [x] Step 1: 创建 SkipLink 组件
+- [x] Step 2: 为侧边栏 nav 添加 aria-label
+- [x] Step 3: 为图标按钮添加 aria-label
+- [x] Step 4: 为状态指示器确保不仅用颜色
+- [x] Step 5: 提交
 
 ### Task 34: 模板管理页面重设计
 - [ ] Step 1: 合并为模板中心页面（el-tabs 切换用户模板/系统模板）
