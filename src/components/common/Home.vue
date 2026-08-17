@@ -14,9 +14,11 @@
       </div>
 
       <main class="layout-content">
-        <keep-alive :include="tagsList">
-          <router-view />
-        </keep-alive>
+        <transition name="fade-transform" mode="out-in">
+          <keep-alive :include="tagsList">
+            <router-view />
+          </keep-alive>
+        </transition>
       </main>
     </div>
 
@@ -109,5 +111,21 @@ export default {
   padding: @space-5;
   background: @bg-content;
   position: relative; // 为页面切换动画设置定位上下文
+}
+
+/* 页面切换过渡动画 */
+.fade-transform-enter-active,
+.fade-transform-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.fade-transform-enter {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.fade-transform-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
 }
 </style>
