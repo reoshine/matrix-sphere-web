@@ -224,6 +224,11 @@ export default {
       this.collapse = msg;
       bus.$emit('collapse-content', msg);
     });
+
+    // ⌘B 快捷键：折叠/展开侧边栏
+    bus.$on('toggle-sidebar', () => {
+      this.collapseChange();
+    });
   }
 };
 </script>
