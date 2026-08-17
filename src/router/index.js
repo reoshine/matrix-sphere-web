@@ -107,7 +107,7 @@ export default new Router({
                 {
                     path: 'settings/roles',
                     component: () => import('@/views/accountManagement/role/role.vue'),
-                    meta: { title: '角色管理' }
+                    meta: { title: '角色权限' }
                 },
                 {
                     path: 'settings/menus',
@@ -225,13 +225,13 @@ export default new Router({
                 },
                 {
                     path: 'accountManagement/authority',
-                    component: () => import('@/views/accountManagement/authority/authority.vue'),
-                    meta: { title: '权限管理' }
+                    component: () => import('@/views/accountManagement/role/role.vue'),
+                    meta: { title: '角色权限' }
                 },
                 {
                     path: 'accountManagement/authority/authority',
-                    component: () => import('@/views/accountManagement/authority/authority.vue'),
-                    meta: { title: '权限管理' }
+                    component: () => import('@/views/accountManagement/role/role.vue'),
+                    meta: { title: '角色权限' }
                 },
                 {
                     path: 'accountManagement/menu/menu',
@@ -240,13 +240,13 @@ export default new Router({
                 },
                 {
                     path: 'accountManagement/roleAuthority',
-                    component: () => import('@/views/accountManagement/roleAuthority/roleAuthority.vue'),
-                    meta: { title: '角色权限分配' }
+                    component: () => import('@/views/accountManagement/role/role.vue'),
+                    meta: { title: '角色权限' }
                 },
                 {
                     path: 'accountManagement/roleAuthority/roleAuthority',
-                    component: () => import('@/views/accountManagement/roleAuthority/roleAuthority.vue'),
-                    meta: { title: '角色权限分配' }
+                    component: () => import('@/views/accountManagement/role/role.vue'),
+                    meta: { title: '角色权限' }
                 },
 
                 // 系统管理（旧路径）

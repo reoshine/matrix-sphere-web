@@ -1,108 +1,112 @@
 <template>
-  <div class="app-container">
-    <el-card class="filter-container" shadow="never">
-      <el-form :inline="true" size="small" @submit.native.prevent>
-        <el-form-item label="角色搜索">
-          <el-input
-              v-model="searchText"
-              placeholder="输入角色编码/名称"
-              prefix-icon="el-icon-search"
-              clearable
-              style="width: 260px;"
-              @keyup.enter.native="getRolePage"
-          />
-        </el-form-item>
-        <el-form-item label="启用状态">
-          <el-select v-model="enabled" placeholder="全部" clearable style="width: 120px;" @change="getRolePage">
-            <el-option
-                v-for="item in enableStatusList"
-                :key="item.enableStatus"
-                :label="item.enableStatusName"
-                :value="item.enableStatus">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-search" @click="getRolePage">查询</el-button>
-          <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+  <PageContainer title="角色权限" subtitle="管理角色、权限及其分配关系">
+    <template #header-actions>
+      <el-button type="primary" icon="el-icon-plus" size="small" @click="onAdd">新增{{ activeTab === 'role' ? '角色' : '权限' }}</el-button>
+    </template>
 
-    <div class="action-bar">
-      <el-button type="primary" icon="el-icon-plus" size="small" @click="addRole">新增角色</el-button>
-    </div>
+    <el-tabs v-model="activeTab" type="border-card" class="role-tabs">
+      <!-- 角色管理 -->
+      <el-tab-pane label="角色管理" name="role">
+        <span slot="label"><i class="el-icon-user"></i> 角色管理</span>
+        <div class="tab-content">
+          <FilterBar @search="getRolePage" @reset="resetRoleQuery">
+            <el-form-item label="角色搜索">
+              <el-input v-model="roleSearch.searchText" placeholder="输入角色编码/名称" prefix-icon="el-icon-search" clearable style="width: 260px;" size="small" @keyup.enter.native="getRolePage" />
+            </el-form-item>
+            <el-form-item label="启用状态">
+              <el-select v-model="roleSearch.enabled" placeholder="全部" clearable style="width: 120px;" size="small" @change="getRolePage">
+                <el-option v-for="item in enableStatusList" :key="item.enableStatus" :label="item.enableStatusName" :value="item.enableStatus" />
+              </el-select>
+            </el-form-item>
+          </FilterBar>
 
-    <el-card shadow="never" class="table-card" :body-style="{ padding: '0' }">
-      <el-table
-          v-loading="loading"
-          :data="rolePage.list"
-          border
-          stripe
-          highlight-current-row
-          style="width: 100%"
-          :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
-      >
-        <el-table-column type="index" label="序号" width="60" align="center" />
+          <el-card shadow="never" :body-style="{ padding: '0' }" class="table-card">
+            <el-table v-loading="roleLoading" :data="rolePage.list" stripe style="width: 100%">
+              <el-table-column type="index" label="序号" width="60" align="center" />
+              <el-table-column prop="roleName" label="角色名称" min-width="150" show-overflow-tooltip>
+                <template slot-scope="{ row }">
+                  <span class="item-name">{{ row.roleName }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="roleCode" label="角色编码" min-width="150" show-overflow-tooltip>
+                <template slot-scope="{ row }">
+                  <el-tag size="small" type="info" effect="plain">{{ row.roleCode }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="enabled" label="状态" width="100" align="center">
+                <template slot-scope="{ row }">
+                  <el-switch v-model="row.enabled" active-color="#13ce66" inactive-color="#ff4949" @change="modifyRoleConfirm(row)" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="createByName" label="创建人" width="100" align="center" />
+              <el-table-column label="操作" width="250" fixed="right" align="center">
+                <template slot-scope="{ row }">
+                  <el-button type="text" size="small" icon="el-icon-edit" @click="modifyRole(row)">编辑</el-button>
+                  <el-button type="text" size="small" icon="el-icon-s-operation" @click="roleMenuAllocation(row)">菜单分配</el-button>
+                  <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeRole(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="pagination-container" v-if="rolePage.total > 0">
+              <el-pagination background @size-change="roleSizeChange" @current-change="roleCurrentChange" :current-page="rolePage.pageNum" :page-sizes="[10, 20, 50, 100]" :page-size="rolePage.pageCount" layout="total, sizes, prev, pager, next, jumper" :total="rolePage.total" />
+            </div>
+          </el-card>
+        </div>
+      </el-tab-pane>
 
-        <el-table-column prop="roleName" label="角色名称" min-width="150" show-overflow-tooltip>
-          <template slot-scope="scope">
-            <span style="font-weight: 600; color: #303133">{{ scope.row.roleName }}</span>
-          </template>
-        </el-table-column>
+      <!-- 权限管理 -->
+      <el-tab-pane label="权限管理" name="authority">
+        <span slot="label"><i class="el-icon-lock"></i> 权限管理</span>
+        <div class="tab-content">
+          <FilterBar @search="getAuthorityPage" @reset="resetAuthorityQuery">
+            <el-form-item label="权限搜索">
+              <el-input v-model="authoritySearch.searchText" placeholder="输入权限编码/名称" prefix-icon="el-icon-search" clearable style="width: 260px;" size="small" @keyup.enter.native="getAuthorityPage" />
+            </el-form-item>
+            <el-form-item label="启用状态">
+              <el-select v-model="authoritySearch.enabled" placeholder="全部" clearable style="width: 120px;" size="small" @change="getAuthorityPage">
+                <el-option v-for="item in enableStatusList" :key="item.enableStatus" :label="item.enableStatusName" :value="item.enableStatus" />
+              </el-select>
+            </el-form-item>
+          </FilterBar>
 
-        <el-table-column prop="roleCode" label="角色编码" min-width="150" show-overflow-tooltip>
-          <template slot-scope="scope">
-            <el-tag size="small" type="info" effect="plain">{{ scope.row.roleCode }}</el-tag>
-          </template>
-        </el-table-column>
+          <el-card shadow="never" :body-style="{ padding: '0' }" class="table-card">
+            <el-table v-loading="authorityLoading" :data="authorityPage.list" stripe style="width: 100%">
+              <el-table-column type="index" label="序号" width="60" align="center" />
+              <el-table-column prop="authorityCode" label="权限编码" min-width="150" show-overflow-tooltip>
+                <template slot-scope="{ row }">
+                  <el-tag size="small" type="info" effect="plain">{{ row.authorityCode }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="authorityDesc" label="权限名称" min-width="150" show-overflow-tooltip>
+                <template slot-scope="{ row }">
+                  <span class="item-name">{{ row.authorityDesc }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="enabled" label="状态" width="100" align="center">
+                <template slot-scope="{ row }">
+                  <el-switch v-model="row.enabled" active-color="#13ce66" inactive-color="#ff4949" @change="modifyAuthorityConfirm(row)" />
+                </template>
+              </el-table-column>
+              <el-table-column prop="createByName" label="创建人" width="100" align="center" />
+              <el-table-column label="操作" width="200" fixed="right" align="center">
+                <template slot-scope="{ row }">
+                  <el-button type="text" size="small" icon="el-icon-edit" @click="modifyAuthority(row)">编辑</el-button>
+                  <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeAuthority(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="pagination-container" v-if="authorityPage.total > 0">
+              <el-pagination background @size-change="authoritySizeChange" @current-change="authorityCurrentChange" :current-page="authorityPage.pageNum" :page-sizes="[10, 20, 50, 100]" :page-size="authorityPage.pageCount" layout="total, sizes, prev, pager, next, jumper" :total="authorityPage.total" />
+            </div>
+          </el-card>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
 
-        <el-table-column prop="enabled" label="启用状态" width="120" align="center">
-          <template slot-scope="scope">
-            <el-switch
-                v-model="scope.row.enabled"
-                active-color="#13ce66"
-                inactive-color="#ff4949"
-                @change="modifyRoleConfirm(scope.row)"
-            />
-          </template>
-        </el-table-column>
-
-        <el-table-column prop="createByName" label="创建人" width="120" align="center" />
-
-        <el-table-column label="操作" width="250" fixed="right" align="center">
-          <template slot-scope="scope">
-            <el-button type="text" icon="el-icon-edit" @click="modifyRole(scope.row)">编辑</el-button>
-            <el-button type="text" icon="el-icon-s-operation" @click="roleMenuAllocation(scope.row)">菜单分配</el-button>
-            <el-button type="text" class="text-danger" icon="el-icon-delete" @click="removeRole(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination-container" v-if="rolePage.total > 0">
-        <el-pagination
-            background
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-            :current-page="rolePage.pageNum"
-            :page-sizes="[10, 20, 50, 100]"
-            :page-size="rolePage.pageCount"
-            layout="total, sizes, prev, pager, next, jumper"
-            :total="rolePage.total">
-        </el-pagination>
-      </div>
-    </el-card>
-
-    <el-drawer
-        :title="drawerTitle"
-        :visible.sync="showDrawer"
-        :before-close="roleModifyDrawerClose"
-        size="500px"
-        :wrapperClosable="false"
-        custom-class="custom-drawer"
-    >
+    <!-- 角色编辑抽屉 -->
+    <el-drawer :title="roleDrawerTitle" :visible.sync="showRoleDrawer" :before-close="roleDrawerClose" size="500px" :wrapperClosable="false" custom-class="custom-drawer">
       <div class="drawer-content">
-        <el-form :model="saveRoleForm" :rules="saveRoleRules" ref="saveRoleRulesRef" label-width="100px" label-position="top">
+        <el-form :model="saveRoleForm" :rules="saveRoleRules" ref="saveRoleRulesRef" label-position="top">
           <el-form-item prop="roleCode" label="角色编码">
             <el-input v-model="saveRoleForm.roleCode" placeholder="唯一标识，如: admin_role" />
           </el-form-item>
@@ -117,413 +121,344 @@
           </el-form-item>
         </el-form>
       </div>
-
       <div class="drawer-footer">
-        <el-button @click="roleModifyDrawerCloseConfirm">取 消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确 定</el-button>
+        <el-button @click="showRoleDrawer = false">取 消</el-button>
+        <el-button type="primary" :loading="roleSubmitLoading" @click="handleRoleSubmit">确 定</el-button>
       </div>
     </el-drawer>
 
-    <el-drawer
-        title="菜单权限分配"
-        :visible.sync="showRoleMenuDrawer"
-        :before-close="roleMenuDrawerClose"
-        size="500px"
-        custom-class="custom-drawer"
-    >
+    <!-- 权限编辑抽屉 -->
+    <el-drawer :title="authorityDrawerTitle" :visible.sync="showAuthorityDrawer" size="500px" :wrapperClosable="false" custom-class="custom-drawer">
       <div class="drawer-content">
-        <el-input
-            placeholder="输入菜单名称进行过滤"
-            v-model="filterText"
-            size="small"
-            prefix-icon="el-icon-search"
-            style="margin-bottom: 15px;"
-        />
-        <el-tree
-            ref="roleMenuTree"
-            :data="menuList"
-            show-checkbox
-            node-key="id"
-            default-expand-all
-            :filter-node-method="filterNode"
-            :default-checked-keys="roleMenu.menuIdList"
-            :props="defaultProps"
-            highlight-current
-            @check="roleMenuAllocationCheck"
-        >
-        </el-tree>
+        <el-form :model="saveAuthorityForm" :rules="saveAuthorityRules" ref="saveAuthorityRulesRef" label-position="top">
+          <el-form-item prop="authorityCode" label="权限编码">
+            <el-input v-model="saveAuthorityForm.authorityCode" placeholder="唯一标识，如: user:read" />
+          </el-form-item>
+          <el-form-item prop="authorityDesc" label="权限名称">
+            <el-input v-model="saveAuthorityForm.authorityDesc" placeholder="描述，如: 查看用户" />
+          </el-form-item>
+          <el-form-item prop="enabled" label="启用状态">
+            <el-select v-model="saveAuthorityForm.enabled" style="width: 100%;">
+              <el-option v-for="item in enableStatusList" :key="item.enableStatus" :label="item.enableStatusName" :value="item.enableStatus" />
+            </el-select>
+          </el-form-item>
+        </el-form>
       </div>
       <div class="drawer-footer">
-        <el-button @click="showRoleMenuDrawer = false">取 消</el-button>
-        <el-button type="primary" :loading="menuLoading" @click="roleMenuAllocationSave">保存分配</el-button>
+        <el-button @click="showAuthorityDrawer = false">取 消</el-button>
+        <el-button type="primary" :loading="authoritySubmitLoading" @click="handleAuthoritySubmit">确 定</el-button>
       </div>
     </el-drawer>
-  </div>
+
+    <!-- 菜单分配抽屉 -->
+    <el-drawer title="菜单权限分配" :visible.sync="showMenuDrawer" size="500px" custom-class="custom-drawer">
+      <div class="drawer-content">
+        <el-input v-model="menuFilterText" placeholder="输入菜单名称进行过滤" size="small" prefix-icon="el-icon-search" style="margin-bottom: 15px;" />
+        <el-tree ref="menuTree" :data="menuList" show-checkbox node-key="id" default-expand-all :filter-node-method="filterMenuNode" :default-checked-keys="roleMenuSave.menuIdList" :props="{ children: 'children', label: 'menuName' }" highlight-current @check="onMenuCheck" />
+      </div>
+      <div class="drawer-footer">
+        <el-button @click="showMenuDrawer = false">取 消</el-button>
+        <el-button type="primary" :loading="menuLoading" @click="saveRoleMenu">保存分配</el-button>
+      </div>
+    </el-drawer>
+  </PageContainer>
 </template>
 
 <script>
+import PageContainer from '@/components/common/PageContainer.vue'
+import FilterBar from '@/components/common/FilterBar.vue'
 import {
-  addRole,
-  addRoleMenu,
-  getRoleById,
-  getRoleMenuByRoleId,
-  getRolePage,
-  modifyRole,
-  removeRole,
-  getMenuList
-} from "@/views/accountManagement/api";
+  getRolePage, addRole, getRoleById, modifyRole, removeRole,
+  getAuthorityPage, addAuthority, getAuthorityById, modifyAuthority, removeAuthority,
+  addRoleMenu, getRoleMenuByRoleId, getMenuList
+} from '@/views/accountManagement/api'
 
 export default {
-  name: "RoleManagement",
+  name: 'RolePermission',
+  components: { PageContainer, FilterBar },
   data() {
     return {
-      // 页面状态
-      loading: false,
-      submitLoading: false,
-      menuLoading: false,
-
-      // 搜索参数
-      searchText: '',
-      enabled: undefined, // 默认为 undefined 查全部
+      activeTab: 'role',
       enableStatusList: [
         { enableStatus: true, enableStatusName: '启用' },
         { enableStatus: false, enableStatusName: '停用' }
       ],
 
-      // 表格数据
-      rolePage: {
-        total: 0,
-        pageNum: 1,
-        pageCount: 10,
-        data: []
-      },
-
-      // 抽屉控制
-      showDrawer: false,
-      drawerTitle: '',
-      showRoleMenuDrawer: false,
-
-      // 表单数据
-      saveRoleForm: {
-        id: '',
-        roleCode: '',
-        roleName: '',
-        enabled: true
-      },
-
-      // 菜单树数据
-      menuList: [],
-      filterText: '',
-      roleMenu: {
-        roleId: '',
-        menuIdList: []
-      },
-      roleMenuSave: {
-        roleId: '',
-        menuIdList: []
-      },
-      role: {}, // 当前操作的角色对象
-
-      // 校验规则
+      // --- 角色管理 ---
+      roleLoading: false,
+      roleSubmitLoading: false,
+      roleSearch: { searchText: '', enabled: undefined },
+      rolePage: { total: 0, pageNum: 1, pageCount: 10, list: [] },
+      showRoleDrawer: false,
+      roleDrawerTitle: '',
+      saveRoleForm: { id: '', roleCode: '', roleName: '', enabled: true },
       saveRoleRules: {
-        roleCode: [
-          { required: true, message: "请输入角色编码", trigger: "blur" },
-          { min: 3, max: 20, message: "长度在3到20个字符", trigger: "blur" }
-        ],
-        roleName: [
-          { required: true, message: "请输入角色名称", trigger: "blur" },
-          { min: 2, max: 20, message: "长度在2到20个字符", trigger: "blur" }
-        ]
+        roleCode: [{ required: true, message: '请输入角色编码', trigger: 'blur' }],
+        roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }]
       },
 
-      defaultProps: {
-        children: 'children',
-        label: 'menuName'
+      // --- 权限管理 ---
+      authorityLoading: false,
+      authoritySubmitLoading: false,
+      authoritySearch: { searchText: '', enabled: undefined },
+      authorityPage: { total: 0, pageNum: 1, pageCount: 10, list: [] },
+      showAuthorityDrawer: false,
+      authorityDrawerTitle: '',
+      saveAuthorityForm: { id: '', authorityCode: '', authorityDesc: '', enabled: true },
+      saveAuthorityRules: {
+        authorityCode: [{ required: true, message: '请输入权限编码', trigger: 'blur' }],
+        authorityDesc: [{ required: true, message: '请输入权限名称', trigger: 'blur' }]
       },
-    };
-  },
 
-  watch: {
-    filterText(val) {
-      this.$refs.roleMenuTree.filter(val);
+      // --- 菜单分配 ---
+      showMenuDrawer: false,
+      menuLoading: false,
+      menuList: [],
+      menuFilterText: '',
+      roleMenuSave: { roleId: '', menuIdList: [] },
+      currentRole: {}
     }
   },
-
+  watch: {
+    menuFilterText(val) {
+      this.$refs.menuTree && this.$refs.menuTree.filter(val)
+    }
+  },
   methods: {
-    // --- 查 ---
+    onAdd() {
+      if (this.activeTab === 'role') this.addRole()
+      else this.addAuthority()
+    },
+
+    // ==================== 角色管理 ====================
     getRolePage() {
-      this.loading = true;
-      const params = {
+      this.roleLoading = true
+      getRolePage({
         pageNum: this.rolePage.pageNum,
         pageCount: this.rolePage.pageCount,
         paging: true,
-        enabled: this.enabled === '' ? undefined : this.enabled,
-        searchText: this.searchText
-      };
-
-      getRolePage(params).then(res => {
-        if (res.code === 200) {
-          this.rolePage = res.data || { pageNum: 1, pageSize: 10, total: 0, list: [] };
-        }
-      }).catch(err => {
-        this.$message.error('查询角色失败: ' + err);
-      }).finally(() => {
-        this.loading = false;
-      });
+        enabled: this.roleSearch.enabled === '' ? undefined : this.roleSearch.enabled,
+        searchText: this.roleSearch.searchText
+      }).then(res => {
+        if (res.code === 200) this.rolePage = res.data || { pageNum: 1, pageCount: 10, total: 0, list: [] }
+      }).catch(err => this.$message.error('查询失败: ' + err))
+        .finally(() => { this.roleLoading = false })
     },
-
-    resetQuery() {
-      this.searchText = '';
-      this.enabled = undefined;
-      this.rolePage.pageNum = 1;
-      this.getRolePage();
+    resetRoleQuery() {
+      this.roleSearch = { searchText: '', enabled: undefined }
+      this.rolePage.pageNum = 1
+      this.getRolePage()
     },
+    roleSizeChange(val) { this.rolePage.pageCount = val; this.getRolePage() },
+    roleCurrentChange(val) { this.rolePage.pageNum = val; this.getRolePage() },
 
-    // --- 增/改 ---
     addRole() {
-      this.resetForm();
-      this.drawerTitle = '新增角色';
-      this.showDrawer = true;
+      this.saveRoleForm = { id: '', roleCode: '', roleName: '', enabled: true }
+      this.roleDrawerTitle = '新增角色'
+      this.showRoleDrawer = true
+      this.$nextTick(() => { this.$refs.saveRoleRulesRef && this.$refs.saveRoleRulesRef.clearValidate() })
     },
-
-    modifyRole(role) {
-      this.resetForm();
-      this.drawerTitle = '修改角色';
-      this.showDrawer = true;
-      // 获取详情回显
-      getRoleById(role.id).then(res => {
-        if (res.code === 200) {
-          this.saveRoleForm = res.data;
-        }
-      });
+    modifyRole(row) {
+      this.saveRoleForm = { id: '', roleCode: '', roleName: '', enabled: true }
+      this.roleDrawerTitle = '修改角色'
+      this.showRoleDrawer = true
+      getRoleById(row.id).then(res => { if (res.code === 200) this.saveRoleForm = res.data })
     },
-
-    // 统一提交入口
-    handleSubmit() {
-      this.$refs.saveRoleRulesRef.validate((valid) => {
-        if (valid) {
-          this.submitLoading = true;
-          const isAdd = this.drawerTitle === '新增角色';
-          const api = isAdd ? addRole : modifyRole;
-
-          api(this.saveRoleForm).then(res => {
-            if (res.code === 200) {
-              this.$message.success(isAdd ? '新增成功' : '修改成功');
-              this.showDrawer = false;
-              this.getRolePage();
-            } else {
-              this.$message.error(res.message);
-            }
-          }).catch(err => {
-            this.$message.error('操作失败: ' + err);
-          }).finally(() => {
-            this.submitLoading = false;
-          });
-        }
-      });
-    },
-
-    // 列表中的 Switch 状态修改
-    modifyRoleConfirm(row) {
-      // 可以在这里加一个 Loading 状态防止连点
-      modifyRole(row).then(res => {
-        if (res.code === 200) {
-          this.$message.success('状态更新成功');
-        } else {
-          this.$message.error(res.message);
-          row.enabled = !row.enabled; // 回滚状态
-        }
-      }).catch(() => {
-        row.enabled = !row.enabled; // 回滚状态
-      });
-    },
-
-    // --- 删 ---
-    removeRole(role) {
-      this.$confirm('此操作将永久删除该角色, 是否继续?', '警告', {
-        type: 'warning'
-      }).then(() => {
-        removeRole(role.id).then(res => {
+    handleRoleSubmit() {
+      this.$refs.saveRoleRulesRef.validate(valid => {
+        if (!valid) return
+        this.roleSubmitLoading = true
+        const isAdd = this.roleDrawerTitle === '新增角色'
+        ;(isAdd ? addRole : modifyRole)(this.saveRoleForm).then(res => {
           if (res.code === 200) {
-            this.$message.success('删除成功');
-            this.getRolePage();
-          } else {
-            this.$message.error(res.message);
-          }
-        });
-      }).catch(() => {});
+            this.$message.success(isAdd ? '新增成功' : '修改成功')
+            this.showRoleDrawer = false
+            this.getRolePage()
+          } else this.$message.error(res.message)
+        }).catch(err => this.$message.error('操作失败: ' + err))
+          .finally(() => { this.roleSubmitLoading = false })
+      })
+    },
+    modifyRoleConfirm(row) {
+      modifyRole(row).then(res => {
+        if (res.code === 200) this.$message.success('状态更新成功')
+        else { row.enabled = !row.enabled; this.$message.error(res.message) }
+      }).catch(() => { row.enabled = !row.enabled })
+    },
+    removeRole(row) {
+      this.$confirm('此操作将永久删除该角色, 是否继续?', '警告', { type: 'warning' }).then(() => {
+        removeRole(row.id).then(res => {
+          if (res.code === 200) { this.$message.success('删除成功'); this.getRolePage() }
+          else this.$message.error(res.message)
+        })
+      }).catch(() => {})
+    },
+    roleDrawerClose(done) { this.saveRoleForm = { id: '', roleCode: '', roleName: '', enabled: true }; done() },
+
+    // ==================== 权限管理 ====================
+    getAuthorityPage() {
+      this.authorityLoading = true
+      getAuthorityPage({
+        pageNum: this.authorityPage.pageNum,
+        pageCount: this.authorityPage.pageCount,
+        paging: true,
+        enabled: this.authoritySearch.enabled === '' ? undefined : this.authoritySearch.enabled,
+        searchText: this.authoritySearch.searchText
+      }).then(res => {
+        if (res.code === 200) this.authorityPage = res.data || { pageNum: 1, pageCount: 10, total: 0, list: [] }
+      }).catch(err => this.$message.error('查询失败: ' + err))
+        .finally(() => { this.authorityLoading = false })
+    },
+    resetAuthorityQuery() {
+      this.authoritySearch = { searchText: '', enabled: undefined }
+      this.authorityPage.pageNum = 1
+      this.getAuthorityPage()
+    },
+    authoritySizeChange(val) { this.authorityPage.pageCount = val; this.getAuthorityPage() },
+    authorityCurrentChange(val) { this.authorityPage.pageNum = val; this.getAuthorityPage() },
+
+    addAuthority() {
+      this.saveAuthorityForm = { id: '', authorityCode: '', authorityDesc: '', enabled: true }
+      this.authorityDrawerTitle = '新增权限'
+      this.showAuthorityDrawer = true
+      this.$nextTick(() => { this.$refs.saveAuthorityRulesRef && this.$refs.saveAuthorityRulesRef.clearValidate() })
+    },
+    modifyAuthority(row) {
+      this.saveAuthorityForm = { id: '', authorityCode: '', authorityDesc: '', enabled: true }
+      this.authorityDrawerTitle = '修改权限'
+      this.showAuthorityDrawer = true
+      getAuthorityById(row.id).then(res => { if (res.code === 200) this.saveAuthorityForm = res.data })
+    },
+    handleAuthoritySubmit() {
+      this.$refs.saveAuthorityRulesRef.validate(valid => {
+        if (!valid) return
+        this.authoritySubmitLoading = true
+        const isAdd = this.authorityDrawerTitle === '新增权限'
+        ;(isAdd ? addAuthority : modifyAuthority)(this.saveAuthorityForm).then(res => {
+          if (res.code === 200) {
+            this.$message.success(isAdd ? '新增成功' : '修改成功')
+            this.showAuthorityDrawer = false
+            this.getAuthorityPage()
+          } else this.$message.error(res.message)
+        }).catch(err => this.$message.error('操作失败: ' + err))
+          .finally(() => { this.authoritySubmitLoading = false })
+      })
+    },
+    modifyAuthorityConfirm(row) {
+      modifyAuthority(row).then(res => {
+        if (res.code === 200) this.$message.success('状态更新成功')
+        else { row.enabled = !row.enabled; this.$message.error(res.message) }
+      }).catch(() => { row.enabled = !row.enabled })
+    },
+    removeAuthority(row) {
+      this.$confirm('此操作将永久删除该权限, 是否继续?', '警告', { type: 'warning' }).then(() => {
+        removeAuthority(row.id).then(res => {
+          if (res.code === 200) { this.$message.success('删除成功'); this.getAuthorityPage() }
+          else this.$message.error(res.message)
+        })
+      }).catch(() => {})
     },
 
-    // --- 菜单分配 ---
+    // ==================== 菜单分配 ====================
     async roleMenuAllocation(role) {
-      this.role = role;
-      this.filterText = '';
-      this.showRoleMenuDrawer = true;
-
-      // 1. 获取所有菜单
+      this.currentRole = role
+      this.menuFilterText = ''
+      this.showMenuDrawer = true
       if (this.menuList.length === 0) {
-        await this.getMenuList();
+        await getMenuList(1).then(res => { if (res.code === 200) this.menuList = res.data || [] })
       }
-
-      // 2. 获取当前角色已有的菜单
-      this.roleMenu.menuIdList = []; // 先清空，防止闪烁
+      this.roleMenuSave = { roleId: role.id, menuIdList: [] }
       getRoleMenuByRoleId(role.id).then(res => {
         if (res.code === 200 && res.data) {
-          this.roleMenu = res.data;
-          this.roleMenuSave = {
-            roleId: role.id,
-            menuIdList: res.data.menuIdList || []
-          };
-          // 设置树的选中状态
-          this.$nextTick(() => {
-            this.$refs.roleMenuTree.setCheckedKeys(this.roleMenuSave.menuIdList);
-          });
-        } else {
-          // 如果没有数据，初始化为空
-          this.roleMenuSave = { roleId: role.id, menuIdList: [] };
-          this.$refs.roleMenuTree.setCheckedKeys([]);
+          this.roleMenuSave = { roleId: role.id, menuIdList: res.data.menuIdList || [] }
+          this.$nextTick(() => { this.$refs.menuTree && this.$refs.menuTree.setCheckedKeys(this.roleMenuSave.menuIdList) })
         }
-      });
+      })
     },
-
-    roleMenuAllocationCheck(checkedNodes, checkedKeys) {
-      // Element UI Tree 的 check 事件返回两个对象，第二个参数包含了 checkedKeys 和 halfCheckedKeys
-      const allChecked = [...checkedKeys.checkedKeys, ...checkedKeys.halfCheckedKeys];
-      this.roleMenuSave.menuIdList = allChecked;
+    onMenuCheck(_, checkedKeys) {
+      this.roleMenuSave.menuIdList = [...checkedKeys.checkedKeys, ...checkedKeys.halfCheckedKeys]
     },
-
-    roleMenuAllocationSave() {
-      this.menuLoading = true;
-      // 确保 roleId 存在
-      if (!this.roleMenuSave.roleId) {
-        this.roleMenuSave.roleId = this.role.id;
-      }
-
+    saveRoleMenu() {
+      this.menuLoading = true
       addRoleMenu(this.roleMenuSave).then(res => {
-        if (res.code === 200) {
-          this.$message.success('权限保存成功');
-          this.showRoleMenuDrawer = false;
-        } else {
-          this.$message.error(res.message);
-        }
-      }).catch(err => {
-        this.$message.error('保存失败: ' + err);
-      }).finally(() => {
-        this.menuLoading = false;
-      });
+        if (res.code === 200) { this.$message.success('权限保存成功'); this.showMenuDrawer = false }
+        else this.$message.error(res.message)
+      }).catch(err => this.$message.error('保存失败: ' + err))
+        .finally(() => { this.menuLoading = false })
     },
-
-    getMenuList() {
-      // 假设传1获取所有菜单
-      return getMenuList(1).then(res => {
-        if (res.code === 200) {
-          this.menuList = res.data || [];
-        }
-      });
-    },
-
-    // 树过滤
-    filterNode(value, data) {
-      if (!value) return true;
-      return data.menuName.indexOf(value) !== -1;
-    },
-
-    // --- 分页 ---
-    handleSizeChange(val) {
-      this.rolePage.pageCount = val;
-      this.getRolePage();
-    },
-    handleCurrentChange(val) {
-      this.rolePage.pageNum = val;
-      this.getRolePage();
-    },
-
-    // --- 辅助 ---
-    roleModifyDrawerClose(done) {
-      this.resetForm();
-      done();
-    },
-    roleMenuDrawerClose(done) {
-      this.filterText = '';
-      done();
-    },
-    roleModifyDrawerCloseConfirm() {
-      this.showDrawer = false;
-      this.resetForm();
-    },
-    resetForm() {
-      this.saveRoleForm = { id: '', roleCode: '', roleName: '', enabled: true };
-      this.$nextTick(() => {
-        if (this.$refs.saveRoleRulesRef) this.$refs.saveRoleRulesRef.clearValidate();
-      });
+    filterMenuNode(value, data) {
+      if (!value) return true
+      return data.menuName.indexOf(value) !== -1
     }
   },
   created() {
-    this.getRolePage();
+    this.getRolePage()
+    this.getAuthorityPage()
   }
-};
+}
 </script>
 
 <style lang="less" scoped>
-.app-container {
-  padding: 20px;
-  background-color: #f0f2f5;
-  min-height: calc(100vh - 140px);
-}
+@import "~@/assets/css/theme.less";
 
-/* 搜索区 */
-.filter-container {
-  margin-bottom: 15px;
-  border: none;
-  :deep(.el-card__body) {
-    padding-bottom: 0;
+.role-tabs {
+  border-radius: @border-radius;
+  overflow: hidden;
+
+  /deep/ .el-tabs__header {
+    background-color: @bg-content;
+  }
+
+  /deep/ .el-tabs__content {
+    padding: 0;
   }
 }
 
-/* 操作栏 */
-.action-bar {
-  margin-bottom: 15px;
+.tab-content {
+  padding: @space-4 @space-5;
 }
 
-/* 表格区 */
 .table-card {
-  border: none;
+  border-radius: @border-radius;
+}
+
+.item-name {
+  font-weight: 600;
+  color: @text-primary;
 }
 
 .pagination-container {
-  background: #fff;
-  padding: 10px 20px;
+  padding: @space-3 @space-5;
   text-align: right;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid @border-color-light;
 }
 
 .text-danger {
-  color: #F56C6C;
+  color: @error-color;
   &:hover { color: #f78989; }
 }
 
-/* 抽屉样式优化 */
+/* 抽屉 */
 .drawer-content {
-  padding: 20px;
-  height: calc(100% - 60px); /* 减去 footer 高度 */
+  padding: @space-5;
+  height: calc(100% - 60px);
   overflow-y: auto;
 }
 
 .drawer-footer {
   height: 60px;
   line-height: 60px;
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid @border-color-light;
   text-align: right;
-  padding-right: 20px;
+  padding-right: @space-5;
   background: #fff;
   position: absolute;
   bottom: 0;
   width: 100%;
 }
 
-/* 抽屉表单样式 */
 ::v-deep .custom-drawer .el-drawer__body {
-  padding: 0; /* 重置默认 padding，由内部元素控制 */
+  padding: 0;
   display: flex;
   flex-direction: column;
 }
