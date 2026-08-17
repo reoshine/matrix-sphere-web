@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <PageContainer title="菜单管理" subtitle="管理系统菜单结构与配置">
     <el-row :gutter="20" class="full-height">
 
       <el-col :span="6" class="full-height-col">
@@ -129,14 +129,18 @@
         </el-card>
       </el-col>
     </el-row>
-  </div>
+  </PageContainer>
 </template>
 
 <script>
+import PageContainer from '@/components/common/PageContainer.vue'
 import { getMenuById, getMenuList, modifyMenu, addMenu, deleteMenu } from "@/views/accountManagement/api";
 
 export default {
   name: "MenuManagement",
+  components: {
+    PageContainer
+  },
   data() {
     return {
       // 状态控制
@@ -298,17 +302,10 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.app-container {
-  padding: 20px;
-  background-color: #f0f2f5;
-  /* 适配高度，防止双重滚动条 */
-  min-height: calc(100vh - 84px);
-  height: calc(100vh - 84px); /* 固定高度，以便内部卡片撑满 */
-  box-sizing: border-box;
-}
+@import "~@/assets/css/theme.less";
 
 .full-height {
-  height: 100%;
+  height: calc(100vh - 200px);
 }
 
 .full-height-col {

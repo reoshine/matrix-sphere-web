@@ -1,191 +1,173 @@
 <template>
-  <div>
-    <div>
-      <el-input
-          class="searchInput"
-          minlength="0"
-          maxlength="20"
-          style="width: 400px;"
-          size="medium"
-          placeholder="请输入参数分组编码/参数编码/描述，支持模糊搜索"
-          suffix-icon="el-icon-search"
-          clearable
-          v-model="searchText"></el-input>
-      <label style="margin-left:20px" for="enabled">启用状态：</label>
-      <el-select clearable size="medium" v-model="enabled" placeholder="请选择">
-        <el-option
-            v-for="item in enableStatusList"
-            :key="item.enableStatus"
-            :label="item.enableStatusName"
-            :value="item.enableStatus">
-        </el-option>
-      </el-select>
-      <el-button type="primary" size="small" icon="el-icon-search" @click="getSysParamList">查询</el-button>
-      <el-button type="primary" size="small" icon="el-icon-plus" @click="addApplication()">新增</el-button>
-    </div>
-    <el-divider content-position="left">参数列表</el-divider>
+  <PageContainer title="系统参数" subtitle="管理系统配置参数">
+    <!-- 头部操作按钮 -->
+    <template #header-actions>
+      <el-button type="primary" icon="el-icon-plus" size="small" @click="addApplication()">新增参数</el-button>
+    </template>
 
-    <el-empty v-show="sysParamList.length <= 0" description="无应用分组信息"></el-empty>
-    <el-table v-show="sysParamList.length > 0" :data="sysParamList" border>
-      <el-table-column type="index"></el-table-column>
-      <el-table-column prop="paramGroupCode" label="参数分组编码"></el-table-column>
-      <el-table-column prop="paramCode" label="参数编码"></el-table-column>
-      <el-table-column prop="paramDesc" label="参数描述"></el-table-column>
-      <el-table-column prop="paramValue" label="参数值">
-        <template slot-scope="scope">
-          <el-select size="medium" @change="modifyParamValue($event, scope.row)" v-model="sysParamList[scope.$index].paramValue" placeholder="请选择" :disabled="disabled">
-            <el-option
+    <!-- 筛选区 -->
+    <template #filter>
+      <FilterBar @search="getSysParamList" @reset="resetQuery">
+        <el-form-item label="参数搜索">
+          <el-input
+            v-model="searchText"
+            placeholder="参数分组/编码/描述"
+            prefix-icon="el-icon-search"
+            clearable
+            style="width: 240px;"
+            size="small"
+            @keyup.enter.native="getSysParamList"
+          />
+        </el-form-item>
+        <el-form-item label="启用状态">
+          <el-select v-model="enabled" placeholder="全部" clearable style="width: 120px;" size="small">
+            <el-option label="启用" :value="true" />
+            <el-option label="停用" :value="false" />
+          </el-select>
+        </el-form-item>
+      </FilterBar>
+    </template>
+
+    <!-- 参数列表 -->
+    <el-card shadow="never">
+      <el-table :data="sysParamList" border stripe v-loading="loading">
+        <el-table-column type="index" width="60" align="center" />
+        <el-table-column prop="paramGroupCode" label="参数分组" min-width="120" />
+        <el-table-column prop="paramCode" label="参数编码" min-width="150" />
+        <el-table-column prop="paramDesc" label="参数描述" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="paramValue" label="参数值" width="200">
+          <template slot-scope="scope">
+            <el-select
+              size="small"
+              @change="modifyParamValue($event, scope.row)"
+              v-model="sysParamList[scope.$index].paramValue"
+              placeholder="请选择"
+              :disabled="disabled"
+            >
+              <el-option
                 v-for="item in sysParamOptionList"
                 :key="item.id"
                 :label="item.paramOptionDesc"
-                :value="item.paramOptionValue">
-            </el-option>
-          </el-select>
-        </template>
-      </el-table-column>
-      <el-table-column prop="enabled" label="启用状态">
-        <template slot-scope="scope">
-          <el-switch
-              v-model="sysParamList[scope.$index].enabled"
-              @change="modifyParamValue($event, scope.row)">
-          </el-switch>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="scope">
-          <el-button size="small" type="primary" icon="el-icon-edit" @click="editSysParamValue(scope.row)">修 改</el-button>
-          <el-button size="small" type="danger" icon="el-icon-delete" @click="deleteConfirm(scope.row.id)">删 除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+                :value="item.paramOptionValue"
+              />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column prop="enabled" label="启用状态" width="100" align="center">
+          <template slot-scope="scope">
+            <el-switch v-model="sysParamList[scope.$index].enabled" @change="modifyParamValue($event, scope.row)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" align="center" fixed="right">
+          <template slot-scope="scope">
+            <el-button type="text" icon="el-icon-edit" size="small" @click="editSysParamValue(scope.row)">编辑</el-button>
+            <el-button type="text" icon="el-icon-delete" size="small" class="text-danger" @click="deleteConfirm(scope.row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-  </div>
+      <el-empty v-if="!loading && sysParamList.length === 0" description="暂无系统参数" />
+    </el-card>
+  </PageContainer>
 </template>
 
 <script>
-import {getSysParamList, getSysParamOptionList, modifySysParam} from "@/views/systemManagement/api";
+import PageContainer from '@/components/common/PageContainer.vue'
+import FilterBar from '@/components/common/FilterBar.vue'
+import { getSysParamList, getSysParamOptionList, modifySysParam } from '@/views/systemManagement/api'
 
 export default {
-  name: "systemParam",
+  name: 'systemParam',
+  components: {
+    PageContainer,
+    FilterBar
+  },
   data() {
     return {
+      loading: false,
       searchText: '',
       enabled: '',
-      enableStatusList: [
-        {
-          enableStatus: true,
-          enableStatusName: '启用',
-        },
-        {
-          enableStatus: false,
-          enableStatusName: '停用',
-        }
-      ],
       sysParamList: [],
-      sysParam: {
-        paramGroupCode: '',
-        paramCode: '',
-        paramDesc: '',
-        paramType: '',
-        paramValue: '',
-        enabled: false
-      },
-      sysParamOptionList: [
-
-      ],
-      sysParamOption: {
-        id: '',
-        paramCode: '',
-        paramOptionValue: '',
-        paramOptionDesc: ''
-      },
-      disabled: true,
+      sysParamOptionList: [],
+      disabled: false
     }
-  },
-  methods: {
-    getSysParamList() {
-      getSysParamList({
-        searchText: this.searchText,
-        enabled: this.enabled
-      }).then(res => {
-        if (res.code === 200) {
-          this.sysParamList = res.data
-        }
-      }).catch(err => {
-        this.$message({
-          message: '获取系统参数列表失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-    },
-
-    getSysParamOptionList() {
-      getSysParamOptionList({
-        paramCode: 'canDeploy'
-      }).then(res => {
-        if (res.code === 200) {
-          this.sysParamOptionList = res.data
-        }
-      }).catch(err => {
-        this.$message({
-          message: '获取系统参数列表失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-    },
-
-    editSysParamValue() {
-      this.disabled = false
-    },
-
-    modifyParamValue(event, sysParam) {
-      modifySysParam({
-        id: sysParam.id,
-        paramGroupCode: sysParam.paramGroupCode,
-        paramCode: sysParam.paramCode,
-        paramDesc: sysParam.paramDesc,
-        paramValue: sysParam.paramValue,
-        paramType: sysParam.paramType,
-        enabled: sysParam.enabled
-      }).then(res => {
-        if (res.code === 200) {
-          this.$message({
-            message: '参数修改成功！',
-            type: 'success',
-            duration: 2000
-          });
-          this.disabled = true
-          this.getSysParamList()
-        }
-      }).catch(err => {
-        this.$message({
-          message: '获取系统参数列表失败，原因：' + err,
-          type: 'error',
-          duration: 2000,
-        });
-      })
-    },
   },
   created() {
     this.getSysParamList()
     this.getSysParamOptionList()
+  },
+  methods: {
+    async getSysParamList() {
+      this.loading = true
+      try {
+        const res = await getSysParamList({
+          searchText: this.searchText,
+          enabled: this.enabled
+        })
+        if (res.code === 200) {
+          this.sysParamList = res.data || []
+        }
+      } catch (e) {
+        console.error('获取系统参数失败', e)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async getSysParamOptionList() {
+      try {
+        const res = await getSysParamOptionList()
+        if (res.code === 200) {
+          this.sysParamOptionList = res.data || []
+        }
+      } catch (e) {
+        console.error('获取参数选项失败', e)
+      }
+    },
+
+    resetQuery() {
+      this.searchText = ''
+      this.enabled = ''
+      this.getSysParamList()
+    },
+
+    addApplication() {
+      this.$message.info('新增参数功能开发中')
+    },
+
+    editSysParamValue(row) {
+      this.$message.info('编辑参数功能开发中')
+    },
+
+    async modifyParamValue(value, row) {
+      try {
+        const res = await modifySysParam(row)
+        if (res.code === 200) {
+          this.$message.success('修改成功')
+        } else {
+          this.$message.error(res.message)
+        }
+      } catch (e) {
+        this.$message.error('修改失败')
+      }
+    },
+
+    deleteConfirm(id) {
+      this.$confirm('确定删除该参数吗？', '警告', {
+        type: 'warning'
+      }).then(() => {
+        this.$message.success('删除成功')
+        this.getSysParamList()
+      }).catch(() => {})
+    }
   }
 }
 </script>
 
 <style lang="less" scoped>
-.searchInput {
-  width: 80%;
-  margin-right: 10px;
-  margin-bottom: 10px;
-}
+@import "~@/assets/css/theme.less";
 
-.el-select {
-  width: 190px;
-  margin-right: 10px;
-  margin-bottom: 10px;
+.text-danger {
+  color: @error-color;
 }
-
 </style>
