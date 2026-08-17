@@ -142,36 +142,6 @@ export default {
     }
   },
 
-  methods: {
-    hasVisibleChildren(children) {
-      if (!children || children.length === 0) {
-        return false;
-      }
-      return children.some(child => !child.hidden);
-    },
-
-    collapseChange() {
-      this.collapse = !this.collapse;
-      bus.$emit('collapse', this.collapse);
-    },
-
-    async logout() {
-      try {
-        await sso.post('/authentication/logout', {}, { withCredentials: true });
-      } catch (error) {
-        console.error('SSO注销请求异常，强制执行本地清理', error);
-      } finally {
-        localStorage.removeItem("adpSsoToken");
-        localStorage.removeItem("adpSsoRefreshToken");
-        localStorage.removeItem("ms_username");
-        this.$message.success('退出成功！');
-        setTimeout(() => {
-          this.$router.push('/login');
-        }, 1500);
-      }
-    }
-  },
-
   computed: {
     ...mapGetters(['menus']),
 
@@ -229,6 +199,52 @@ export default {
     bus.$on('toggle-sidebar', () => {
       this.collapseChange();
     });
+
+    // 小屏自动折叠
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize);
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize);
+  },
+
+  methods: {
+    handleResize() {
+      const isSmallScreen = window.innerWidth < 768;
+      if (isSmallScreen && !this.collapse) {
+        this.collapse = true;
+        bus.$emit('collapse', true);
+      }
+    },
+
+    hasVisibleChildren(children) {
+      if (!children || children.length === 0) {
+        return false;
+      }
+      return children.some(child => !child.hidden);
+    },
+
+    collapseChange() {
+      this.collapse = !this.collapse;
+      bus.$emit('collapse', this.collapse);
+    },
+
+    async logout() {
+      try {
+        await sso.post('/authentication/logout', {}, { withCredentials: true });
+      } catch (error) {
+        console.error('SSO注销请求异常，强制执行本地清理', error);
+      } finally {
+        localStorage.removeItem("adpSsoToken");
+        localStorage.removeItem("adpSsoRefreshToken");
+        localStorage.removeItem("ms_username");
+        this.$message.success('退出成功！');
+        setTimeout(() => {
+          this.$router.push('/login');
+        }, 1500);
+      }
+    }
   }
 };
 </script>

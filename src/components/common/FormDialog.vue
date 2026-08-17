@@ -100,4 +100,12 @@ export default {
     background-color: #f9fafc;
   }
 }
+
+/* 响应式：小屏弹窗全宽 */
+@media (max-width: 768px) {
+  .form-dialog {
+    width: 90vw !important;
+    margin: 0 auto;
+  }
+}
 </style>
