@@ -19,6 +19,9 @@
         </keep-alive>
       </main>
     </div>
+
+    <!-- 全局搜索（⌘K / Ctrl+K） -->
+    <GlobalSearch ref="globalSearch" />
   </div>
 </template>
 
@@ -27,6 +30,7 @@ import bus from '@/util/bus';
 import headerBar from "@/components/common/headerBar";
 import sidebar from "@/components/common/sidebar";
 import tags from "@/components/common/Tags";
+import GlobalSearch from "@/components/common/GlobalSearch.vue";
 
 export default {
   name: "home",
@@ -34,6 +38,7 @@ export default {
     headerBar,
     sidebar,
     tags,
+    GlobalSearch,
   },
   data() {
     return {
@@ -44,6 +49,11 @@ export default {
   created() {
     bus.$on('collapse-content', msg => {
       this.collapse = msg;
+    });
+
+    // 全局搜索：从 headerBar 搜索图标触发
+    bus.$on('open-global-search', () => {
+      this.$refs.globalSearch && this.$refs.globalSearch.open();
     });
 
     // 只有在标签页列表里的页面才使用keep-alive，即关闭标签之后就不保存到内存中了。

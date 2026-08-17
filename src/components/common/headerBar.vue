@@ -9,8 +9,13 @@
       <Breadcrumb />
     </div>
 
-    <!-- 右侧：消息中心 -->
+    <!-- 右侧：搜索 + 消息中心 -->
     <div class="header-bar__right">
+      <el-tooltip effect="dark" content="全局搜索 (⌘K)" placement="bottom">
+        <div class="header-bar__action" @click="openGlobalSearch">
+          <i class="el-icon-search"></i>
+        </div>
+      </el-tooltip>
       <el-tooltip
         effect="dark"
         :content="message ? `有${message}条未读消息` : '消息中心'"
@@ -50,6 +55,9 @@ export default {
     collapseChange() {
       this.collapse = !this.collapse;
       bus.$emit('collapse', this.collapse);
+    },
+    openGlobalSearch() {
+      bus.$emit('open-global-search');
     }
   }
 };
