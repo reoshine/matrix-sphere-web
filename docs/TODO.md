@@ -241,8 +241,8 @@
 - [x] Step 3: 启动验证 + 提交
 
 ### Task 36: 资源管理页面重设计
-- [ ] Step 1: 使用 PageContainer + FilterBar 统一页面结构
-- [ ] Step 2: 启动验证 + 提交
+- [x] Step 1: 使用 PageContainer + FilterBar 统一页面结构
+- [x] Step 2: 启动验证 + 提交
 
 ### Task 37: 系统设置页面重设计
 - [ ] Step 1: 菜单管理使用树形表格

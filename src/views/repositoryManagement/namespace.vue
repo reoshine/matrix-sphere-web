@@ -1,26 +1,22 @@
 <template>
-  <div class="namespace-container">
-    <h2>命名空间管理</h2>
-    <p>命名空间管理功能正在开发中...</p>
-  </div>
+  <PageContainer title="命名空间" subtitle="管理 Git 仓库命名空间">
+    <el-card shadow="never">
+      <el-empty description="命名空间管理功能正在开发中..." />
+    </el-card>
+  </PageContainer>
 </template>
 
 <script>
+import PageContainer from '@/components/common/PageContainer.vue'
+
 export default {
   name: 'Namespace',
-  data() {
-    return {
-      
-    }
-  },
-  methods: {
-    
+  components: {
+    PageContainer
   }
 }
 </script>
 
-<style scoped>
-.namespace-container {
-  padding: 20px;
-}
-</style> 
+<style lang="less" scoped>
+@import "~@/assets/css/theme.less";
+</style>

@@ -1,16 +1,16 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never" class="filter-card">
-      <div slot="header">
-        <i class="el-icon-folder-opened"></i>
-        <span>Git 仓库管理</span>
-        <el-button
-          type="primary" plain size="small" style="float: right"
-          icon="el-icon-refresh" :loading="refreshingAll"
-          @click="refreshAll"
-        >刷新全部</el-button>
-      </div>
+  <PageContainer title="Git 仓库" subtitle="管理 Git 仓库关联与项目信息">
+    <!-- 头部操作按钮 -->
+    <template #header-actions>
+      <el-button
+        type="primary" plain size="small"
+        icon="el-icon-refresh" :loading="refreshingAll"
+        @click="refreshAll"
+      >刷新全部</el-button>
+    </template>
 
+    <!-- 仓库列表 -->
+    <el-card shadow="never" class="repo-card">
       <el-table :data="repoList" v-loading="loading" stripe border style="width: 100%">
         <el-table-column prop="applicationCode" label="应用编码" min-width="140" />
         <el-table-column prop="applicationName" label="应用名称" min-width="140" />
@@ -77,14 +77,18 @@
         <el-button size="small" @click="projectDialogVisible = false">关 闭</el-button>
       </div>
     </el-dialog>
-  </div>
+  </PageContainer>
 </template>
 
 <script>
+import PageContainer from '@/components/common/PageContainer.vue'
 import { getGitRepoList, getProjectInfo, refreshProjectId } from './api'
 
 export default {
   name: 'GitRepository',
+  components: {
+    PageContainer
+  },
   data() {
     return {
       repoList: [],
@@ -181,13 +185,9 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.app-container {
-  padding: 20px;
-  background-color: #f0f2f5;
-  min-height: calc(100vh - 126px);
-}
+@import "~@/assets/css/theme.less";
 
-.filter-card {
+.repo-card {
   :deep(.el-card__header) {
     font-weight: bold;
     i { margin-right: 6px; }
@@ -196,7 +196,7 @@ export default {
 
 .copy-btn {
   cursor: pointer;
-  color: #409EFF;
+  color: @primary-color;
   margin-left: 6px;
   &:hover { opacity: 0.7; }
 }
