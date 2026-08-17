@@ -254,8 +254,8 @@
 - [x] Step 2: 提交
 
 ### Task 39: 应用分组页面重设计
-- [ ] Step 1: 使用 PageContainer + FormDialog
-- [ ] Step 2: 启动验证 + 提交
+- [x] Step 1: 使用 PageContainer + FormDialog
+- [x] Step 2: 启动验证 + 提交
 
 ### Task 40: 菜单分组逻辑重构——仅适配 menuCode
 - [ ] Step 1: 重构 menuGroups.js，移除 matchPaths 字段，仅保留 matchCodes 字段匹配顶级菜单的 menuCode
