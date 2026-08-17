@@ -305,13 +305,12 @@ export default {
       page({
         pageNum: this.pageNum,
         pageCount: this.pageCount,
-        searchText: this.searchText,
-        credentialType: this.filterType || undefined
+        searchText: this.searchText
       }).then(res => {
         if (res.code === 200) {
           const result = res.data
           this.total = result.total
-          this.credentialList = (result.data || []).map(item => {
+          this.credentialList = (result.list || result.data || []).map(item => {
             if (item.credentialConfig) {
               try {
                 item.config = JSON.parse(item.credentialConfig)
