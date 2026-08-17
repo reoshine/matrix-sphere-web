@@ -23,14 +23,29 @@ a {
 
 /* ==================== Element UI 全局覆盖 ==================== */
 
-/* 表格表头 */
+/* --- el-table 全局样式规范 --- */
+
+/* 表头：灰底 + 加粗 + 小字号 */
 .el-table th {
-    background-color: var(--table-header-bg, #f5f7fa) !important;
+    background-color: var(--table-header-bg, var(--color-gray-50, #f9fafb)) !important;
+    color: var(--color-text-secondary, #4b5563);
+    font-weight: 600;
+    font-size: var(--text-sm, 13px);
 }
 
-/* 表格行 hover */
-.el-table tr:hover {
-    background: var(--table-row-hover-bg, #f6faff);
+/* 行高统一为 48px */
+.el-table td {
+    padding: 10px 0;
+}
+
+/* 斑马纹：更微妙的灰色 */
+.el-table tr.el-table__row--striped td {
+    background: var(--color-gray-50, #f9fafb);
+}
+
+/* hover 行：品牌浅色 */
+.el-table tr.el-table__row:hover > td {
+    background: var(--table-row-hover-bg, var(--color-primary-lighter, #dbeafe));
 }
 
 /* 按钮与 tooltip 间距 */
