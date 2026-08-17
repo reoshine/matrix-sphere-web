@@ -1,12 +1,16 @@
 <template>
   <div class="filter-bar">
-    <div class="filter-bar__fields">
-      <slot />
-    </div>
-    <div class="filter-bar__actions">
-      <el-button type="primary" icon="el-icon-search" size="small" @click="$emit('search')">查询</el-button>
-      <el-button icon="el-icon-refresh" size="small" @click="$emit('reset')">重置</el-button>
-    </div>
+    <el-form :inline="true" size="small" @submit.native.prevent>
+      <div class="filter-bar__fields">
+        <slot />
+      </div>
+      <div class="filter-bar__actions">
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-search" @click="$emit('search')">查询</el-button>
+          <el-button icon="el-icon-refresh" @click="$emit('reset')">重置</el-button>
+        </el-form-item>
+      </div>
+    </el-form>
   </div>
 </template>
 
