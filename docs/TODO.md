@@ -236,9 +236,9 @@
 - [x] Step 3: 启动验证 + 提交
 
 ### Task 35: 监控中心页面重设计
-- [ ] Step 1: "服务状态"页面合并服务监控 + 服务器管理
-- [ ] Step 2: "容器监控"使用 PageContainer
-- [ ] Step 3: 启动验证 + 提交
+- [x] Step 1: "服务状态"页面合并服务监控 + 服务器管理
+- [x] Step 2: "容器监控"使用 PageContainer
+- [x] Step 3: 启动验证 + 提交
 
 ### Task 36: 资源管理页面重设计
 - [ ] Step 1: 使用 PageContainer + FilterBar 统一页面结构

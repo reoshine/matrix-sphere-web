@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="server-management">
     <el-card class="filter-container" shadow="never">
       <el-form :inline="true" :model="queryParams" size="small" @submit.native.prevent>
         <el-form-item label="服务器名称">
@@ -410,10 +410,8 @@ export default {
 </script>
 
 <style scoped>
-.app-container {
-  padding: 20px;
-  background-color: #f0f2f5; /* 浅灰色背景，增强对比度 */
-  min-height: calc(100vh - 84px);
+.server-management {
+  /* 组件容器样式 */
 }
 
 .filter-container {
@@ -455,7 +453,6 @@ export default {
 .pagination-container {
   margin-top: 20px;
   text-align: right;
-  background: #fff;
   padding: 10px 0;
 }
 

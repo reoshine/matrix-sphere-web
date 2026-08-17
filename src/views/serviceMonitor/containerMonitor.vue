@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="container-monitor">
     <el-row :gutter="20">
       <el-col
         v-for="server in serverList"
@@ -134,10 +134,10 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.app-container {
-  padding: 20px;
-  background-color: #f0f2f5;
-  min-height: calc(100vh - 126px);
+@import "~@/assets/css/theme.less";
+
+.container-monitor {
+  /* 组件容器样式 */
 }
 
 .server-card {
