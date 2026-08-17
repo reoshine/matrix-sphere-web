@@ -21,3 +21,7 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+.playwright-mcp
+.claude
+CLAUDE.md

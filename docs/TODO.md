@@ -231,9 +231,9 @@
 - [x] Step 5: 提交
 
 ### Task 34: 模板管理页面重设计
-- [ ] Step 1: 合并为模板中心页面（el-tabs 切换用户模板/系统模板）
-- [ ] Step 2: 使用 PageContainer + FilterBar
-- [ ] Step 3: 启动验证 + 提交
+- [x] Step 1: 合并为模板中心页面（el-tabs 切换用户模板/系统模板）
+- [x] Step 2: 使用 PageContainer + FilterBar
+- [x] Step 3: 启动验证 + 提交
 
 ### Task 35: 监控中心页面重设计
 - [ ] Step 1: "服务状态"页面合并服务监控 + 服务器管理
