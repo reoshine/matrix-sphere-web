@@ -1,7 +1,7 @@
 <template>
   <PageContainer title="凭据管理" subtitle="管理 Git、服务器、Docker Registry 等凭据">
     <template #header-actions>
-      <el-button type="success" plain icon="el-icon-plus" @click="addDialog">新增凭据</el-button>
+      <el-button type="primary" icon="el-icon-plus" size="small" @click="addDialog">新增凭据</el-button>
     </template>
 
     <template #filter>
@@ -9,78 +9,97 @@
         <el-form-item label="凭据搜索">
           <el-input
               v-model="searchText"
-              placeholder="请输入描述关键词"
+              placeholder="输入凭据名称/描述"
               prefix-icon="el-icon-search"
               clearable
               style="width: 300px;"
+              size="small"
               @keyup.enter.native="page"
           />
+        </el-form-item>
+        <el-form-item label="凭据类型">
+          <el-select v-model="filterType" placeholder="全部" clearable style="width: 150px;" size="small" @change="page">
+            <el-option v-for="item in credentialTypeList" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
         </el-form-item>
       </FilterBar>
     </template>
 
-    <el-empty v-show="credentialList.length <= 0" description="暂无凭据数据，请点击新增"></el-empty>
+    <!-- 按类型分组展示 -->
+    <div v-if="groupedCredentials.length > 0" class="credential-groups">
+      <div v-for="group in groupedCredentials" :key="group.type" class="credential-group">
+        <div class="group-header">
+          <i :class="getGroupIcon(group.type)" class="group-icon"></i>
+          <span class="group-title">{{ getGroupLabel(group.type) }}</span>
+          <el-tag size="mini" type="info" effect="plain">{{ group.items.length }}</el-tag>
+        </div>
 
-    <el-row v-show="credentialList.length > 0" :gutter="15">
-      <el-col
-          v-for="credential in credentialList"
-          :key="credential.id"
-          :xs="24" :sm="12" :md="8" :lg="6" :xl="4"
-      >
-        <el-card shadow="hover" class="credential-card">
-          <div slot="header" class="card-header">
-            <div class="header-left">
-              <i class="el-icon-key"></i>
-              <span class="cred-type" :title="credential.credentialType">{{ credential.credentialType }}</span>
-            </div>
-            <div class="header-actions">
-              <el-button type="text" icon="el-icon-edit" @click.stop="credentialEdit(credential)">编辑</el-button>
-              <el-button type="text" class="text-danger" icon="el-icon-delete" @click.stop="removeCredential(credential.id)">删除</el-button>
-            </div>
-          </div>
-
-          <div class="card-body">
-            <div class="desc-box" v-if="credential.credentialDesc">
-              <el-tag size="mini" type="info" effect="plain" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis;">
-                {{ credential.credentialDesc }}
+        <el-table
+            :data="group.items"
+            stripe
+            style="width: 100%"
+            class="credential-table"
+            @row-click="openDetail"
+        >
+          <el-table-column prop="credentialDesc" label="凭据名称" min-width="160">
+            <template slot-scope="{ row }">
+              <span class="cred-name">{{ row.credentialDesc || row.config.credentialName || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="类型" width="100" align="center">
+            <template slot-scope="{ row }">
+              <el-tag size="mini" :type="getTypeTagType(row.credentialType)" effect="plain">
+                {{ row.credentialType }}
               </el-tag>
-            </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="URL" min-width="200" show-overflow-tooltip>
+            <template slot-scope="{ row }">
+              <span v-if="row.config.url" class="cred-url">{{ row.config.url }}</span>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="用户名" width="120">
+            <template slot-scope="{ row }">
+              <span v-if="row.config.user">{{ row.config.user }}</span>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="Token/密码" width="140">
+            <template slot-scope="{ row }">
+              <template v-if="row.config.token">
+                <span v-if="!row._showToken" class="token-hidden" @click.stop="toggleToken(row)">
+                  •••••••• <i class="el-icon-view"></i>
+                </span>
+                <span v-else class="token-revealed" @click.stop="toggleToken(row)">
+                  {{ row.config.token }} <i class="el-icon-hide"></i>
+                </span>
+              </template>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="有效期" width="160" align="center">
+            <template slot-scope="{ row }">
+              <span v-if="row.config.expiresAt" :class="isExpired(row.config.expiresAt) ? 'text-error' : ''">
+                {{ formatTime(row.config.expiresAt) }}
+              </span>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" align="center" fixed="right">
+            <template slot-scope="{ row }">
+              <el-button type="text" size="small" icon="el-icon-edit" @click.stop="credentialEdit(row)">编辑</el-button>
+              <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click.stop="removeCredential(row.id)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
 
-            <div class="info-list">
-              <div class="info-item" v-if="credential.config.url">
-                <span class="label">URL:</span>
-                <span class="value text-truncate" :title="credential.config.url">{{ credential.config.url }}</span>
-                <i class="el-icon-document-copy copy-icon" @click="handleCopy(credential.config.url)"></i>
-              </div>
+    <el-empty v-else description="暂无凭据数据，请点击新增" />
 
-              <div class="info-item" v-if="credential.config.credentialName">
-                <span class="label">名称:</span>
-                <span class="value text-truncate" :title="credential.config.credentialName">{{ credential.config.credentialName }}</span>
-                <i class="el-icon-document-copy copy-icon" @click="handleCopy(credential.config.credentialName)"></i>
-              </div>
-
-              <div class="info-item" v-if="credential.config.user">
-                <span class="label">用户:</span>
-                <span class="value text-truncate">{{ credential.config.user }}</span>
-                <i class="el-icon-document-copy copy-icon" @click="handleCopy(credential.config.user)"></i>
-              </div>
-
-              <div class="info-item" v-if="credential.config.token">
-                <span class="label">Token:</span>
-                <span class="value">********</span> <i class="el-icon-document-copy copy-icon" @click="handleCopy(credential.config.token)"></i>
-              </div>
-
-              <div class="info-item" v-if="credential.config.expiresAt">
-                <span class="label">有效期:</span>
-                <span class="value">{{ formatTime(credential.config.expiresAt) }}</span>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <div class="pagination-container" v-show="credentialList.length > 0">
+    <!-- 分页 -->
+    <div class="pagination-container" v-if="credentialList.length > 0">
       <el-pagination
           background
           @current-change="handleCurrentChange"
@@ -93,21 +112,72 @@
       </el-pagination>
     </div>
 
+    <!-- 凭据详情抽屉 -->
+    <el-drawer
+        :visible.sync="detailDrawerVisible"
+        direction="rtl"
+        size="450px"
+        :with-header="true"
+        :title="detailCredential ? (detailCredential.credentialDesc || '凭据详情') : '凭据详情'"
+    >
+      <div class="drawer-content" v-if="detailCredential">
+        <el-descriptions :column="1" border size="medium">
+          <el-descriptions-item label="凭据类型">
+            <el-tag size="small" :type="getTypeTagType(detailCredential.credentialType)">
+              {{ detailCredential.credentialType }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="凭据名称">
+            {{ detailCredential.config.credentialName || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="描述">
+            {{ detailCredential.credentialDesc || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="URL">
+            <el-link v-if="detailCredential.config.url" type="primary" :href="detailCredential.config.url" target="_blank" :underline="false">
+              {{ detailCredential.config.url }}
+            </el-link>
+            <span v-else class="text-muted">-</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="用户名">
+            {{ detailCredential.config.user || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="Token/密码">
+            <span v-if="detailCredential.config.token">
+              <span v-if="!detailDrawer._showToken" class="token-hidden" @click="detailDrawer._showToken = true">
+                •••••••• <i class="el-icon-view"></i>
+              </span>
+              <span v-else class="token-revealed" @click="detailDrawer._showToken = false">
+                {{ detailCredential.config.token }} <i class="el-icon-hide"></i>
+              </span>
+            </span>
+            <span v-else class="text-muted">-</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="有效期">
+            <span v-if="detailCredential.config.expiresAt" :class="isExpired(detailCredential.config.expiresAt) ? 'text-error' : ''">
+              {{ formatTime(detailCredential.config.expiresAt) }}
+            </span>
+            <span v-else class="text-muted">-</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+    </el-drawer>
+
+    <!-- 新增/编辑弹窗 -->
     <FormDialog
         :title="modifyCredentialInfoForm.id ? '修改凭据' : '新增凭据'"
         :visible.sync="modifyCredentialDialogVisible"
-        width="500px"
+        width="520px"
         submit-text="确 定"
         @submit="modifyCredential"
         @cancel="cancelCredential"
     >
       <el-form
-          class="modifyCredential"
           :model="modifyCredentialInfoForm"
           :rules="modifyCredentialRules"
           ref="modifyCredentialRef"
-          label-width="90px"
-          size="small"
+          label-position="top"
+          size="medium"
       >
         <el-form-item label="凭据类型" prop="credentialType">
           <el-select style="width: 100%" v-model="modifyCredentialInfoForm.credentialType" placeholder="请选择类型">
@@ -115,27 +185,27 @@
                 v-for="item in credentialTypeList"
                 :key="item.value"
                 :label="item.label"
-                :value="item.value">
-            </el-option>
+                :value="item.value"
+            />
           </el-select>
         </el-form-item>
 
         <el-divider content-position="center">配置详情</el-divider>
 
-        <el-form-item label="URL地址" prop="config.url">
-          <el-input v-model="modifyCredentialInfoForm.config.url" placeholder="例如: http://192.168.1.100"></el-input>
+        <el-form-item label="URL 地址" prop="config.url">
+          <el-input v-model="modifyCredentialInfoForm.config.url" placeholder="例如: http://192.168.1.100" />
         </el-form-item>
         <el-form-item label="凭据名称" prop="config.credentialName">
-          <el-input v-model="modifyCredentialInfoForm.config.credentialName" placeholder="输入名称标识"></el-input>
+          <el-input v-model="modifyCredentialInfoForm.config.credentialName" placeholder="输入名称标识" />
         </el-form-item>
         <el-form-item label="凭据描述" prop="config.credentialDesc">
-          <el-input type="textarea" :rows="2" v-model="modifyCredentialInfoForm.config.credentialDesc" placeholder="用途描述"></el-input>
+          <el-input type="textarea" :rows="2" v-model="modifyCredentialInfoForm.config.credentialDesc" placeholder="用途描述" />
         </el-form-item>
         <el-form-item label="用户名" prop="config.user">
-          <el-input v-model="modifyCredentialInfoForm.config.user" placeholder="Username"></el-input>
+          <el-input v-model="modifyCredentialInfoForm.config.user" placeholder="Username" />
         </el-form-item>
         <el-form-item label="Access Token" prop="config.token">
-          <el-input v-model="modifyCredentialInfoForm.config.token" show-password placeholder="请输入 Token"></el-input>
+          <el-input v-model="modifyCredentialInfoForm.config.token" show-password placeholder="请输入 Token" />
         </el-form-item>
         <el-form-item label="有效期" prop="config.expiresAt">
           <el-date-picker
@@ -143,8 +213,8 @@
               v-model="modifyCredentialInfoForm.config.expiresAt"
               type="datetime"
               value-format="yyyy-MM-dd HH:mm:ss"
-              placeholder="选择有效期">
-          </el-date-picker>
+              placeholder="选择有效期"
+          />
         </el-form-item>
       </el-form>
     </FormDialog>
@@ -152,13 +222,13 @@
 </template>
 
 <script>
-import {page, create, modify, remove} from "@/views/credentialManagement/api";
-import PageContainer from "@/components/common/PageContainer.vue";
-import FilterBar from "@/components/common/FilterBar.vue";
-import FormDialog from "@/components/common/FormDialog.vue";
+import { page, create, modify, remove } from '@/views/credentialManagement/api'
+import PageContainer from '@/components/common/PageContainer.vue'
+import FilterBar from '@/components/common/FilterBar.vue'
+import FormDialog from '@/components/common/FormDialog.vue'
 
 export default {
-  name: "credential",
+  name: 'credential',
   components: {
     PageContainer,
     FilterBar,
@@ -166,324 +236,314 @@ export default {
   },
   data() {
     return {
-      //分页参数
       total: 0,
       pageNum: 1,
-      pageCount: 12, // 卡片布局每页12个比较整齐
-      pageSizes: [12, 24, 48],
+      pageCount: 20,
+      pageSizes: [20, 50, 100],
 
-      //搜索内容
       searchText: '',
-
-      // 列表数据
+      filterType: '',
       credentialList: [],
 
-      // 表单数据
+      // 详情抽屉
+      detailDrawerVisible: false,
+      detailCredential: null,
+      detailDrawer: { _showToken: false },
+
+      // 表单
       modifyCredentialInfoForm: {
         id: '',
         credentialType: '',
-        config: {
-          user: '',
-          url: '',
-          token: '',
-          credentialName: '',
-          credentialDesc: '',
-          expiresAt: ''
-        },
-        credentialDesc: '',
+        config: { user: '', url: '', token: '', credentialName: '', credentialDesc: '', expiresAt: '' },
+        credentialDesc: ''
       },
-
       modifyCredentialDialogVisible: false,
 
-      // 校验规则
       modifyCredentialRules: {
         credentialType: [
-          {required: true, message: "请选择凭据类型", trigger: "change"}
+          { required: true, message: '请选择凭据类型', trigger: 'change' }
         ],
-        // 可以根据需要添加 config 内部的校验
         'config.url': [
-          {type: 'url', message: '请输入正确的URL格式', trigger: 'blur'}
+          { type: 'url', message: '请输入正确的URL格式', trigger: 'blur' }
         ]
       },
 
-      // 凭据类型下拉选项 (需与后端 CredentialType 枚举一致)
       credentialTypeList: [
-        {label: 'Gitlab', value: 'gitlab'},
-        {label: 'Jenkins', value: 'jenkins'},
-      ],
+        { label: 'Gitlab', value: 'gitlab' },
+        { label: 'Jenkins', value: 'jenkins' }
+      ]
+    }
+  },
+  computed: {
+    groupedCredentials() {
+      const groups = {}
+      this.credentialList.forEach(item => {
+        const type = item.credentialType || '其他'
+        if (!groups[type]) {
+          groups[type] = []
+        }
+        groups[type].push(item)
+      })
+      return Object.keys(groups).map(type => ({
+        type,
+        items: groups[type]
+      }))
     }
   },
   methods: {
-    // 复制功能
-    async handleCopy(text) {
-      if (!text) return;
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = 0;
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        this.$message.success('已复制到剪贴板');
-      } catch (err) {
-        this.$message.error('复制失败');
-      } finally {
-        document.body.removeChild(textarea);
-      }
-    },
-
     handleCurrentChange(val) {
-      this.pageNum = val;
-      this.page();
+      this.pageNum = val
+      this.page()
     },
 
     handleSizeChange(val) {
-      this.pageCount = val;
-      this.page();
+      this.pageCount = val
+      this.page()
     },
 
-    // 查询
     page() {
       page({
         pageNum: this.pageNum,
         pageCount: this.pageCount,
-        searchText: this.searchText
+        searchText: this.searchText,
+        credentialType: this.filterType || undefined
       }).then(res => {
         if (res.code === 200) {
-          const result = res.data;
-          this.total = result.total;
+          const result = res.data
+          this.total = result.total
           this.credentialList = (result.data || []).map(item => {
             if (item.credentialConfig) {
               try {
-                item.config = JSON.parse(item.credentialConfig);
+                item.config = JSON.parse(item.credentialConfig)
               } catch (e) {
-                item.config = {};
+                item.config = {}
               }
             } else {
-              item.config = {};
+              item.config = {}
             }
-            return item;
-          });
+            item._showToken = false
+            return item
+          })
         }
       }).catch(err => {
-        this.$message.error('查询失败：' + err);
+        this.$message.error('查询失败：' + err)
       })
     },
 
-    // 打开新增弹窗
     addDialog() {
       this.modifyCredentialInfoForm = {
         id: '',
         credentialType: '',
-        config: {user: '', url: '', token: '', credentialName: '', credentialDesc: '', expiresAt: ''},
+        config: { user: '', url: '', token: '', credentialName: '', credentialDesc: '', expiresAt: '' },
         credentialDesc: ''
-      };
-      this.modifyCredentialDialogVisible = true;
+      }
+      this.modifyCredentialDialogVisible = true
       this.$nextTick(() => {
-        this.$refs.modifyCredentialRef && this.$refs.modifyCredentialRef.clearValidate();
-      });
+        this.$refs.modifyCredentialRef && this.$refs.modifyCredentialRef.clearValidate()
+      })
     },
 
-    // 打开编辑弹窗
     credentialEdit(credential) {
       this.modifyCredentialInfoForm = {
         id: credential.id,
         credentialType: credential.credentialType,
         credentialDesc: credential.credentialDesc,
-        config: credential.config ? JSON.parse(JSON.stringify(credential.config)) : {user: '', url: '', token: '', credentialName: '', credentialDesc: '', expiresAt: ''}
-      };
-      this.modifyCredentialDialogVisible = true;
+        config: credential.config ? JSON.parse(JSON.stringify(credential.config)) : { user: '', url: '', token: '', credentialName: '', credentialDesc: '', expiresAt: '' }
+      }
+      this.modifyCredentialDialogVisible = true
     },
 
     modifyCredential() {
       this.$refs.modifyCredentialRef.validate(valid => {
         if (valid) {
-          const form = this.modifyCredentialInfoForm;
+          const form = this.modifyCredentialInfoForm
           const requestData = {
             id: form.id || null,
             credentialType: form.credentialType,
             credentialDesc: form.credentialDesc,
             credentialConfig: form.config ? JSON.stringify(form.config) : null
-          };
+          }
 
-          const apiCall = form.id ? modify(requestData) : create(requestData);
+          const apiCall = form.id ? modify(requestData) : create(requestData)
           apiCall.then(res => {
             if (res.code === 200) {
-              this.$message.success(form.id ? '修改成功' : '新增成功');
-              this.modifyCredentialDialogVisible = false;
-              this.page();
+              this.$message.success(form.id ? '修改成功' : '新增成功')
+              this.modifyCredentialDialogVisible = false
+              this.page()
             }
           }).catch(err => {
-            this.$message.error('操作失败：' + err);
-          });
+            this.$message.error('操作失败：' + err)
+          })
         }
-      });
+      })
     },
 
     cancelCredential() {
-      this.modifyCredentialDialogVisible = false;
+      this.modifyCredentialDialogVisible = false
     },
 
     removeCredential(id) {
-      this.$confirm('确认删除该凭据吗？', '警告', {type: 'warning'})
-          .then(() => {
-            remove(id).then(res => {
-              if (res.code === 200) {
-                this.$message.success('删除成功');
-                this.page();
-              }
-            }).catch(err => {
-              this.$message.error('删除失败：' + err);
-            });
-          }).catch(() => {});
+      this.$confirm('确认删除该凭据吗？', '警告', { type: 'warning' }).then(() => {
+        remove(id).then(res => {
+          if (res.code === 200) {
+            this.$message.success('删除成功')
+            this.page()
+          }
+        }).catch(err => {
+          this.$message.error('删除失败：' + err)
+        })
+      }).catch(() => {})
+    },
+
+    // 详情抽屉
+    openDetail(row) {
+      this.detailCredential = row
+      this.detailDrawer = { _showToken: false }
+      this.detailDrawerVisible = true
+    },
+
+    // Token 显隐切换
+    toggleToken(row) {
+      this.$set(row, '_showToken', !row._showToken)
+    },
+
+    // 工具方法
+    getGroupIcon(type) {
+      const map = { gitlab: 'el-icon-connection', jenkins: 'el-icon-s-cooperation' }
+      return map[type.toLowerCase()] || 'el-icon-key'
+    },
+
+    getGroupLabel(type) {
+      const map = { gitlab: 'Git 凭据', jenkins: 'CI/CD 凭据' }
+      return map[type.toLowerCase()] || type + ' 凭据'
+    },
+
+    getTypeTagType(type) {
+      const map = { gitlab: 'warning', jenkins: 'primary' }
+      return map[type] || 'info'
     },
 
     formatTime(time) {
-      if (!time) return '-';
-      return time.replace('T', ' ');
+      if (!time) return '-'
+      return String(time).replace('T', ' ')
+    },
+
+    isExpired(time) {
+      if (!time) return false
+      return new Date(time) < new Date()
     }
   },
   created() {
-    this.page();
+    this.page()
   }
 }
 </script>
 
 <style lang="less" scoped>
-.app-container {
-  padding: 20px;
-  background-color: #f0f2f5;
-  /* 关键修改：
-     100vh (全屏)
-     - 84px (顶部导航栏+TagsView的大致高度)
-     - 40px (上下的 padding: 20px * 2)
-     - 2px (防止计算误差导致的微小滚动)
-  */
-  min-height: calc(100vh - 126px);
+@import "~@/assets/css/theme.less";
 
-  /* 防止 el-row 的 gutter 导致横向滚动条 */
-  overflow-x: hidden;
+/* 凭据分组 */
+.credential-groups {
+  display: flex;
+  flex-direction: column;
+  gap: @space-5;
 }
 
-/* 搜索栏 */
-.filter-container {
-  margin-bottom: 15px;
-  border: none;
+.credential-group {
+  background: @bg-footer;
+  border-radius: @border-radius;
+  border: 1px solid @border-color-light;
+  overflow: hidden;
+}
 
-  :deep(.el-card__body) {
-    padding-bottom: 0;
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: @space-2;
+  padding: @space-3 @space-4;
+  background: @bg-content;
+  border-bottom: 1px solid @border-color-light;
+}
+
+.group-icon {
+  color: @primary-color;
+  font-size: @font-size-lg;
+}
+
+.group-title {
+  font-size: @font-size-sm;
+  font-weight: 600;
+  color: @text-primary;
+}
+
+.credential-table {
+  /deep/ .el-table__header th {
+    background-color: @bg-content;
   }
 }
 
-/* 凭据卡片样式 */
-.credential-card {
-  border: none;
-  margin-bottom: 15px;
-  transition: all 0.3s;
+/* 凭据名称 */
+.cred-name {
+  font-weight: 500;
+  color: @text-primary;
+}
+
+.cred-url {
+  font-size: @font-size-xs;
+  color: @text-secondary;
+  font-family: @font-mono;
+}
+
+/* Token 显隐 */
+.token-hidden {
+  cursor: pointer;
+  color: @text-tertiary;
+  font-size: @font-size-sm;
+
+  i {
+    margin-left: 4px;
+    color: @primary-color;
+  }
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05);
+    color: @text-secondary;
   }
+}
 
-  /* 头部 */
+.token-revealed {
+  cursor: pointer;
+  color: @text-primary;
+  font-family: @font-mono;
+  font-size: @font-size-xs;
 
-  :deep(.el-card__header) {
-    padding: 12px 15px;
-    border-bottom: 1px solid #f6f6f6;
-  }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      font-weight: bold;
-      color: #303133;
-
-      i {
-        margin-right: 6px;
-        color: #409EFF;
-        font-size: 16px;
-      }
-
-      .cred-type {
-        font-size: 14px;
-        max-width: 120px;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-    }
-  }
-
-  /* 主体 */
-
-  .card-body {
-    padding: 15px;
-    font-size: 13px;
-    height: 180px; /* 固定高度，防止卡片参差不齐 */
-    overflow-y: auto;
-
-    .desc-box {
-      margin-bottom: 12px;
-    }
-
-    .info-list {
-      .info-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-        line-height: 1.5;
-
-        .label {
-          color: #909399;
-          width: 50px; /* 固定宽度对齐 */
-          flex-shrink: 0;
-        }
-
-        .value {
-          color: #606266;
-          flex: 1;
-          margin-right: 5px;
-        }
-
-        .text-truncate {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 120px; /* 限制长度 */
-        }
-
-        .copy-icon {
-          cursor: pointer;
-          color: #409EFF;
-          font-size: 14px;
-
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-      }
-    }
+  i {
+    margin-left: 4px;
+    color: @error-color;
   }
 }
 
 /* 分页 */
 .pagination-container {
-  background: #fff;
-  padding: 10px 20px;
+  margin-top: @space-4;
   text-align: right;
-  margin-top: 10px;
+}
+
+/* 抽屉内容 */
+.drawer-content {
+  padding: @space-4;
+}
+
+/* 通用 */
+.text-muted {
+  color: @text-tertiary;
+}
+
+.text-error {
+  color: @error-color;
 }
 
 .text-danger {
-  color: #F56C6C;
-
+  color: @error-color;
   &:hover {
     color: #f78989;
   }
