@@ -92,14 +92,16 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import "~@/assets/css/theme.less";
+
 .login-wrapper {
   display: flex;
-  width: 960px;
-  height: 550px;
+  width: min(960px, 90vw);
+  height: min(550px, 85vh);
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+  border-radius: @border-radius-lg;
+  box-shadow: @shadow-lg;
   overflow: hidden;
   position: fixed;
   top: 50%;
@@ -110,12 +112,12 @@ export default {
 
 .brand-section {
   width: 50%;
-  background: linear-gradient(135deg, #1e58ff 0%, #003eb3 100%);
+  background: linear-gradient(135deg, @primary-color 0%, @primary-dark 100%);
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 60px;
+  padding: @space-12;
   color: #fff;
 }
 
@@ -134,7 +136,7 @@ export default {
 .matrix-line {
   position: absolute;
   background: rgba(255,255,255,0.1);
-  border-radius: 4px;
+  border-radius: @border-radius-sm;
 }
 .line-1 { top: 20%; left: 10%; width: 60%; height: 2px; }
 .line-2 { top: 25%; left: 10%; width: 40%; height: 2px; }
@@ -148,12 +150,12 @@ export default {
 .brand-logo {
   font-size: 42px;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: @space-5;
   letter-spacing: 1px;
 }
 
 .brand-desc {
-  font-size: 16px;
+  font-size: @font-size-lg;
   line-height: 1.8;
   opacity: 0.85;
   font-weight: 300;
@@ -161,7 +163,7 @@ export default {
 
 .form-section {
   width: 50%;
-  padding: 60px 50px;
+  padding: @space-12 @space-8;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -169,62 +171,91 @@ export default {
 }
 
 .form-header {
-  margin-bottom: 40px;
+  margin-bottom: 10;
 }
 
 .form-title {
-  font-size: 26px;
+  font-size: @font-size-3xl;
   font-weight: 600;
-  color: #1f2d3d;
-  margin-bottom: 10px;
+  color: @text-primary;
+  margin-bottom: @space-3;
 }
 
 .form-subtitle {
-  color: #909399;
-  font-size: 14px;
+  color: @text-tertiary;
+  font-size: @font-size-base;
 }
 
 .form-item {
-  margin-bottom: 24px;
+  margin-bottom: @space-6;
 }
 
 ::v-deep .el-input__inner {
   height: 42px;
   line-height: 42px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  transition: all 0.3s;
+  border: 1px solid @border-color;
+  border-radius: @border-radius;
+  transition: all @transition-fast;
   padding-left: 40px;
 }
 
 ::v-deep .el-input__inner:hover {
-  border-color: #c0c4cc;
+  border-color: var(--color-gray-300, #d1d5db);
 }
 
 ::v-deep .el-input__inner:focus {
-  border-color: #409EFF;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+  border-color: @primary-color;
+  box-shadow: 0 0 0 2px var(--primary-lighter, rgba(44, 88, 180, 0.1));
 }
 
 .submit-btn {
   width: 100%;
   height: 42px;
-  background-color: #409EFF;
+  background-color: @primary-color;
   border: none;
-  font-size: 15px;
+  font-size: @font-size-md;
   letter-spacing: 1px;
 }
 
 ::v-deep input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-  -webkit-text-fill-color: #606266 !important;
+  -webkit-text-fill-color: @text-secondary !important;
 }
 
 .footer-copyright {
   position: absolute;
-  bottom: 20px;
-  right: 50px;
-  color: #909399;
-  font-size: 12px;
+  bottom: @space-5;
+  right: @space-8;
+  color: @text-tertiary;
+  font-size: @font-size-xs;
+}
+
+/* 响应式：小屏堆叠布局 */
+@media (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+    width: 95vw;
+    height: auto;
+    max-height: 90vh;
+  }
+
+  .brand-section {
+    width: 100%;
+    padding: @space-8 @space-6;
+    min-height: 160px;
+  }
+
+  .brand-logo {
+    font-size: 28px;
+  }
+
+  .brand-desc {
+    font-size: @font-size-sm;
+  }
+
+  .form-section {
+    width: 100%;
+    padding: @space-6;
+  }
 }
 </style>
