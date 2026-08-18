@@ -268,6 +268,7 @@ export default {
       loadingDeployed: false,
       loadingUnDeployed: false,
       btnLoading: false, // 全局按钮 Loading
+      isInitializing: true, // 标志：是否正在初始化
     };
   },
 
@@ -336,6 +337,10 @@ export default {
 
       // WAITING 状态下不关闭资源，继续接收 SSE/轮询更新
       if (isWaiting) {
+        return;
+      }
+      // 初始化阶段不重复调用 refreshBranchData，避免 getDeployRecord 被调用两次
+      if (this.isInitializing) {
         return;
       }
       if (newStatus === 'error') {
@@ -794,6 +799,9 @@ export default {
     if (master && master.deployStatus === 1) {
       this.createSseConnect(this.applicationId);
     }
+
+    // 初始化完成，允许 updateStepState 调用 refreshBranchData
+    this.isInitializing = false;
   },
 
   beforeDestroy() {
