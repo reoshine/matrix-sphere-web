@@ -105,6 +105,15 @@ export default {
       ]
     }
   },
+  created() {
+    // 监听全局 Escape 键事件
+    this.$bus && this.$bus.$on('close-top-modal', () => {
+      if (this.visible) {
+        this.close()
+      }
+    })
+  },
+
   methods: {
     open() {
       this.visible = true
