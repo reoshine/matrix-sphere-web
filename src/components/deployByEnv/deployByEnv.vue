@@ -479,11 +479,8 @@ export default {
         p2 = this.getDeployRecord(this.deployMaster.id);
       }
 
-      // 同步更新 deployMaster 状态，避免步骤失败后 isDeploying 未重置导致按钮禁用
-      const p3 = this.getDeployMaster(this.applicationId, this.env);
-
       try {
-        await Promise.all([p1, p2, p3]);
+        await Promise.all([p1, p2]);
       } catch (e) {
         console.error("数据刷新异常", e);
       } finally {
@@ -511,6 +508,12 @@ export default {
         const res = await getDeployMaster({applicationId, env: activeName});
         if (res.code === 200) {
           this.deployMaster = res.data || {};
+          // 更新概览信息
+          this.$emit('deployInfoUpdated', {
+            releaseBranchName: this.deployMaster.releaseBranchName || '',
+            featureBranchList: this.deployInfo.featureBranchList || [],
+            deployStatus: this.deployMaster.deployStatus
+          });
           return this.deployMaster;
         }
       } catch (e) { console.error(e) }
