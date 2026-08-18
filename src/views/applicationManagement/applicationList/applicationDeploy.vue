@@ -61,6 +61,7 @@
           v-for="envItem in envList"
           :key="envItem.name"
           :name="envItem.name"
+          lazy
         >
           <template slot="label">
             <span class="env-tab-label">

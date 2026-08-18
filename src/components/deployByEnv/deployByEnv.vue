@@ -943,6 +943,7 @@ export default {
 }
 
 .toolbar-container {
+  margin-top: 15px;
   margin-bottom: 15px;
   display: flex;
   align-items: center;
