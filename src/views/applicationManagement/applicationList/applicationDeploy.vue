@@ -268,10 +268,8 @@ export default {
     loadDeployHistory() {
       this.historyLoading = true
       const params = {
-        applicationId: this.applicationId
-      }
-      if (this.historyEnv) {
-        params.env = this.historyEnv
+        applicationId: this.applicationId,
+        env: this.historyEnv || this.activeEnv || 'DEV'
       }
       getDepLoyLogList(params).then(res => {
         if (res.code === 200) {
