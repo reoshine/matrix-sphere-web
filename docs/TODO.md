@@ -258,10 +258,10 @@
 - [x] Step 2: 启动验证 + 提交
 
 ### Task 40: 菜单分组逻辑重构——仅适配 menuCode
-- [ ] Step 1: 重构 menuGroups.js，移除 matchPaths 字段，仅保留 matchCodes 字段匹配顶级菜单的 menuCode
-- [ ] Step 2: 确认 sidebar.vue 中 groupMenus 调用无需变更（已传入完整 menu 对象）
-- [ ] Step 3: 启动开发服务器验证分组显示正确
-- [ ] Step 4: 提交
+- [x] Step 1: 重构 menuGroups.js，移除 matchPaths 字段，仅保留 matchCodes 字段匹配顶级菜单的 menuCode
+- [x] Step 2: 确认 sidebar.vue 中 groupMenus 调用无需变更（已传入完整 menu 对象）
+- [x] Step 3: 启动开发服务器验证分组显示正确
+- [x] Step 4: 提交
 
 ---
 

@@ -3,61 +3,45 @@
  * 将后端 /menu/tree 返回的菜单映射到前端定义的分组结构
  * 后端零改动，前端做分组适配
  *
- * 后端顶级菜单（menu_level=1）的 menu_url 通常为 null，
- * 标识字段为 menuCode（如 applicationManagement、serviceMonitor）。
- * 因此匹配逻辑同时检查 menuCode 和 menuUrl。
+ * 后端顶级菜单（menu_level=1）的标识字段为 menuCode（如 applicationManagement、serviceMonitor）。
+ * 匹配逻辑仅使用 menuCode，不再依赖 menuUrl。
  */
 
 const GROUP_CONFIG = [
   {
     key: 'overview',
     title: '概览',
-    matchCodes: [],
-    matchPaths: ['/dashboard']
+    matchCodes: ['dashboard']
   },
   {
     key: 'core',
     title: '核心业务',
-    matchCodes: ['applicationManagement', 'projectManagement'],
-    matchPaths: ['/apps', '/deploy', '/applicationManagement', '/projectManagement']
+    matchCodes: ['applicationManagement', 'projectManagement']
   },
   {
     key: 'ops',
     title: '运维支撑',
-    matchCodes: ['serviceMonitor', 'repositoryManagement', 'credentialManagement'],
-    matchPaths: ['/monitor', '/resources', '/serviceMonitor', '/repositoryManagement', '/credentialManagement']
+    matchCodes: ['serviceMonitor', 'repositoryManagement', 'credentialManagement']
   },
   {
     key: 'system',
     title: '系统',
-    matchCodes: ['accountManagement', 'systemManagement'],
-    matchPaths: ['/settings', '/accountManagement', '/systemManagement']
+    matchCodes: ['accountManagement', 'systemManagement']
   }
 ]
 
 /**
- * 根据菜单的 menuCode 或 menuUrl 判断属于哪个分组
+ * 根据菜单的 menuCode 判断属于哪个分组
  * @param {Object} menu - 菜单对象
  * @param {string} menu.menuCode - 菜单编码（顶级菜单的标识）
- * @param {string} menu.menuUrl - 菜单路径（子菜单的标识）
  * @returns {string} 分组 key
  */
 function findGroupKey(menu) {
   const menuCode = menu.menuCode || ''
-  const menuUrl = menu.menuUrl || ''
 
   for (const group of GROUP_CONFIG) {
-    // 优先匹配 menuCode（顶级菜单通常 menuUrl 为 null）
     if (menuCode && group.matchCodes && group.matchCodes.includes(menuCode)) {
       return group.key
-    }
-    // 再匹配 menuUrl 前缀（子菜单有完整路径）
-    if (menuUrl && group.matchPaths) {
-      for (const path of group.matchPaths) {
-        if (menuUrl.startsWith(path)) {
-          return group.key
-        }
-      }
     }
   }
 
