@@ -82,47 +82,88 @@ export default {
   &__left {
     display: flex;
     align-items: center;
-    gap: @space-3;
+    gap: @space-4;
     min-width: 0;
   }
 
   &__collapse {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     cursor: pointer;
-    padding: @space-2;
+    border: none;
     border-radius: @border-radius;
-    transition: background @transition-fast;
+    background: transparent;
+    transition: all @transition-fast;
     flex-shrink: 0;
 
     &:hover {
       background: @border-color-light;
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.95);
     }
 
     i {
-      font-size: @font-size-xl;
+      font-size: 18px;
       color: @text-secondary;
+      transition: color @transition-fast;
+    }
+
+    &:hover i {
+      color: @text-primary;
     }
   }
 
   &__right {
     display: flex;
     align-items: center;
-    gap: @space-3;
+    gap: @space-2;
     flex-shrink: 0;
   }
 
   &__action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     cursor: pointer;
-    padding: @space-2;
-    border-radius: @border-radius;
-    transition: background @transition-fast;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    transition: all @transition-fast;
+    position: relative;
 
     &:hover {
       background: @border-color-light;
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.95);
     }
 
     i {
-      font-size: @font-size-xl;
+      font-size: 18px;
       color: @text-secondary;
+      transition: color @transition-fast;
+    }
+
+    &:hover i {
+      color: @primary-color;
+    }
+
+    // Badge 样式优化
+    ::v-deep .el-badge__content {
+      font-size: 10px;
+      height: 16px;
+      line-height: 16px;
+      padding: 0 4px;
     }
   }
 }
