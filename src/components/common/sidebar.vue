@@ -28,6 +28,7 @@
       <template v-for="group in filteredMenuGroups">
         <!-- 分组标题（未折叠时显示） -->
         <div class="sidebar-nav__group-title" v-show="!collapse" :key="'g-' + group.key">
+          <i :class="group.icon" class="sidebar-nav__group-icon" v-if="group.icon"></i>
           {{ group.title }}
         </div>
 
@@ -335,13 +336,21 @@ export default {
   }
 
   &__group-title {
-    padding: @space-4 @space-4 @space-1;
+    display: flex;
+    align-items: center;
+    gap: @space-2;
+    padding: @space-4 @space-4 @space-2;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: rgba(255, 255, 255, 0.3);
     white-space: nowrap;
+  }
+
+  &__group-icon {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.4);
   }
 
   &__menu-list {
@@ -353,22 +362,35 @@ export default {
       .el-menu-item,
       .el-submenu__title {
         color: @menu-text !important;
-        height: 44px;
-        line-height: 44px;
+        height: 48px;
+        line-height: 48px;
+        padding-left: @space-5 !important;
+        margin: 2px @space-2;
+        border-radius: @border-radius;
+        transition: all @transition-fast;
 
         i {
           color: @menu-text;
+          margin-right: @space-2;
+          font-size: 18px;
+          transition: color @transition-fast;
         }
 
         &:hover {
           background-color: @menu-hover-bg !important;
+          color: #fff !important;
+
+          i {
+            color: #fff !important;
+          }
         }
       }
 
       .el-menu-item.is-active {
         background-color: @primary-color !important;
         color: #fff !important;
-        border-left: 3px solid @primary-light;
+        border-left: none;
+        font-weight: 500;
 
         i {
           color: #fff !important;
@@ -377,6 +399,12 @@ export default {
 
       .el-submenu .el-menu {
         background-color: rgba(0, 0, 0, 0.15) !important;
+        padding: @space-1 0;
+      }
+
+      .el-submenu__icon-arrow {
+        right: @space-3;
+        font-size: 12px;
       }
     }
   }

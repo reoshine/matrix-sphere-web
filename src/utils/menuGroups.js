@@ -11,21 +11,25 @@ const GROUP_CONFIG = [
   {
     key: 'overview',
     title: '概览',
+    icon: 'el-icon-s-home',
     matchCodes: ['dashboard']
   },
   {
     key: 'core',
     title: '核心业务',
+    icon: 'el-icon-s-platform',
     matchCodes: ['applicationManagement', 'projectManagement']
   },
   {
     key: 'ops',
     title: '运维支撑',
+    icon: 'el-icon-monitor',
     matchCodes: ['serviceMonitor', 'repositoryManagement', 'credentialManagement']
   },
   {
     key: 'system',
     title: '系统',
+    icon: 'el-icon-setting',
     matchCodes: ['accountManagement', 'systemManagement']
   }
 ]
