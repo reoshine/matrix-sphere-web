@@ -1,6 +1,6 @@
 <template>
   <nav class="sidebar-nav" aria-label="主导航">
-    <!-- Logo + 折叠按钮 -->
+    <!-- Logo -->
     <div class="sidebar-nav__header">
       <div class="sidebar-nav__logo" v-show="!collapse" aria-hidden="true">
         <i class="el-icon-s-platform"></i>
@@ -9,14 +9,6 @@
       <div class="sidebar-nav__logo sidebar-nav__logo--icon" v-show="collapse" aria-hidden="true">
         <i class="el-icon-s-platform"></i>
       </div>
-      <button
-        class="sidebar-nav__collapse"
-        :aria-label="collapse ? '展开侧边栏' : '折叠侧边栏'"
-        @click="collapseChange"
-      >
-        <i v-if="!collapse" class="el-icon-s-fold" aria-hidden="true"></i>
-        <i v-else class="el-icon-s-unfold" aria-hidden="true"></i>
-      </button>
     </div>
 
     <!-- 搜索框（未折叠时显示） -->
@@ -266,11 +258,11 @@ export default {
   background-color: @bg-sidebar;
   color: @menu-text;
 
-  // Header: Logo + 折叠按钮
+  // Header: Logo
   &__header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     height: 56px;
     padding: 0 @space-3;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -295,23 +287,6 @@ export default {
     &--icon {
       justify-content: center;
       width: 100%;
-    }
-  }
-
-  &__collapse {
-    cursor: pointer;
-    padding: @space-2;
-    border-radius: @border-radius;
-    transition: background @transition-fast;
-    flex-shrink: 0;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    i {
-      color: @menu-text;
-      font-size: @font-size-lg;
     }
   }
 
