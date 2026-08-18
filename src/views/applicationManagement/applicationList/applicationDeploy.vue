@@ -54,55 +54,50 @@
       </el-descriptions>
     </el-card>
 
-    <!-- 4 环境卡片并排 -->
-    <div class="env-grid">
-      <el-card
+    <!-- 环境切换 Tabs -->
+    <el-card class="env-tabs-card" shadow="never">
+      <el-tabs v-model="activeEnv" class="env-tabs">
+        <el-tab-pane
           v-for="envItem in envList"
           :key="envItem.name"
-          class="env-card"
-          shadow="never"
-          :body-style="{ padding: '0' }"
-      >
-        <div slot="header" class="env-card__header" :class="'env-card__header--' + envItem.name.toLowerCase()">
-          <div class="env-card__title">
-            <i :class="envItem.icon"></i>
-            <span>{{ envItem.label }}</span>
-          </div>
-          <el-tag
-              size="mini"
-              :type="envItem.tagType"
-              effect="dark"
-          >
-            {{ envItem.name }}
-          </el-tag>
-        </div>
-        <div class="env-card__body">
-          <deployByEnv
+          :name="envItem.name"
+        >
+          <template slot="label">
+            <span class="env-tab-label">
+              <i :class="envItem.icon"></i>
+              <span>{{ envItem.label }}</span>
+              <el-tag size="mini" :type="envItem.tagType" effect="dark" class="env-tab-tag">{{ envItem.name }}</el-tag>
+            </span>
+          </template>
+          <div class="env-tab-content">
+            <deployByEnv
               :applicationId="applicationId"
               :env="envItem.name"
               @deployInfoUpdated="onDeployInfoUpdated"
-          />
-        </div>
-      </el-card>
-    </div>
+            />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
 
-    <!-- 部署历史 -->
-    <el-card class="history-card" shadow="never">
-      <div slot="header" class="history-header">
-        <span class="history-title"><i class="el-icon-time"></i> 部署历史</span>
-        <el-select v-model="historyEnv" size="small" placeholder="选择环境" clearable style="width: 120px;" @change="loadDeployHistory">
-          <el-option v-for="e in envList" :key="e.name" :label="e.label" :value="e.name" />
-        </el-select>
+    <!-- 最近部署 -->
+    <el-card class="recent-deploy-card" shadow="never">
+      <div slot="header" class="recent-deploy-header">
+        <span class="recent-deploy-title"><i class="el-icon-time"></i> 最近部署</span>
+        <el-button type="text" size="small" @click="showAllHistory = true">
+          查看全部 <i class="el-icon-arrow-right"></i>
+        </el-button>
       </div>
 
       <el-table
-          v-loading="historyLoading"
-          :data="deployHistoryList"
-          stripe
-          style="width: 100%"
-          empty-text="暂无部署历史记录"
+        v-loading="historyLoading"
+        :data="recentHistoryList"
+        stripe
+        style="width: 100%"
+        empty-text="暂无部署记录"
+        size="small"
       >
-        <el-table-column prop="deployTime" label="时间" width="170" :formatter="formatTime" />
+        <el-table-column prop="deployTime" label="时间" width="160" :formatter="formatTime" />
         <el-table-column prop="env" label="环境" width="80" align="center">
           <template slot-scope="{ row }">
             <el-tag size="mini" :type="getEnvTagType(row.env)">{{ row.env }}</el-tag>
@@ -114,7 +109,7 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="Feature 分支" min-width="200">
+        <el-table-column label="Feature 分支" min-width="180">
           <template slot-scope="{ row }">
             <div v-if="row.featureBranchNameList && row.featureBranchNameList.length" class="feature-tags">
               <el-tag v-for="b in row.featureBranchNameList" :key="b" size="mini" type="info" effect="plain">{{ b }}</el-tag>
@@ -122,20 +117,72 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="deployByName" label="操作人" width="100" align="center" />
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column prop="deployByName" label="操作人" width="90" align="center" />
+        <el-table-column label="状态" width="90" align="center">
           <template slot-scope="{ row }">
             <StatusDot :type="getDeployStatusType(row.deployStatus)" :label="getDeployStatusText(row.deployStatus)" />
           </template>
         </el-table-column>
-        <el-table-column label="失败原因" min-width="200" show-overflow-tooltip>
-          <template slot-scope="{ row }">
-            <span v-if="row.deployStatus === 3 && row.errorMessage" class="text-error">{{ row.errorMessage }}</span>
-            <span v-else class="text-muted">-</span>
-          </template>
-        </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 全部历史抽屉 -->
+    <el-drawer
+      title="部署历史"
+      :visible.sync="showAllHistory"
+      direction="rtl"
+      size="80%"
+      :wrapper-closable="true"
+    >
+      <div class="drawer-content">
+        <div class="drawer-filter">
+          <el-select v-model="historyEnv" size="small" placeholder="选择环境" clearable style="width: 120px;" @change="loadDeployHistory">
+            <el-option v-for="e in envList" :key="e.name" :label="e.label" :value="e.name" />
+          </el-select>
+        </div>
+
+        <el-table
+          v-loading="historyLoading"
+          :data="deployHistoryList"
+          stripe
+          style="width: 100%"
+          empty-text="暂无部署历史记录"
+        >
+          <el-table-column prop="deployTime" label="时间" width="170" :formatter="formatTime" />
+          <el-table-column prop="env" label="环境" width="80" align="center">
+            <template slot-scope="{ row }">
+              <el-tag size="mini" :type="getEnvTagType(row.env)">{{ row.env }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="Release 分支" min-width="140">
+            <template slot-scope="{ row }">
+              <span v-if="row.releaseBranchName" class="branch-mono">{{ row.releaseBranchName }}</span>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="Feature 分支" min-width="200">
+            <template slot-scope="{ row }">
+              <div v-if="row.featureBranchNameList && row.featureBranchNameList.length" class="feature-tags">
+                <el-tag v-for="b in row.featureBranchNameList" :key="b" size="mini" type="info" effect="plain">{{ b }}</el-tag>
+              </div>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="deployByName" label="操作人" width="100" align="center" />
+          <el-table-column label="状态" width="100" align="center">
+            <template slot-scope="{ row }">
+              <StatusDot :type="getDeployStatusType(row.deployStatus)" :label="getDeployStatusText(row.deployStatus)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="失败原因" min-width="200" show-overflow-tooltip>
+            <template slot-scope="{ row }">
+              <span v-if="row.deployStatus === 3 && row.errorMessage" class="text-error">{{ row.errorMessage }}</span>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-drawer>
   </PageContainer>
 </template>
 
@@ -167,11 +214,13 @@ export default {
         { name: 'POC', label: '演示环境', icon: 'el-icon-monitor', tagType: 'info' },
         { name: 'PROD', label: '生产环境', icon: 'el-icon-s-platform', tagType: 'danger' }
       ],
+      activeEnv: 'DEV',
 
       // 部署历史
       historyEnv: '',
       deployHistoryList: [],
-      historyLoading: false
+      historyLoading: false,
+      showAllHistory: false
     }
   },
   computed: {
@@ -183,6 +232,10 @@ export default {
         })
       }
       return map
+    },
+
+    recentHistoryList() {
+      return this.deployHistoryList.slice(0, 5)
     }
   },
   methods: {
@@ -212,15 +265,14 @@ export default {
     },
 
     loadDeployHistory() {
-      if (!this.historyEnv) {
-        this.deployHistoryList = []
-        return
-      }
       this.historyLoading = true
-      getDepLoyLogList({
-        applicationId: this.applicationId,
-        env: this.historyEnv
-      }).then(res => {
+      const params = {
+        applicationId: this.applicationId
+      }
+      if (this.historyEnv) {
+        params.env = this.historyEnv
+      }
+      getDepLoyLogList(params).then(res => {
         if (res.code === 200) {
           this.deployHistoryList = res.data || []
         }
@@ -263,6 +315,7 @@ export default {
       localStorage.setItem('applicationId', pid)
       this.getGroupList()
       this.getApplication(pid)
+      this.loadDeployHistory()
     } else {
       this.$message.warning('丢失应用ID参数，请从列表页重新进入')
       this.$router.push('/apps')
@@ -321,75 +374,56 @@ export default {
   font-size: @font-size-sm;
 }
 
-/* 环境卡片网格 — 响应式 4→2→1 */
-.env-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: @space-4;
+/* 环境切换 Tabs */
+.env-tabs-card {
   margin-bottom: @space-5;
+  border-radius: @border-radius;
 
-  @media (max-width: 1440px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+  /deep/ .el-card__body {
+    padding: 0 @space-5 @space-5;
   }
 }
 
-.env-card {
-  border-radius: @border-radius;
-  overflow: hidden;
-
-  /deep/ .el-card__header {
-    padding: @space-3 @space-4;
+.env-tabs {
+  /deep/ .el-tabs__header {
+    margin: 0;
+    padding: 0 @space-5;
+    background: @bg-footer;
     border-bottom: 1px solid @border-color-light;
   }
-}
 
-.env-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  &--dev {
-    border-left: 3px solid @primary-color;
+  /deep/ .el-tabs__nav-wrap::after {
+    height: 1px;
+    background: @border-color-light;
   }
 
-  &--test {
-    border-left: 3px solid @warning-color;
-  }
-
-  &--poc {
-    border-left: 3px solid @info-color;
-  }
-
-  &--prod {
-    border-left: 3px solid @error-color;
+  /deep/ .el-tabs__item {
+    height: 56px;
+    line-height: 56px;
+    padding: 0 @space-5;
   }
 }
 
-.env-card__title {
-  display: flex;
+.env-tab-label {
+  display: inline-flex;
   align-items: center;
   gap: @space-2;
-  font-size: @font-size-sm;
-  font-weight: 600;
-  color: @text-primary;
 
   i {
-    color: @primary-color;
+    font-size: 16px;
   }
 }
 
-.env-card__body {
-  padding: 0;
-  max-height: 600px;
-  overflow-y: auto;
+.env-tab-tag {
+  margin-left: @space-1;
 }
 
-/* 部署历史卡片 */
-.history-card {
+.env-tab-content {
+  padding-top: @space-4;
+}
+
+/* 最近部署卡片 */
+.recent-deploy-card {
   border-radius: @border-radius;
 
   /deep/ .el-card__header {
@@ -398,17 +432,17 @@ export default {
   }
 
   /deep/ .el-card__body {
-    padding: @space-4 @space-5;
+    padding: 0;
   }
 }
 
-.history-header {
+.recent-deploy-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.history-title {
+.recent-deploy-title {
   font-size: @font-size-base;
   font-weight: 600;
   color: @text-primary;
@@ -431,5 +465,14 @@ export default {
 .text-error {
   color: @error-color;
   font-size: @font-size-sm;
+}
+
+/* 抽屉内容 */
+.drawer-content {
+  padding: @space-5;
+}
+
+.drawer-filter {
+  margin-bottom: @space-4;
 }
 </style>

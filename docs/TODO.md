@@ -282,12 +282,12 @@
 - [x] Step 5: 启动验证 + 提交
 
 ### Task 44: 应用部署页面环境切换重构
-- [ ] Step 1: 将 env-grid 改为 el-tabs 布局
-- [ ] Step 2: 每个 tab-pane 包含一个环境的 deployByEnv 组件
-- [ ] Step 3: 添加环境图标和状态指示
-- [ ] Step 4: 重构部署历史为"最近5条 + 查看全部"模式
-- [ ] Step 5: 实现抽屉中的完整部署历史（带分页和筛选）
-- [ ] Step 6: 启动验证 + 提交
+- [x] Step 1: 将 env-grid 改为 el-tabs 布局
+- [x] Step 2: 每个 tab-pane 包含一个环境的 deployByEnv 组件
+- [x] Step 3: 添加环境图标和状态指示
+- [x] Step 4: 重构部署历史为"最近5条 + 查看全部"模式
+- [x] Step 5: 实现抽屉中的完整部署历史（带分页和筛选）
+- [x] Step 6: 启动验证 + 提交
 
 ---
 
