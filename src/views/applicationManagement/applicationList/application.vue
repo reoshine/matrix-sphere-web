@@ -90,7 +90,7 @@
       <div v-show="applicationList.length > 0" class="card-grid">
         <el-row :gutter="15">
           <el-col v-for="application in applicationList" :key="application.id" :xs="24" :sm="12" :md="8" :lg="6" :xl="4">
-            <el-card shadow="hover" class="application-card" :body-style="{ padding: '0px' }">
+            <el-card shadow="never" class="application-card" :body-style="{ padding: '0px' }">
               <div class="card-header">
                 <div class="header-title">
                   <i class="el-icon-monitor icon-bg"></i>
@@ -688,15 +688,17 @@ export default {
 /* 卡片样式 */
 .application-card {
   border: 1px solid @border-color-light;
-  background-color: @bg-footer;
-  transition: box-shadow @transition-fast, border-color @transition-fast;
+  background-color: #fff;
+  transition: all @transition-fast;
   border-radius: @border-radius;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover {
-    box-shadow: @shadow-lg;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: @primary-lighter;
+    transform: translateY(-2px);
   }
 
   .card-header {
@@ -770,7 +772,6 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-radius: 0 0 @border-radius @border-radius;
 
     .main-actions {
       flex: 1;
