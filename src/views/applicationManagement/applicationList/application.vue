@@ -175,16 +175,9 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80" align="center">
+        <el-table-column label="状态" width="90" align="center">
           <template slot-scope="{ row }">
-            <el-switch
-                v-model="row.enableStatus"
-                :active-value="1"
-                :inactive-value="0"
-                active-color="#13ce66"
-                inactive-color="#ff4949"
-                @change="enableChange($event, row)"
-            />
+            <StatusDot :type="row.enableStatus === 1 ? 'success' : 'error'" :label="row.enableStatus === 1 ? '启用' : '停用'" />
           </template>
         </el-table-column>
         <el-table-column label="最近部署" width="120" align="center">
@@ -194,16 +187,18 @@
         </el-table-column>
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template slot-scope="{ row }">
-            <el-button type="text" size="small" icon="el-icon-s-promotion" @click="toAppDeploy(row.id)">部署</el-button>
-            <el-button type="text" size="small" icon="el-icon-share" @click="toBranchManagement(row.id)">分支</el-button>
-            <el-dropdown trigger="click" @command="handleRowCommand($event, row)">
-              <el-button type="text" size="small" icon="el-icon-more"></el-button>
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item icon="el-icon-setting" command="edit-pipeline">配置流水线</el-dropdown-item>
-                <el-dropdown-item icon="el-icon-edit" command="edit-basic">修改基础信息</el-dropdown-item>
-                <el-dropdown-item divided icon="el-icon-delete" class="text-danger" command="delete">删除应用</el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
+            <div class="table-actions">
+              <el-button type="text" size="small" icon="el-icon-s-promotion" @click="toAppDeploy(row.id)">部署</el-button>
+              <el-button type="text" size="small" icon="el-icon-share" @click="toBranchManagement(row.id)">分支</el-button>
+              <el-dropdown trigger="click" @command="handleRowCommand($event, row)">
+                <el-button type="text" size="small" icon="el-icon-more"></el-button>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item icon="el-icon-setting" command="edit-pipeline">配置流水线</el-dropdown-item>
+                  <el-dropdown-item icon="el-icon-edit" command="edit-basic">修改基础信息</el-dropdown-item>
+                  <el-dropdown-item divided icon="el-icon-delete" class="text-danger" command="delete">删除应用</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -329,6 +324,7 @@
 import PageContainer from '@/components/common/PageContainer.vue'
 import FilterBar from '@/components/common/FilterBar.vue'
 import FormDialog from '@/components/common/FormDialog.vue'
+import StatusDot from '@/components/common/StatusDot.vue'
 import {
   enableChange,
   exportApplicationTemplate,
@@ -347,7 +343,8 @@ export default {
   components: {
     PageContainer,
     FilterBar,
-    FormDialog
+    FormDialog,
+    StatusDot
   },
   data() {
     return {
@@ -865,5 +862,13 @@ export default {
 
 .text-danger {
   color: @error-color;
+}
+
+/* 列表操作列 */
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 </style>
