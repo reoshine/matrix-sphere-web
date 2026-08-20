@@ -3,25 +3,26 @@
     <!-- 头部操作按钮 -->
     <template #header-actions>
       <el-button type="primary" icon="el-icon-plus" size="small" @click="addApplication">新增应用</el-button>
-      <el-button plain size="small" icon="el-icon-download" @click="exportApplicationTemplate">模板下载</el-button>
+      <el-dropdown trigger="click" @command="handleHeaderCommand" style="margin-left: 10px;">
+        <el-button plain size="small">
+          更多操作 <i class="el-icon-arrow-down el-icon--right"></i>
+        </el-button>
+        <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item command="download" icon="el-icon-download">模板下载</el-dropdown-item>
+          <el-dropdown-item command="import" icon="el-icon-upload2">导入应用</el-dropdown-item>
+          <el-dropdown-item divided command="sync-gitee" icon="el-icon-connection">从 Gitee 同步</el-dropdown-item>
+          <el-dropdown-item command="sync-gitlab" icon="el-icon-connection">从 GitLab 同步</el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
       <el-upload
-          class="upload-inline"
+          ref="uploadRef"
+          class="upload-hidden"
           action="#"
           :http-request="upload"
           :accept="uploadFileType"
           :show-file-list="false"
       >
-        <el-button plain size="small" icon="el-icon-upload2">导入</el-button>
       </el-upload>
-      <el-dropdown trigger="click" style="margin-left: 10px;" @command="handleSyncRepo">
-        <el-button plain size="small" icon="el-icon-connection">
-          同步仓库 <i class="el-icon-arrow-down el-icon--right"></i>
-        </el-button>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="gitee" icon="el-icon-loading">从 Gitee 同步</el-dropdown-item>
-          <el-dropdown-item command="gitlab" icon="el-icon-loading">从 GitLab 同步</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
     </template>
 
     <!-- 筛选区 -->
@@ -402,6 +403,22 @@ export default {
     };
   },
   methods: {
+    handleHeaderCommand(command) {
+      switch (command) {
+        case 'download':
+          this.exportApplicationTemplate()
+          break
+        case 'import':
+          this.$refs.uploadRef.$el.querySelector('input').click()
+          break
+        case 'sync-gitee':
+          this.handleSyncRepo('gitee')
+          break
+        case 'sync-gitlab':
+          this.handleSyncRepo('gitlab')
+          break
+      }
+    },
     handleSyncRepo(command) {
       const label = command === 'gitee' ? 'Gitee' : 'GitLab'
       this.$message.info(`从 ${label} 同步仓库功能正在开发中`)
@@ -660,10 +677,9 @@ export default {
 <style lang="less" scoped>
 @import "~@/assets/css/theme.less";
 
-/* 上传按钮内联 */
-.upload-inline {
-  display: inline-block;
-  margin-left: @space-2;
+/* 隐藏的文件上传触发器 */
+.upload-hidden {
+  display: none;
 }
 
 /* 工具栏 */
