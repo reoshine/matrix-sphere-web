@@ -206,9 +206,8 @@ export default {
       immediate: true
     },
     'modifyApplicationForm.initTemplateId': {
-      handler(newVal, oldVal) {
-        // 跳过初始化时的赋值（oldVal 为 undefined 或空字符串）
-        if (!newVal || oldVal === undefined || oldVal === '') return
+      handler(newVal) {
+        console.log('[Watcher] initTemplateId changed:', newVal)
         this.fetchTemplateScript(newVal)
       }
     }
@@ -238,7 +237,7 @@ export default {
       }
       getTemplateDetail(templateId).then(res => {
         if (res.code === 200 && res.data) {
-          this.modifyApplicationForm.pipelineScript = res.data.pipelineScript || res.data.jenkinsfileContent || ''
+          this.modifyApplicationForm.pipelineScript = res.data.templateContent || res.data.pipelineScript || res.data.jenkinsfileContent || ''
         }
       }).catch(err => {
         this.$message.warning('获取模板脚本失败：' + err)
