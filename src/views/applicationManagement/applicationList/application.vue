@@ -137,9 +137,6 @@
                       <el-dropdown-item icon="el-icon-setting" @click.native="applicationEdit(application.id)">
                         配置流水线
                       </el-dropdown-item>
-                      <el-dropdown-item icon="el-icon-edit" @click.native="modify(application.id)">
-                        修改基础信息
-                      </el-dropdown-item>
                       <el-dropdown-item divided icon="el-icon-delete" class="text-danger" @click.native="removeApplication(application.id)">
                         删除应用
                       </el-dropdown-item>
@@ -194,7 +191,6 @@
                 <el-button type="text" size="small" icon="el-icon-more"></el-button>
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item icon="el-icon-setting" command="edit-pipeline">配置流水线</el-dropdown-item>
-                  <el-dropdown-item icon="el-icon-edit" command="edit-basic">修改基础信息</el-dropdown-item>
                   <el-dropdown-item divided icon="el-icon-delete" class="text-danger" command="delete">删除应用</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
@@ -649,9 +645,6 @@ export default {
       switch (command) {
         case 'edit-pipeline':
           this.applicationEdit(row.id);
-          break;
-        case 'edit-basic':
-          this.modify(row.id);
           break;
         case 'delete':
           this.removeApplication(row.id);
