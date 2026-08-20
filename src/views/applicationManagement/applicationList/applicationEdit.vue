@@ -135,7 +135,7 @@ import 'highlight.js/styles/atom-one-dark.css'
 import PageContainer from '@/components/common/PageContainer.vue'
 import { getApplicationById, modifyApplication } from '@/views/applicationManagement/applicationList/api'
 import { queryList } from '@/views/applicationManagement/applicationGroup/api'
-import { getTemplateList } from '@/views/applicationManagement/deployTemplate/api'
+import { getTemplateList, getTemplateDetail } from '@/views/applicationManagement/deployTemplate/api'
 
 export default {
   name: 'applicationEdit',
@@ -204,6 +204,13 @@ export default {
         }
       },
       immediate: true
+    },
+    'modifyApplicationForm.initTemplateId': {
+      handler(newVal, oldVal) {
+        // 跳过初始化时的赋值（oldVal 为 undefined 或空字符串）
+        if (!newVal || oldVal === undefined || oldVal === '') return
+        this.fetchTemplateScript(newVal)
+      }
     }
   },
 
@@ -221,6 +228,20 @@ export default {
         if (res.code === 200) {
           this.templateList = res.data || []
         }
+      })
+    },
+
+    fetchTemplateScript(templateId) {
+      if (!templateId) {
+        this.modifyApplicationForm.pipelineScript = ''
+        return
+      }
+      getTemplateDetail(templateId).then(res => {
+        if (res.code === 200 && res.data) {
+          this.modifyApplicationForm.pipelineScript = res.data.pipelineScript || res.data.jenkinsfileContent || ''
+        }
+      }).catch(err => {
+        this.$message.warning('获取模板脚本失败：' + err)
       })
     },
 
