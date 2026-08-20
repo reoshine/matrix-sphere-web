@@ -710,16 +710,16 @@ export default {
 .application-card {
   border: 1px solid @border-color-light;
   background-color: #fff;
-  transition: all @transition-fast;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: @border-radius;
   overflow: hidden;
   position: relative;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     border-color: @primary-lighter;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
   }
 
   .card-header {
@@ -738,10 +738,10 @@ export default {
       margin-right: 10px;
 
       .icon-bg {
-        background: @primary-lighter;
+        background: var(--color-blue-50);
         color: @primary-color;
-        padding: 6px;
-        border-radius: @border-radius-sm;
+        padding: 8px;
+        border-radius: 8px;
         margin-right: 10px;
         font-size: 16px;
         flex-shrink: 0;
@@ -758,18 +758,18 @@ export default {
   }
 
   .card-body {
-    padding: 15px 20px;
-    height: 100px;
+    padding: 14px 16px 12px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 
     .application-name {
-      color: @text-secondary;
-      font-size: @font-size-sm;
-      line-height: 20px;
-      height: 40px;
-      margin-bottom: 8px;
+      color: @text-primary;
+      font-size: @font-size-base;
+      font-weight: 500;
+      line-height: 1.5;
+      height: 42px;
+      margin-bottom: 10px;
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 2;
