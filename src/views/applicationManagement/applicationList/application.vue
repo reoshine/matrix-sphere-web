@@ -74,14 +74,14 @@
         <span class="result-count">共 {{ total }} 个应用</span>
       </div>
       <div class="toolbar-right">
-        <el-radio-group v-model="viewMode" size="small">
-          <el-radio-button label="card">
+        <div class="view-toggle">
+          <span class="toggle-btn" :class="{ 'is-active': viewMode === 'card' }" @click="viewMode = 'card'">
             <i class="el-icon-menu"></i>
-          </el-radio-button>
-          <el-radio-button label="list">
+          </span>
+          <span class="toggle-btn" :class="{ 'is-active': viewMode === 'list' }" @click="viewMode = 'list'">
             <i class="el-icon-s-grid"></i>
-          </el-radio-button>
-        </el-radio-group>
+          </span>
+        </div>
       </div>
     </template>
 
@@ -687,8 +687,9 @@ export default {
 /* 工具栏 */
 .toolbar-left {
   .result-count {
-    font-size: @font-size-sm;
-    color: @text-tertiary;
+    font-size: @font-size-base;
+    color: @text-secondary;
+    font-weight: 500;
   }
 }
 
@@ -698,9 +699,40 @@ export default {
   gap: @space-3;
 }
 
+/* 视图切换 */
+.view-toggle {
+  display: inline-flex;
+  background: var(--color-gray-100);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+
+  .toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: @text-tertiary;
+    transition: all @transition-fast;
+
+    &:hover {
+      color: @text-secondary;
+    }
+
+    &.is-active {
+      background: #fff;
+      color: @primary-color;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
 /* 卡片网格 */
 .card-grid {
-  .el-col { margin-bottom: @space-4; }
+  .el-col { margin-bottom: @space-5; }
 }
 
 /* 卡片样式 */
