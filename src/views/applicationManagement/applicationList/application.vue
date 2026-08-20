@@ -110,18 +110,23 @@
               <div class="card-body">
                 <div class="application-name" :title="application.applicationName">{{ application.applicationName }}</div>
                 <div class="meta-row">
-                  <el-tag size="mini" type="info" effect="plain">ID: {{ application.gitApplicationId || 'N/A' }}</el-tag>
                   <el-tag size="mini" type="info" effect="light" v-if="application.applicationGroupCode">{{ application.applicationGroupCode }}</el-tag>
+                  <span v-else class="meta-empty">-</span>
                 </div>
               </div>
 
               <div class="card-footer">
                 <div class="main-actions">
                   <el-tooltip content="进入部署控制台" placement="top" :open-delay="500">
-                    <el-button type="text" icon="el-icon-s-promotion" @click="toAppDeploy(application.id)">部署</el-button>
+                    <span class="action-btn" @click="toAppDeploy(application.id)">
+                      <i class="el-icon-s-promotion"></i> 部署
+                    </span>
                   </el-tooltip>
-                  <el-divider direction="vertical"></el-divider>
-                  <el-button type="text" icon="el-icon-share" @click="toBranchManagement(application.id)">分支</el-button>
+                  <el-tooltip content="分支管理" placement="top" :open-delay="500">
+                    <span class="action-btn" @click="toBranchManagement(application.id)">
+                      <i class="el-icon-share"></i> 分支
+                    </span>
+                  </el-tooltip>
                 </div>
                 <div class="more-actions">
                   <el-dropdown trigger="hover" placement="top">
@@ -777,6 +782,11 @@ export default {
       gap: 6px;
       height: 22px;
       align-items: center;
+
+      .meta-empty {
+        color: @text-tertiary;
+        font-size: @font-size-sm;
+      }
     }
   }
 
@@ -790,37 +800,32 @@ export default {
     justify-content: space-between;
 
     .main-actions {
-      flex: 1;
       display: flex;
-      justify-content: center;
+      gap: 8px;
       align-items: center;
 
-      .el-button {
-        padding: 8px 15px;
-        font-weight: 500;
-        color: @text-secondary;
-        background: transparent !important;
-        transition: all @transition-fast;
+      .action-btn {
         display: inline-flex;
         align-items: center;
+        gap: 4px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: @text-secondary;
+        background: #fff;
+        border: 1px solid @border-color-light;
+        cursor: pointer;
+        transition: all @transition-fast;
 
         i {
-          margin-right: 4px;
-          transition: transform @transition-fast;
+          font-size: 14px;
         }
 
         &:hover {
           color: @primary-color;
-          i {
-            transform: scale(1.25);
-          }
+          border-color: @primary-lighter;
+          background: var(--color-blue-50);
         }
-      }
-
-      .el-divider--vertical {
-        height: 1.2em;
-        background-color: @border-color;
-        margin: 0 5px;
       }
     }
 
