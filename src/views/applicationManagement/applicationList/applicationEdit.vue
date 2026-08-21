@@ -91,11 +91,20 @@
         <div class="tab-content pipeline-content">
           <div class="pipeline-toolbar">
             <span class="pipeline-label">Jenkins Pipeline (Groovy)</span>
-            <el-button type="text" icon="el-icon-document-copy" size="small" @click="copyCode">复制配置</el-button>
+            <div class="pipeline-toolbar-right">
+              <el-select v-model="editorTheme" size="mini" placeholder="主题" style="width: 140px; margin-right: 10px;" @change="onThemeChange">
+                <el-option label="Dracula (暗色)" value="dracula" />
+                <el-option label="Monokai (暗色)" value="monokai" />
+                <el-option label="Eclipse (亮色)" value="eclipse" />
+                <el-option label="IDEA (亮色)" value="idea" />
+                <el-option label="Solarized (暖色)" value="solarized light" />
+              </el-select>
+              <el-button type="text" icon="el-icon-document-copy" size="small" @click="copyCode">复制配置</el-button>
+            </div>
           </div>
-          <div class="pipeline-editor">
+          <div class="pipeline-editor" :class="{ 'light-theme': isLightTheme }">
             <el-empty v-if="!modifyApplicationForm.pipelineScript" description="暂无流水线配置信息，请先在基础配置中选择初始化模板" />
-            <pre v-else class="hljs-container"><code class="groovy" ref="codeBlock">{{ modifyApplicationForm.pipelineScript }}</code></pre>
+            <codemirror v-else v-model="modifyApplicationForm.pipelineScript" :options="cmOptions" />
           </div>
         </div>
       </el-tab-pane>
@@ -130,8 +139,20 @@
 </template>
 
 <script>
-import hljs from 'highlight.js'
-import 'highlight.js/styles/atom-one-dark.css'
+import { codemirror } from 'vue-codemirror'
+import 'codemirror/lib/codemirror.css'
+
+// 引入多个主题 CSS
+import 'codemirror/theme/dracula.css'
+import 'codemirror/theme/monokai.css'
+import 'codemirror/theme/eclipse.css'
+import 'codemirror/theme/idea.css'
+import 'codemirror/theme/solarized.css'
+
+// 引入语言模式
+import 'codemirror/mode/groovy/groovy.js'
+import 'codemirror/addon/selection/active-line.js'
+
 import PageContainer from '@/components/common/PageContainer.vue'
 import { getApplicationById, modifyApplication } from '@/views/applicationManagement/applicationList/api'
 import { queryList } from '@/views/applicationManagement/applicationGroup/api'
@@ -140,13 +161,15 @@ import { getTemplateList, getTemplateDetail } from '@/views/applicationManagemen
 export default {
   name: 'applicationEdit',
   components: {
-    PageContainer
+    PageContainer,
+    codemirror
   },
   data() {
     return {
       applicationId: '',
       loading: false,
       activeTab: 'basic',
+      editorTheme: localStorage.getItem('matrix_editor_theme') || 'dracula',
 
       modifyApplicationForm: {
         id: '',
@@ -191,20 +214,26 @@ export default {
     }
   },
 
-  watch: {
-    'modifyApplicationForm.pipelineScript': {
-      handler(val) {
-        if (val) {
-          this.$nextTick(() => {
-            if (this.$refs.codeBlock) {
-              this.$refs.codeBlock.removeAttribute('data-highlighted')
-              hljs.highlightElement(this.$refs.codeBlock)
-            }
-          })
-        }
-      },
-      immediate: true
+  computed: {
+    isLightTheme() {
+      return ['eclipse', 'idea', 'solarized light', 'default'].includes(this.editorTheme);
     },
+    cmOptions() {
+      return {
+        tabSize: 2,
+        mode: 'text/x-groovy',
+        theme: this.editorTheme,
+        lineNumbers: true,
+        line: true,
+        styleActiveLine: true,
+        matchBrackets: true,
+        readOnly: true,
+        viewportMargin: Infinity
+      }
+    }
+  },
+
+  watch: {
     'modifyApplicationForm.initTemplateId': {
       handler(newVal) {
         console.log('[Watcher] initTemplateId changed:', newVal)
@@ -287,6 +316,10 @@ export default {
       document.execCommand('Copy')
       document.body.removeChild(input)
       this.$message.success('Pipeline 配置已复制到剪贴板')
+    },
+
+    onThemeChange(theme) {
+      localStorage.setItem('matrix_editor_theme', theme)
     }
   },
 
@@ -359,6 +392,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #3e4451;
+
+  .pipeline-toolbar-right {
+    display: flex;
+    align-items: center;
+  }
 }
 
 .pipeline-label {
@@ -373,18 +411,17 @@ export default {
   background-color: #282c34;
   overflow: auto;
   min-height: 400px;
-}
 
-.hljs-container {
-  margin: 0;
-  padding: @space-4;
-  font-family: @font-mono;
-  font-size: @font-size-sm;
-  line-height: 1.6;
+  &.light-theme {
+    background-color: #fff;
+  }
 
-  code {
-    background: transparent !important;
-    padding: 0;
+  ::v-deep .CodeMirror {
+    height: auto;
+    min-height: 400px;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-size: @font-size-sm;
+    line-height: 1.6;
   }
 }
 
