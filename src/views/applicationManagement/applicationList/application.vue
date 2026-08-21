@@ -116,33 +116,26 @@
               </div>
 
               <div class="card-footer">
-                <div class="main-actions">
-                  <el-tooltip content="进入部署控制台" placement="top" :open-delay="500">
-                    <span class="action-btn" @click="toAppDeploy(application.id)">
-                      <i class="el-icon-s-promotion"></i> 部署
-                    </span>
-                  </el-tooltip>
-                  <el-tooltip content="分支管理" placement="top" :open-delay="500">
-                    <span class="action-btn" @click="toBranchManagement(application.id)">
-                      <i class="el-icon-share"></i> 分支
-                    </span>
-                  </el-tooltip>
-                </div>
-                <div class="more-actions">
-                  <el-dropdown trigger="hover" placement="top">
-                    <span class="el-dropdown-link">
-                      <i class="el-icon-more"></i>
-                    </span>
-                    <el-dropdown-menu slot="dropdown">
-                      <el-dropdown-item icon="el-icon-setting" @click.native="applicationEdit(application.id)">
-                        配置流水线
-                      </el-dropdown-item>
-                      <el-dropdown-item divided icon="el-icon-delete" class="text-danger" @click.native="removeApplication(application.id)">
-                        删除应用
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </el-dropdown>
-                </div>
+                <el-tooltip content="进入部署控制台" placement="top" :open-delay="500">
+                  <span class="action-btn" @click="toAppDeploy(application.id)">
+                    <i class="el-icon-s-promotion"></i> 部署
+                  </span>
+                </el-tooltip>
+                <el-tooltip content="分支管理" placement="top" :open-delay="500">
+                  <span class="action-btn" @click="toBranchManagement(application.id)">
+                    <i class="el-icon-share"></i> 分支
+                  </span>
+                </el-tooltip>
+                <el-tooltip content="配置流水线" placement="top" :open-delay="500">
+                  <span class="action-btn" @click="applicationEdit(application.id)">
+                    <i class="el-icon-setting"></i> 配置
+                  </span>
+                </el-tooltip>
+                <el-tooltip content="删除应用" placement="top" :open-delay="500">
+                  <span class="action-btn action-btn--danger" @click="removeApplication(application.id)">
+                    <i class="el-icon-delete"></i> 删除
+                  </span>
+                </el-tooltip>
               </div>
             </el-card>
           </el-col>
@@ -815,56 +808,43 @@ export default {
   .card-footer {
     background-color: @bg-content;
     border-top: 1px solid @border-color-light;
-    padding: 0 12px;
-    height: 48px;
+    padding: 10px 12px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    gap: 6px;
 
-    .main-actions {
-      display: flex;
-      gap: 8px;
+    .action-btn {
+      flex: 1;
+      display: inline-flex;
       align-items: center;
-
-      .action-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 5px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        color: @text-secondary;
-        background: #fff;
-        border: 1px solid @border-color-light;
-        cursor: pointer;
-        transition: all @transition-fast;
-
-        i {
-          font-size: 14px;
-        }
-
-        &:hover {
-          color: @primary-color;
-          border-color: @primary-lighter;
-          background: var(--color-blue-50);
-        }
-      }
-    }
-
-    .more-actions {
-      padding: 8px;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 0;
+      border-radius: 6px;
+      font-size: 12px;
+      color: @text-secondary;
+      background: #fff;
+      border: 1px solid @border-color-light;
       cursor: pointer;
-      color: @text-tertiary;
-      border-radius: @border-radius-sm;
       transition: all @transition-fast;
+      white-space: nowrap;
+
+      i {
+        font-size: 13px;
+      }
 
       &:hover {
         color: @primary-color;
-        background-color: @primary-lighter;
+        border-color: @primary-lighter;
+        background: var(--color-blue-50);
       }
 
-      i {
-        font-size: 16px;
+      &--danger {
+        color: @error-color;
+        &:hover {
+          color: @error-color;
+          border-color: @error-color;
+          background: rgba(239, 68, 68, 0.05);
+        }
       }
     }
   }
