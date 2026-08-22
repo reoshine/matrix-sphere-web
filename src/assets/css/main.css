@@ -73,3 +73,39 @@ a {
 .move-leave {
     opacity: 0;
 }
+
+/* ==================== el-switch 全局样式覆盖 ==================== */
+
+.el-switch__core {
+    border-radius: 10px;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.el-switch__core::after {
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.el-switch.is-checked .el-switch__core {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    border-color: transparent;
+}
+
+.el-switch.is-checked .el-switch__core::after {
+    background: #fff;
+}
+
+.el-switch:not(.is-checked) .el-switch__core {
+    background: var(--color-gray-300);
+    border-color: transparent;
+}
+
+.el-switch:not(.is-checked) .el-switch__core::after {
+    background: #fff;
+}
+
+.el-switch.is-disabled {
+    opacity: 0.6;
+}
