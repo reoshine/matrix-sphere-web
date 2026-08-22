@@ -313,6 +313,18 @@ export default {
       })
     },
 
+    preloadCurrentApp(appId) {
+      getApplicationById(appId).then(res => {
+        if (res.code === 200 && res.data) {
+          const app = res.data
+          const exists = this.appOptions.some(opt => opt.id === app.id)
+          if (!exists) {
+            this.appOptions.unshift(app)
+          }
+        }
+      })
+    },
+
     // --- 分支列表 ---
     getBranchListByApplicationId(applicationId) {
       this.tableLoading = true
@@ -495,6 +507,7 @@ export default {
       localStorage.setItem('applicationId', JSON.stringify(pid))
       this.getApplication(pid)
       this.getBranchListByApplicationId(pid)
+      this.preloadCurrentApp(pid)
     }
   }
 }
