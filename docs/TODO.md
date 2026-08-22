@@ -1,6 +1,6 @@
 # MatrixSphere UI/UX 重设计 — TODO 清单
 
-> 共 39 个任务，166 个步骤。按 Phase 顺序执行。
+> 共 49 个任务，215 个步骤。按 Phase 顺序执行。
 > 来源：`docs/superpowers/plans/2026-08-16-matrix-sphere-ui-redesign.md`
 
 ---
@@ -300,3 +300,87 @@
 - [ ] Step 4: 启动验证 + 提交
 
 > **延后原因**：经过多次迭代修复依然无法完美适配。根本原因是 Vue scoped 样式与全局暗黑模式选择器的 CSS 特异性冲突（两者都是 0-2-0，但 scoped 样式后加载覆盖全局样式）。需要使用 `!important` 或修改所有组件的 scoped 样式才能解决，但这会影响代码质量和维护性。待整体重构计划结束后，统一采用 CSS 变量方案重新开发。
+
+---
+
+## Phase 5：体验优化与缺陷修复
+
+> 来源：`docs/superpowers/plans/2026-08-19-phase5-optimization-bugfix.md`
+
+### Task 45: 应用列表卡片样式重设计
+- [x] Step 1: 修改 el-card 的 shadow 属性（hover → never）
+- [x] Step 2: 重写 .application-card 基础样式（默认边框+微弱阴影）
+- [x] Step 3: 调整卡片底部操作区域样式（移除独立 border-radius）
+- [x] Step 4: 启动开发服务器验证
+- [x] Step 5: 提交
+
+### Task 46: 移除"修改基础信息"按钮
+- [x] Step 1: 移除卡片视图中的"修改基础信息"下拉项
+- [x] Step 2: 移除列表视图中的"修改基础信息"下拉项
+- [x] Step 3: 清理 handleRowCommand 中的 edit-basic 分支
+- [x] Step 4: 评估 modify 方法是否仍被调用（仅定义处存在，不再被调用）
+- [x] Step 5: 启动开发服务器验证
+- [x] Step 6: 提交
+
+### Task 47: 修复部署模板在流水线配置中未回显
+- [x] Step 1: 确认模板详情 API 返回 pipelineScript
+- [x] Step 2: 添加 initTemplateId 的 watcher
+- [x] Step 3: 添加 fetchTemplateScript 方法
+- [x] Step 4: 确保 import getTemplateDetail
+- [x] Step 5: 启动开发服务器验证
+- [x] Step 6: 提交
+
+### Task 48: 修复分支管理页面应用下拉框显示 ID
+- [x] Step 1: 修改 created 钩子中的应用加载逻辑
+- [x] Step 2: 添加 preloadCurrentApp 方法
+- [x] Step 3: 确认 getApplicationById 已引入
+- [x] Step 4: 启动开发服务器验证
+- [x] Step 5: 提交
+
+### Task 49: 修复部署进度条垂直居中
+- [x] Step 1: 修改 .process-wrapper 样式（添加 flexbox 居中）
+- [x] Step 2: 确认 el-steps 宽度适应
+- [x] Step 3: 启动开发服务器验证
+- [x] Step 4: 提交
+
+---
+
+## Phase 6：应用列表页面全面重设计
+
+> 来源：`docs/superpowers/plans/2026-08-19-app-list-page-redesign.md`
+
+### Task 50: 重设计头部操作区
+- [x] Step 1: 简化 header-actions 模板（主按钮 + 下拉菜单）
+- [x] Step 2: 添加 handleHeaderCommand 方法
+- [x] Step 3: 调整 el-upload 为隐藏触发
+- [x] Step 4: 清理 .upload-inline 样式
+- [x] Step 5: 启动开发服务器验证
+- [x] Step 6: 提交
+
+### Task 51: 重设计卡片视图 — 信息层次与布局
+- [x] Step 1: 重写卡片 body 区域模板（name 独立一行，移除 ID tag）
+- [x] Step 2: 重写卡片 footer 操作按钮模板（pill 样式）
+- [x] Step 3: 启动开发服务器验证
+- [x] Step 4: 提交
+
+### Task 52: 重设计卡片视图 — 视觉样式
+- [x] Step 1: 优化 .card-header .icon-bg 样式（圆角 + 浅蓝背景）
+- [x] Step 2: 优化 .card-body 间距和字体（移除固定高度）
+- [x] Step 3: 重写 .card-footer 操作按钮样式（pill 按钮）— 已在 Task 51 完成
+- [x] Step 4: 增强卡片 hover 效果（阴影 + 上浮 + 弹性曲线）
+- [x] Step 5: 启动开发服务器验证
+- [x] Step 6: 提交
+
+### Task 53: 重设计列表视图
+- [x] Step 1: 状态列改用 StatusDot 组件
+- [x] Step 2: 优化操作列按钮样式
+- [x] Step 3: 确认 StatusDot 已引入
+- [x] Step 4: 启动开发服务器验证
+- [x] Step 5: 提交
+
+### Task 54: 重设计工具栏与整体视觉打磨
+- [x] Step 1: 重写工具栏视图切换（自定义 toggle 按钮组）
+- [x] Step 2: 优化结果计数样式
+- [x] Step 3: 优化卡片网格间距
+- [x] Step 4: 启动开发服务器验证
+- [x] Step 5: 提交

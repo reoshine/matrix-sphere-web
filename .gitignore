@@ -22,6 +22,9 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
+docs/superpowers
+docs/redesign-proposal.md
+docs/ui-ux-diagnosis.md
 .playwright-mcp
 .claude
 CLAUDE.md

@@ -58,8 +58,6 @@
           <template slot-scope="{ row }">
             <el-switch
                 v-model="row.enabled"
-                active-color="#13ce66"
-                inactive-color="#ff4949"
                 @change="modifyAccountStatus(row)"
             />
           </template>

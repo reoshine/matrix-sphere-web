@@ -35,7 +35,7 @@
               </el-table-column>
               <el-table-column prop="enabled" label="状态" width="100" align="center">
                 <template slot-scope="{ row }">
-                  <el-switch v-model="row.enabled" active-color="#13ce66" inactive-color="#ff4949" @change="modifyRoleConfirm(row)" />
+                  <el-switch v-model="row.enabled"  @change="modifyRoleConfirm(row)" />
                 </template>
               </el-table-column>
               <el-table-column prop="createByName" label="创建人" width="100" align="center" />
@@ -84,7 +84,7 @@
               </el-table-column>
               <el-table-column prop="enabled" label="状态" width="100" align="center">
                 <template slot-scope="{ row }">
-                  <el-switch v-model="row.enabled" active-color="#13ce66" inactive-color="#ff4949" @change="modifyAuthorityConfirm(row)" />
+                  <el-switch v-model="row.enabled"  @change="modifyAuthorityConfirm(row)" />
                 </template>
               </el-table-column>
               <el-table-column prop="createByName" label="创建人" width="100" align="center" />
