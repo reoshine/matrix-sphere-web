@@ -840,6 +840,14 @@ export default {
 
   .process-wrapper {
     padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+
+    .custom-steps {
+      width: 100%;
+    }
   }
 
   ::v-deep .el-step__line {
