@@ -31,12 +31,15 @@
     <!-- 分组列表 -->
     <el-card shadow="never" class="table-card">
       <el-table
+        ref="tableRef"
         v-loading="loading"
         :data="applicationGroupList"
         border
         stripe
         highlight-current-row
         style="width: 100%"
+        @row-click="handleRowClick"
+        @row-dblclick="handleRowDblClick"
       >
         <el-table-column type="index" label="序号" width="60" align="center" />
         <el-table-column prop="applicationGroupCode" label="分组编码" min-width="120" show-overflow-tooltip />
@@ -120,6 +123,8 @@ export default {
     return {
       loading: false,
       submitLoading: false,
+      currentRow: null,
+      isRowClick: false,
       queryParams: {
         pageNum: 1,
         pageSize: 10,
@@ -152,6 +157,14 @@ export default {
   created() {
     this.getList()
   },
+  mounted() {
+    // 添加点击外部区域清除高亮的事件监听
+    document.addEventListener('click', this.handleDocumentClick)
+  },
+  beforeDestroy() {
+    // 移除事件监听
+    document.removeEventListener('click', this.handleDocumentClick)
+  },
   methods: {
     async getList() {
       this.loading = true
@@ -167,6 +180,13 @@ export default {
           const result = res.data
           this.total = result.total || 0
           this.applicationGroupList = result.list || []
+          // 刷新列表后清除行高亮
+          this.currentRow = null
+          this.$nextTick(() => {
+            if (this.$refs.tableRef) {
+              this.$refs.tableRef.setCurrentRow()
+            }
+          })
         } else {
           this.$message.error(res.message || '查询失败')
         }
@@ -274,6 +294,45 @@ export default {
           this.$message.error('删除失败')
         }
       }).catch(() => {})
+    },
+
+    handleRowClick(row, column, event) {
+      // 设置标志，避免handleDocumentClick误清除高亮
+      this.isRowClick = true
+      // 点击行时，如果点击的是操作按钮区域，不高亮该行
+      if (column && column.property === undefined) {
+        // 清除高亮状态
+        this.$nextTick(() => {
+          if (this.$refs.tableRef) {
+            this.$refs.tableRef.setCurrentRow()
+          }
+        })
+        return
+      }
+      this.currentRow = row
+    },
+
+    handleRowDblClick(row, column, event) {
+      // 双击行时打开编辑弹窗
+      this.handleEdit(row)
+    },
+
+    handleDocumentClick(event) {
+      // 如果是行点击触发的，跳过
+      if (this.isRowClick) {
+        this.isRowClick = false
+        return
+      }
+      // 检查点击是否在表格外部
+      const tableEl = this.$refs.tableRef?.$el
+      if (tableEl && !tableEl.contains(event.target)) {
+        // 点击在表格外部，清除高亮状态
+        this.$nextTick(() => {
+          if (this.$refs.tableRef) {
+            this.$refs.tableRef.setCurrentRow()
+          }
+        })
+      }
     },
 
     enableChange(newValue, row) {
