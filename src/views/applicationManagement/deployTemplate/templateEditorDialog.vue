@@ -23,23 +23,23 @@
             <el-select v-model="editorTheme" size="small" placeholder="选择主题" style="width: 100%">
               <el-option label="Dracula (暗色推荐)" value="dracula">
                 <span style="float: left">Dracula</span>
-                <span style="float: right; color: #8492a6; font-size: 12px">Dark</span>
+                <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">Dark</span>
               </el-option>
               <el-option label="Monokai (经典暗色)" value="monokai">
                 <span style="float: left">Monokai</span>
-                <span style="float: right; color: #8492a6; font-size: 12px">Dark</span>
+                <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">Dark</span>
               </el-option>
               <el-option label="Eclipse (经典亮色)" value="eclipse">
                 <span style="float: left">Eclipse</span>
-                <span style="float: right; color: #8492a6; font-size: 12px">Light</span>
+                <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">Light</span>
               </el-option>
               <el-option label="IDEA (IntelliJ亮色)" value="idea">
                 <span style="float: left">IDEA</span>
-                <span style="float: right; color: #8492a6; font-size: 12px">Light</span>
+                <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">Light</span>
               </el-option>
               <el-option label="Solarized (暖色)" value="solarized light">
                 <span style="float: left">Solarized</span>
-                <span style="float: right; color: #8492a6; font-size: 12px">Light</span>
+                <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">Light</span>
               </el-option>
             </el-select>
           </el-form-item>
@@ -262,16 +262,18 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.tips { font-size: 12px; color: #909399; margin-left: 10px; }
+@import "~@/assets/css/theme.less";
+
+.tips { font-size: 12px; color: @text-tertiary; margin-left: 10px; }
 .editor-tips {
   font-size: 12px;
-  color: #909399;
+  color: @text-tertiary;
   margin-top: 5px;
   line-height: 1.5;
 }
 
 .editor-wrapper {
-  border: 1px solid #dcdfe6;
+  border: 1px solid @border-color;
   border-radius: 4px;
   overflow: hidden;
   line-height: 24px;
@@ -279,12 +281,12 @@ export default {
 
   /* 错误状态红框 */
   &.error-border {
-    border-color: #F56C6C;
+    border-color: @error-color;
   }
 
   /* 亮色主题时的微调：防止背景太白导致边框看不清 */
   &.light-theme {
-    border: 1px solid #c0c4cc;
+    border: 1px solid @border-color;
   }
 }
 
@@ -292,17 +294,17 @@ export default {
 .editor-toolbar {
   height: 30px;
   line-height: 30px;
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  background-color: var(--color-bg-header);
+  border-bottom: 1px solid var(--color-border);
   padding: 0 10px;
   font-size: 12px;
-  color: #606266;
+  color: @text-secondary;
   display: flex;
   align-items: center;
 
   .toolbar-divider {
     margin: 0 10px;
-    color: #dcdfe6;
+    color: @text-tertiary;
   }
 
   .toolbar-item {

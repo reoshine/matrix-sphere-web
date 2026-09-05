@@ -68,11 +68,11 @@ export default {
           name: 'CPU使用率',
           type: 'gauge',
           axisLine: {
-            lineStyle: { width: 8, color: [[0.7, '#67e0e3'], [1, '#fd666d']] }
+            lineStyle: { width: 8, color: [[0.7, '#35ceb8'], [1, '#f07178']] }
           },
           pointer: { itemStyle: { color: 'inherit' } },
-          axisTick: { distance: -30, length: 8, lineStyle: { color: '#fff', width: 2 } },
-          splitLine: { distance: -30, length: 30, lineStyle: { color: '#fff', width: 4 } },
+          axisTick: { distance: -30, length: 8, lineStyle: { color: '#91a0b8', width: 2 } },
+          splitLine: { distance: -30, length: 30, lineStyle: { color: '#2a3850', width: 4 } },
           axisLabel: { color: 'inherit', distance: 20, fontSize: 10 },
           title: { show: true, color: 'inherit' },
           detail: { valueAnimation: true, fontSize: 20, offsetCenter: [0, '70%'], color: 'inherit' },
@@ -88,11 +88,11 @@ export default {
           name: '内存使用率',
           type: 'gauge',
           axisLine: {
-            lineStyle: { width: 8, color: [[0.8, '#67e0e3'], [1, '#fd666d']] }
+            lineStyle: { width: 8, color: [[0.8, '#35ceb8'], [1, '#f07178']] }
           },
           pointer: { itemStyle: { color: 'inherit' } },
-          axisTick: { distance: -30, length: 8, lineStyle: { color: '#fff', width: 2 } },
-          splitLine: { distance: -30, length: 30, lineStyle: { color: '#fff', width: 4 } },
+          axisTick: { distance: -30, length: 8, lineStyle: { color: '#91a0b8', width: 2 } },
+          splitLine: { distance: -30, length: 30, lineStyle: { color: '#2a3850', width: 4 } },
           axisLabel: { color: 'inherit', distance: 20, fontSize: 10 },
           title: { show: true, color: 'inherit' },
           detail: { valueAnimation: true, fontSize: 20, offsetCenter: [0, '70%'], color: 'inherit' },
@@ -139,6 +139,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import "~@/assets/css/theme.less";
+
 .chart1 {
   width: 750px;
   height: 400px;
@@ -154,7 +156,7 @@ export default {
 .no-data-hint {
   text-align: center;
   padding: 60px 0;
-  color: #909399;
+  color: @text-tertiary;
   font-size: 14px;
   i {
     font-size: 20px;

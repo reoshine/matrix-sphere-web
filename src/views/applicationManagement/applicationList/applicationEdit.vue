@@ -326,7 +326,7 @@ export default {
   created() {
     this.getGroupList()
     this.getTemplateList()
-    let pid = this.$route.params.applicationId || this.$route.query.applicationId
+    let pid = this.$route.params.id || this.$route.params.applicationId || this.$route.query.applicationId
     if (!pid && localStorage.getItem('applicationId')) {
       try {
         pid = JSON.parse(localStorage.getItem('applicationId'))
@@ -413,7 +413,7 @@ export default {
   min-height: 400px;
 
   &.light-theme {
-    background-color: #fff;
+    background-color: @bg-surface;
   }
 
   ::v-deep .CodeMirror {

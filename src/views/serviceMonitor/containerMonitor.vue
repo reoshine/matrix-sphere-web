@@ -83,16 +83,16 @@ export default {
   },
   methods: {
     cpuColor(val) {
-      if (!val) return '#67C23A'
-      return val > 80 ? '#F56C6C' : val > 60 ? '#E6A23C' : '#67C23A'
+      if (!val) return '#48d6a8'
+      return val > 80 ? '#f07178' : val > 60 ? '#f0b34f' : '#48d6a8'
     },
     memoryColor(val) {
-      if (!val) return '#67C23A'
-      return val > 80 ? '#F56C6C' : val > 60 ? '#E6A23C' : '#67C23A'
+      if (!val) return '#48d6a8'
+      return val > 80 ? '#f07178' : val > 60 ? '#f0b34f' : '#48d6a8'
     },
     diskColor(val) {
-      if (!val) return '#67C23A'
-      return val > 80 ? '#F56C6C' : val > 60 ? '#E6A23C' : '#67C23A'
+      if (!val) return '#48d6a8'
+      return val > 80 ? '#f07178' : val > 60 ? '#f0b34f' : '#48d6a8'
     },
     loadServers() {
       getServerList().then(res => {
@@ -152,7 +152,7 @@ export default {
     .header-left {
       display: flex;
       align-items: center;
-      i { margin-right: 6px; color: #409EFF; }
+      i { margin-right: 6px; color: @primary-light; }
       .server-name { font-weight: bold; }
     }
   }
@@ -168,13 +168,13 @@ export default {
   .info-row {
     display: flex;
     margin-bottom: 6px;
-    .label { color: #909399; width: 40px; flex-shrink: 0; }
-    .value { color: #606266; }
+    .label { color: @text-tertiary; width: 40px; flex-shrink: 0; }
+    .value { color: @text-secondary; }
   }
 
   .no-metrics {
     text-align: center;
-    color: #909399;
+    color: @text-tertiary;
     padding: 15px 0;
     i { font-size: 18px; margin-right: 5px; }
   }
@@ -186,7 +186,7 @@ export default {
     display: inline-block;
     width: 36px;
     font-size: 12px;
-    color: #606266;
+    color: @text-secondary;
     margin-bottom: 3px;
   }
 }

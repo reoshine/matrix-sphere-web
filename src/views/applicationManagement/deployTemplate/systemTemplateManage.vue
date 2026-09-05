@@ -138,7 +138,7 @@ export default {
 </script>
 
 <style scoped>
-.text-danger { color: #F56C6C; }
-.text-danger:hover { color: #f78989; }
-::v-deep .el-card__header { padding: 15px 20px; border-bottom: 1px solid #ebeef5; }
+.text-danger { color: var(--color-error); }
+.text-danger:hover { color: var(--color-error); }
+::v-deep .el-card__header { padding: 15px 20px; border-bottom: 1px solid var(--color-border); }
 </style>

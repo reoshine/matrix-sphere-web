@@ -435,7 +435,7 @@ export default {
 
 .text-danger {
   color: @error-color;
-  &:hover { color: #f78989; }
+  &:hover { color: var(--color-error); }
 }
 
 /* 抽屉 */
@@ -451,7 +451,7 @@ export default {
   border-top: 1px solid @border-color-light;
   text-align: right;
   padding-right: @space-5;
-  background: #fff;
+  background: @bg-surface;
   position: absolute;
   bottom: 0;
   width: 100%;

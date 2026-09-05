@@ -544,7 +544,7 @@ export default {
 .text-danger {
   color: @error-color;
   &:hover {
-    color: #f78989;
+    color: var(--color-error);
   }
 }
 </style>

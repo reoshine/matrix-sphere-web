@@ -23,6 +23,7 @@ export default new Router({
         // ==================== 主布局 ====================
         {
             path: '/',
+            redirect: '/dashboard',
             component: () => import('@/components/common/Home.vue'),
             meta: { title: 'MatrixSphere 系统' },
             children: [
@@ -54,19 +55,24 @@ export default new Router({
                     path: 'apps/:id/edit',
                     name: 'appEdit',
                     component: () => import('@/views/applicationManagement/applicationList/applicationEdit.vue'),
-                    meta: { title: '应用配置', parentPath: '/apps' }
+                    meta: { title: '应用配置', hidden: true, parentPath: '/apps' }
                 },
 
                 // ---------- 部署中心（新语义路径） ----------
                 {
                     path: 'deploy',
-                    component: () => import('@/views/applicationManagement/applicationList/applicationDeploy.vue'),
-                    meta: { title: '部署控制台' }
+                    redirect: '/apps'
                 },
                 {
                     path: 'deploy/branches',
                     component: () => import('@/views/applicationManagement/branchManagement/branch.vue'),
                     meta: { title: '分支管理' }
+                },
+                {
+                    path: 'deploy/:id',
+                    name: 'appDeploy',
+                    component: () => import('@/views/applicationManagement/applicationList/applicationDeploy.vue'),
+                    meta: { title: '部署控制台', hidden: true, parentPath: '/apps' }
                 },
 
                 // ---------- 监控中心（新语义路径） ----------

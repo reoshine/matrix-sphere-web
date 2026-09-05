@@ -101,7 +101,7 @@ export default {
   display: flex;
   width: 960px;
   height: 550px;
-  background: #fff;
+  background: var(--color-bg-surface);
   border-radius: 8px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -116,7 +116,7 @@ export default {
 /* 2. 左侧：品牌视觉区 (Matrix 风格) */
 .brand-section {
   width: 50%;
-  background: linear-gradient(135deg, #1e58ff 0%, #003eb3 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -172,7 +172,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background-color: #ffffff;
+  background-color: var(--color-bg-surface-elevated);
 }
 
 .form-header {
@@ -182,12 +182,12 @@ export default {
 .form-title {
   font-size: 26px;
   font-weight: 600;
-  color: #1f2d3d;
+  color: var(--color-text-primary);
   margin-bottom: 10px;
 }
 
 .form-subtitle {
-  color: #909399;
+  color: var(--color-text-tertiary);
   font-size: 14px;
 }
 
@@ -200,26 +200,26 @@ export default {
 ::v-deep .el-input__inner {
   height: 42px;
   line-height: 42px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   transition: all 0.3s;
   padding-left: 40px; /* 为图标留位置 */
 }
 
 ::v-deep .el-input__inner:hover {
-  border-color: #c0c4cc;
+  border-color: #40536f;
 }
 
 ::v-deep .el-input__inner:focus {
-  border-color: #409EFF;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(32, 191, 169, 0.12);
 }
 
 /* 5. 按钮样式 */
 .submit-btn {
   width: 100%;
   height: 42px;
-  background-color: #409EFF;
+  background-color: var(--color-primary);
   border: none;
   font-size: 15px;
   letter-spacing: 1px;
@@ -227,8 +227,8 @@ export default {
 
 /* 6. 处理浏览器自动填充导致的黄色背景 */
 ::v-deep input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-  -webkit-text-fill-color: #606266 !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-page) inset !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
 }
 
 /* 7. 页脚版权 */
@@ -236,7 +236,7 @@ export default {
   position: absolute;
   bottom: 20px;
   right: 50px; /* 在表单区下方 */
-  color: #909399;
+  color: var(--color-text-tertiary);
   font-size: 12px;
 }
 </style>

@@ -3,7 +3,7 @@
     <!-- 页面头部：标题 + 操作按钮 -->
     <div class="page-header" v-if="title || $slots.header">
       <div class="page-header__left">
-        <h2 class="page-title">{{ title }}</h2>
+        <h1 class="page-title">{{ title }}</h1>
         <p class="page-subtitle" v-if="subtitle">{{ subtitle }}</p>
       </div>
       <div class="page-header__right">

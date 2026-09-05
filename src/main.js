@@ -8,6 +8,9 @@ import ElementUI from 'element-ui'
 import { initGlobalKeys } from '@/utils/globalKeys'
 
 import 'element-ui/lib/theme-chalk/index.css'
+import '@/assets/css/design-tokens.css'
+import '@/assets/css/main.css'
+import '@/assets/css/element-dark.css'
 import '@/assets/css/icon.css';
 import '@/assets/iconfont/iconfont.css'
 import '@/assets/css/theme.less'

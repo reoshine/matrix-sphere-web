@@ -61,7 +61,7 @@
                 :value="item.applicationGroupCode"
             >
               <span style="float: left">{{ item.applicationGroupName }}</span>
-              <span style="float: right; color: #8492a6; font-size: 12px; margin-left: 10px">{{ item.applicationGroupCode }}</span>
+              <span style="float: right; color: var(--color-text-tertiary); font-size: 12px; margin-left: 10px">{{ item.applicationGroupCode }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -279,12 +279,12 @@
                     :value="item.id"
                 >
                   <span style="float: left">{{ item.templateName }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 12px">
+                  <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">
                     {{ item.isDefault ? '默认' : '' }}
                   </span>
                 </el-option>
               </el-select>
-              <div style="font-size: 12px; color: #909399; line-height: 1.5; margin-top: 4px;">
+              <div style="font-size: 12px; color: var(--color-text-tertiary); line-height: 1.5; margin-top: 4px;">
                 <i class="el-icon-info"></i> 选中后，系统将以该模板为原型，为您自动生成 Jenkinsfile 和 Job 配置。
               </div>
             </el-form-item>
@@ -601,10 +601,7 @@ export default {
     },
 
     toAppDeploy(applicationId) {
-      this.$router.push({
-        path: "/applicationManagement/applicationList/applicationDeploy",
-        query: { applicationId: applicationId }
-      });
+      this.$router.push(`/deploy/${applicationId}`);
     },
 
     applicationEdit(applicationId) {
@@ -686,7 +683,7 @@ export default {
 /* 视图切换 */
 .view-toggle {
   display: inline-flex;
-  background: var(--color-gray-100);
+  background: @bg-header;
   border-radius: 8px;
   padding: 3px;
   gap: 2px;
@@ -707,7 +704,7 @@ export default {
     }
 
     &.is-active {
-      background: #fff;
+      background: @bg-surface;
       color: @primary-color;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
@@ -722,7 +719,7 @@ export default {
 /* 卡片样式 */
 .application-card {
   border: 1px solid @border-color-light;
-  background-color: #fff;
+  background-color: @bg-footer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: @border-radius;
   overflow: hidden;
@@ -751,7 +748,7 @@ export default {
       margin-right: 10px;
 
       .icon-bg {
-        background: var(--color-blue-50);
+        background: @primary-lighter;
         color: @primary-color;
         padding: 8px;
         border-radius: 8px;
@@ -820,7 +817,7 @@ export default {
       border-radius: 6px;
       font-size: 12px;
       color: @text-secondary;
-      background: #fff;
+      background: @bg-surface-elevated;
       border: 1px solid @border-color-light;
       cursor: pointer;
       transition: all @transition-fast;
@@ -833,7 +830,7 @@ export default {
       &:hover {
         color: @primary-color;
         border-color: @primary-lighter;
-        background: var(--color-blue-50);
+        background: @primary-lighter;
       }
 
       &--danger {

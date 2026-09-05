@@ -71,6 +71,8 @@ export default {
 </script>
 
 <style lang="less">
+@import "~@/assets/css/theme.less";
+
 /* 非 scoped 样式，覆盖 Element UI 弹窗默认样式 */
 .form-dialog {
   border-radius: 12px;
@@ -78,14 +80,14 @@ export default {
 
   .el-dialog__header {
     padding: 20px 24px;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid @border-color;
     margin: 0;
   }
 
   .el-dialog__title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: @text-primary;
   }
 
   .el-dialog__body {
@@ -96,8 +98,8 @@ export default {
 
   .el-dialog__footer {
     padding: 16px 24px 20px;
-    border-top: 1px solid #ebeef5;
-    background-color: #f9fafc;
+    border-top: 1px solid @border-color;
+    background-color: @bg-header;
   }
 }
 

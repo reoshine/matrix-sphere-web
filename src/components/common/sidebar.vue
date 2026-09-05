@@ -266,7 +266,7 @@ export default {
     justify-content: center;
     height: 56px;
     padding: 0 @space-3;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid @border-color-light;
     flex-shrink: 0;
   }
 
@@ -276,7 +276,7 @@ export default {
     gap: @space-2;
     font-size: @font-size-lg;
     font-weight: 600;
-    color: #fff;
+    color: @text-primary;
     white-space: nowrap;
     overflow: hidden;
 
@@ -297,12 +297,12 @@ export default {
     flex-shrink: 0;
 
     ::v-deep .el-input__inner {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #111827;
+      border: 1px solid @border-color;
       color: @menu-text;
 
       &::placeholder {
-        color: rgba(255, 255, 255, 0.3);
+        color: @text-tertiary;
       }
 
       &:focus {
@@ -311,7 +311,7 @@ export default {
     }
 
     ::v-deep .el-input__prefix {
-      color: rgba(255, 255, 255, 0.3);
+      color: @text-tertiary;
     }
   }
 
@@ -327,7 +327,7 @@ export default {
       width: 4px;
     }
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
+      background: #40506a;
       border-radius: 2px;
     }
     &::-webkit-scrollbar-track {
@@ -344,13 +344,13 @@ export default {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.3);
+    color: @text-tertiary;
     white-space: nowrap;
   }
 
   &__group-icon {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.4);
+    color: @text-secondary;
   }
 
   &__menu-list {
@@ -378,27 +378,28 @@ export default {
 
         &:hover {
           background-color: @menu-hover-bg !important;
-          color: #fff !important;
+          color: @text-primary !important;
 
           i {
-            color: #fff !important;
+            color: @text-primary !important;
           }
         }
       }
 
       .el-menu-item.is-active {
-        background-color: @primary-color !important;
-        color: #fff !important;
+        background-color: @menu-active-bg !important;
+        color: @text-primary !important;
+        box-shadow: inset 0 0 0 1px rgba(32, 191, 169, 0.24);
         border-left: none;
         font-weight: 500;
 
         i {
-          color: #fff !important;
+          color: @primary-light !important;
         }
       }
 
       .el-submenu .el-menu {
-        background-color: rgba(0, 0, 0, 0.15) !important;
+        background-color: #0e1828 !important;
         padding: @space-1 0;
       }
 
@@ -415,14 +416,14 @@ export default {
     align-items: center;
     gap: @space-2;
     padding: @space-3 @space-4;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid @border-color-light;
     flex-shrink: 0;
   }
 
   &__user-avatar {
     flex-shrink: 0;
     background: @primary-color;
-    color: #fff;
+    color: #062623;
     font-size: @font-size-sm;
   }
 
@@ -435,7 +436,7 @@ export default {
 
   &__user-name {
     font-size: @font-size-sm;
-    color: #fff;
+    color: @text-primary;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -443,7 +444,7 @@ export default {
 
   &__user-dept {
     font-size: @font-size-xs;
-    color: rgba(255, 255, 255, 0.5);
+    color: @text-tertiary;
   }
 
   &__logout {

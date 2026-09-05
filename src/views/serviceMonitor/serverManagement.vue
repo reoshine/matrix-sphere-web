@@ -431,23 +431,23 @@ export default {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #909399; /* 默认灰色 */
+  background-color: var(--color-text-tertiary);
   margin-right: 5px;
   vertical-align: middle;
 }
 
 .status-dot.online {
-  background-color: #ffffff;
-  box-shadow: 0 0 4px #ffffff; /* 发光效果 */
+  background-color: var(--color-success);
+  box-shadow: none;
 }
 
 /* 文本颜色辅助类 */
 .text-success {
-  color: #67C23A;
+  color: var(--color-success);
 }
 
 .text-danger {
-  color: #F56C6C;
+  color: var(--color-error);
 }
 
 .pagination-container {
@@ -471,20 +471,20 @@ export default {
 }
 
 .drawer-footer {
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid var(--color-border);
   padding: 15px 0 0;
   display: flex;
   justify-content: space-between;
-  background: #fff;
+  background: var(--color-bg-surface);
 }
 
 .section-title {
   font-size: 14px;
   font-weight: bold;
-  color: #303133;
+  color: var(--color-text-primary);
   margin-bottom: 15px;
   padding-left: 10px;
-  border-left: 4px solid #409EFF;
+  border-left: 4px solid var(--color-primary);
   line-height: 1;
 }
 </style>

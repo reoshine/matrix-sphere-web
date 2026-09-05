@@ -304,14 +304,17 @@ export default {
   },
 
   created() {
-    let pid = this.$route.query.applicationId
+    let pid = this.$route.params.id || this.$route.query.applicationId
     if (!pid) {
-      pid = localStorage.getItem('applicationId')
+      const cachedId = localStorage.getItem('applicationId')
+      if (cachedId) {
+        try { pid = JSON.parse(cachedId) } catch (e) { pid = cachedId }
+      }
     }
 
     if (pid) {
       this.applicationId = pid
-      localStorage.setItem('applicationId', pid)
+      localStorage.setItem('applicationId', JSON.stringify(pid))
       this.getGroupList()
       this.getApplication(pid)
       this.loadDeployHistory()
@@ -342,6 +345,16 @@ export default {
 
   /deep/ .el-card__body {
     padding: @space-4 @space-5;
+  }
+
+  /deep/ .el-descriptions-item__label.is-bordered-label {
+    color: @text-secondary;
+    background: @bg-header !important;
+  }
+
+  /deep/ .el-descriptions-item__content.is-bordered-content {
+    color: @text-primary;
+    background: @bg-footer !important;
   }
 }
 

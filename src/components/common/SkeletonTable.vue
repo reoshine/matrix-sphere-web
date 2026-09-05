@@ -55,7 +55,7 @@ export default {
     display: flex;
     gap: @space-3;
     padding: @space-4;
-    background: var(--table-header-bg, var(--color-gray-50));
+    background: var(--table-header-bg);
     border-bottom: 1px solid @border-color-light;
   }
 
@@ -74,9 +74,9 @@ export default {
 .skeleton-bone {
   background: linear-gradient(
     90deg,
-    var(--color-gray-200) 25%,
-    var(--color-gray-100) 50%,
-    var(--color-gray-200) 75%
+    #24324a 25%,
+    #31415b 50%,
+    #24324a 75%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s infinite;

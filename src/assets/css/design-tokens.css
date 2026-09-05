@@ -6,17 +6,17 @@
 
 /* ---- Layer 1: 基础 Token（原始值） ---- */
 :root {
-  /* 色板 — 蓝色系 */
-  --color-blue-50: #eff6ff;
-  --color-blue-100: #dbeafe;
-  --color-blue-200: #bfdbfe;
-  --color-blue-300: #93c5fd;
-  --color-blue-400: #60a5fa;
-  --color-blue-500: #2c58b4;   /* 品牌蓝 */
-  --color-blue-600: #1e3f8a;
-  --color-blue-700: #1e3a6e;
-  --color-blue-800: #1e3264;
-  --color-blue-900: #172554;
+  /* 色板 — 深青绿品牌系 */
+  --color-teal-50: #e8fffb;
+  --color-teal-100: #c7f8ee;
+  --color-teal-200: #94ecdd;
+  --color-teal-300: #63dec9;
+  --color-teal-400: #35ceb8;
+  --color-teal-500: #20bfa9;
+  --color-teal-600: #169888;
+  --color-teal-700: #0f786e;
+  --color-teal-800: #0c5e58;
+  --color-teal-900: #0a4945;
 
   /* 色板 — 灰色系 */
   --color-gray-50: #f9fafb;
@@ -31,9 +31,9 @@
   --color-gray-900: #111827;
 
   /* 色板 — 语义色 */
-  --color-green-500: #10b981;
-  --color-yellow-500: #f59e0b;
-  --color-red-500: #ef4444;
+  --color-green-500: #48d6a8;
+  --color-yellow-500: #f0b34f;
+  --color-red-500: #f07178;
 
   /* 间距 */
   --space-1: 4px;
@@ -52,9 +52,9 @@
   --radius-full: 9999px;
 
   /* 阴影 */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px rgba(3, 9, 18, 0.28);
+  --shadow-md: 0 8px 20px rgba(3, 9, 18, 0.26);
+  --shadow-lg: 0 20px 40px rgba(3, 9, 18, 0.34);
 
   /* 字体 */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
@@ -75,33 +75,33 @@
 /* ---- Layer 2: 语义 Token（引用基础 Token，定义用途） ---- */
 :root {
   /* 品牌色 */
-  --color-primary: var(--color-blue-500);
-  --color-primary-light: var(--color-blue-400);
-  --color-primary-lighter: var(--color-blue-100);
-  --color-primary-dark: var(--color-blue-600);
+  --color-primary: var(--color-teal-500);
+  --color-primary-light: var(--color-teal-400);
+  --color-primary-lighter: #123e3d;
+  --color-primary-dark: var(--color-teal-600);
 
   /* 语义色 */
   --color-success: var(--color-green-500);
   --color-warning: var(--color-yellow-500);
   --color-error: var(--color-red-500);
-  --color-info: var(--color-gray-500);
+  --color-info: #73a7e8;
 
-  /* 表面色（亮色模式） */
-  --color-bg-page: var(--color-gray-100);
-  --color-bg-surface: #ffffff;
-  --color-bg-surface-elevated: #ffffff;
-  --color-bg-sidebar: #1a1f2e;
-  --color-bg-header: #ffffff;
+  /* 表面色（深青绿暗色模式） */
+  --color-bg-page: #111827;
+  --color-bg-surface: #172033;
+  --color-bg-surface-elevated: #202b40;
+  --color-bg-sidebar: #0b1220;
+  --color-bg-header: #141d2d;
 
   /* 文字色 */
-  --color-text-primary: var(--color-gray-900);
-  --color-text-secondary: var(--color-gray-600);
-  --color-text-tertiary: var(--color-gray-400);
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #e7edf7;
+  --color-text-secondary: #91a0b8;
+  --color-text-tertiary: #7889a3;
+  --color-text-inverse: #e8fffb;
 
   /* 边框色 */
-  --color-border: var(--color-gray-200);
-  --color-border-light: var(--color-gray-100);
+  --color-border: #2a3850;
+  --color-border-light: #202c40;
 
   /* 布局 */
   --header-height: 56px;
@@ -118,7 +118,7 @@
 /* ---- Layer 3: 组件 Token（引用语义 Token） ---- */
 :root {
   /* 表格 */
-  --table-header-bg: var(--color-gray-50);
+  --table-header-bg: var(--color-bg-header);
   --table-row-hover-bg: var(--color-primary-lighter);
   --table-row-height: 48px;
 
@@ -144,7 +144,7 @@
   --dialog-body-padding: var(--space-6);
 
   /* 侧边栏菜单 */
-  --sidebar-menu-text: #a0aec0;
-  --sidebar-menu-hover-bg: rgba(255, 255, 255, 0.08);
-  --sidebar-menu-active-bg: var(--color-primary);
+  --sidebar-menu-text: #98a8bf;
+  --sidebar-menu-hover-bg: #18263b;
+  --sidebar-menu-active-bg: #123e3d;
 }

@@ -41,15 +41,16 @@
         <span class="section-title">快速操作</span>
       </div>
       <div class="quick-actions">
-        <div
+        <button
           v-for="action in quickActions"
           :key="action.path"
+          type="button"
           class="quick-action-item"
           @click="$router.push(action.path)"
         >
           <i :class="action.icon" class="quick-action-icon"></i>
           <span class="quick-action-label">{{ action.label }}</span>
-        </div>
+        </button>
       </div>
     </el-card>
 
@@ -95,9 +96,10 @@
           </el-button>
         </div>
         <div v-if="activeApps.length > 0" class="app-list">
-          <div
+          <button
             v-for="item in activeApps"
             :key="item.id"
+            type="button"
             class="app-item"
             @click="$router.push('/apps')"
           >
@@ -107,7 +109,7 @@
               <span class="app-code">{{ item.code }}</span>
             </div>
             <span class="app-time">{{ item.lastDeployTime }}</span>
-          </div>
+          </button>
         </div>
         <EmptyState
           v-else
@@ -154,7 +156,7 @@ export default {
       recentDeploys: [],
       activeApps: [],
       quickActions: [
-        { label: '部署控制台', icon: 'el-icon-s-promotion', path: '/deploy' },
+        { label: '选择应用部署', icon: 'el-icon-s-promotion', path: '/apps' },
         { label: '应用列表', icon: 'el-icon-s-platform', path: '/apps' },
         { label: '分支管理', icon: 'el-icon-s-management', path: '/deploy/branches' },
         { label: '凭据管理', icon: 'el-icon-lock', path: '/resources/credentials' }
@@ -297,8 +299,11 @@ export default {
   justify-content: center;
   gap: @space-3;
   padding: @space-6 @space-4;
+  width: 100%;
   border-radius: @border-radius;
   border: 1px solid @border-color-light;
+  background: transparent;
+  font-family: inherit;
   cursor: pointer;
   transition: all @transition-fast;
 
@@ -409,7 +414,12 @@ export default {
   align-items: center;
   gap: @space-3;
   padding: @space-3 0;
+  width: 100%;
+  border: none;
   border-bottom: 1px solid @border-color-light;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
   cursor: pointer;
   transition: background @transition-fast;
 

@@ -228,13 +228,13 @@ export default {
     // 保存 (新增或修改)
     saveMenu() {
       // 这里应该加入表单校验
-      // const api = this.menu.id ? modifyMenu : addMenu;
+      const api = this.menu.id ? modifyMenu : addMenu;
 
-      modifyMenu(this.menu).then(res => {
+      api(this.menu).then(res => {
         if (res.code === 200) {
           this.$message.success('保存成功');
           this.cannotEdit = true;
-          this.handleApplicationChange(); // 刷新树
+          this.loadMenuTree();
         } else {
           this.$message.error(res.message || '保存失败');
         }
@@ -267,17 +267,21 @@ export default {
       this.$confirm(`确认删除菜单 "${data.menuName}" 吗?`, '警告', {
         type: 'warning'
       }).then(() => {
-        // TODO: 调用 deleteMenu API
-        // deleteMenu(data.id).then(...)
-        this.$message.success('模拟删除成功');
-        // 前端模拟移除
-        const parent = node.parent;
-        const children = parent.data.children || parent.data;
-        const index = children.findIndex(d => d.id === data.id);
-        children.splice(index, 1);
-        if (this.currentMenuId === data.id) {
-          this.currentMenuId = '';
-          this.menu = {};
+        return deleteMenu(data.id);
+      }).then(res => {
+        if (res.code === 200) {
+          this.$message.success('删除成功');
+          if (this.currentMenuId === data.id) {
+            this.currentMenuId = '';
+            this.menu = {};
+          }
+          this.loadMenuTree();
+        } else {
+          this.$message.error(res.message || '删除失败');
+        }
+      }).catch(err => {
+        if (err && err !== 'cancel' && err !== 'close') {
+          this.$message.error('删除异常: ' + err);
         }
       });
     },
@@ -345,15 +349,15 @@ export default {
   .title {
     font-size: 16px;
     font-weight: bold;
-    color: #303133;
-    i { margin-right: 5px; color: #409EFF; }
+    color: @text-primary;
+    i { margin-right: 5px; color: @primary-light; }
   }
 }
 
 .tree-tools {
   margin-bottom: 15px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid @border-color;
 }
 
 .tree-wrapper {
@@ -380,7 +384,7 @@ export default {
 
     .node-icon {
       margin-right: 6px;
-      color: #909399;
+      color: @text-tertiary;
       font-size: 14px;
     }
   }
@@ -398,12 +402,12 @@ export default {
 
 /* 选中节点高亮样式的补充 */
 ::v-deep .el-tree-node.is-current > .el-tree-node__content {
-  background-color: #f0f7ff;
-  color: #409EFF;
+  background-color: @primary-lighter;
+  color: @primary-light;
   font-weight: bold;
 
   .node-icon {
-    color: #409EFF;
+    color: @primary-light;
   }
 
   .node-actions {
@@ -416,7 +420,7 @@ export default {
 }
 
 .text-danger {
-  color: #F56C6C;
-  &:hover { color: #ff4949; }
+  color: @error-color;
+  &:hover { color: @error-color; }
 }
 </style>

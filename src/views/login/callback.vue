@@ -93,12 +93,12 @@ export default {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f0f2f5;
+  background-color: var(--color-bg-page);
 }
 .loading-box {
   text-align: center;
   font-size: 20px;
-  color: #409EFF;
+  color: var(--color-primary);
 }
 .loading-box i {
   font-size: 40px;

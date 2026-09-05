@@ -104,9 +104,11 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import "~@/assets/css/theme.less";
+
 // [重构] 整个样式块
 .page-header-container {
-  background-color: #ffffff;
+  background-color: @bg-footer;
   // padding: 16px 20px;
   margin-bottom: 20px;
   border-radius: 4px;
@@ -137,13 +139,13 @@ export default {
   // 让所有链接项保持标准样式
   ::v-deep .el-breadcrumb__inner,
   ::v-deep .el-breadcrumb__inner a {
-    color: #606266 !important;
+    color: @text-secondary !important;
     font-weight: 400 !important;
   }
 
   // [修复] 单独设置 *最后一项* (纯文本) 的样式
   ::v-deep .el-breadcrumb__item:last-child .el-breadcrumb__inner {
-    color: #303133 !important; // 设为标准黑色
+    color: @text-primary !important;
     font-weight: 500 !important; // 稍微加粗
     cursor: text;
   }

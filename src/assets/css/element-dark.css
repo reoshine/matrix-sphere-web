@@ -1,0 +1,318 @@
+/* Element UI 暗色主题覆盖层：必须在 theme-chalk 之后加载。 */
+
+body {
+  color: var(--color-text-primary);
+  background: var(--color-bg-page);
+}
+
+/* 按钮 */
+.el-button {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface);
+  border-color: var(--color-border);
+}
+
+.el-button:focus,
+.el-button:hover {
+  color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  border-color: var(--color-primary);
+}
+
+.el-button--primary {
+  color: #062623;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.el-button--primary:focus,
+.el-button--primary:hover {
+  color: #062623;
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+}
+
+.el-button--success { color: var(--color-success); background: rgba(72, 214, 168, .1); border-color: rgba(72, 214, 168, .38); }
+.el-button--warning { color: var(--color-warning); background: rgba(240, 179, 79, .1); border-color: rgba(240, 179, 79, .38); }
+.el-button--danger { color: var(--color-error); background: rgba(240, 113, 120, .1); border-color: rgba(240, 113, 120, .38); }
+.el-button--info { color: var(--color-info); background: rgba(115, 167, 232, .1); border-color: rgba(115, 167, 232, .38); }
+
+.el-button--success:focus, .el-button--success:hover { color: var(--color-success); background: rgba(72, 214, 168, .18); border-color: rgba(72, 214, 168, .58); }
+.el-button--warning:focus, .el-button--warning:hover { color: var(--color-warning); background: rgba(240, 179, 79, .18); border-color: rgba(240, 179, 79, .58); }
+.el-button--danger:focus, .el-button--danger:hover { color: var(--color-error); background: rgba(240, 113, 120, .18); border-color: rgba(240, 113, 120, .58); }
+.el-button--info:focus, .el-button--info:hover { color: var(--color-info); background: rgba(115, 167, 232, .18); border-color: rgba(115, 167, 232, .58); }
+
+/* Element UI 的 plain 变体拥有更高的组合选择器优先级，单独定义以避免浅色按钮突兀出现。 */
+.el-button.el-button--primary.is-plain { color: var(--color-primary-light) !important; background: var(--color-primary-lighter) !important; border-color: rgba(32, 191, 169, .45) !important; }
+.el-button.el-button--success.is-plain { color: var(--color-success) !important; background: rgba(72, 214, 168, .1) !important; border-color: rgba(72, 214, 168, .38) !important; }
+.el-button.el-button--warning.is-plain { color: var(--color-warning) !important; background: rgba(240, 179, 79, .1) !important; border-color: rgba(240, 179, 79, .38) !important; }
+.el-button.el-button--danger.is-plain { color: var(--color-error) !important; background: rgba(240, 113, 120, .1) !important; border-color: rgba(240, 113, 120, .38) !important; }
+.el-button.el-button--info.is-plain { color: var(--color-info) !important; background: rgba(115, 167, 232, .1) !important; border-color: rgba(115, 167, 232, .38) !important; }
+.el-button.el-button--primary.is-plain:focus, .el-button.el-button--primary.is-plain:hover { color: #062623 !important; background: var(--color-primary) !important; border-color: var(--color-primary) !important; }
+.el-button.el-button--success.is-plain:focus, .el-button.el-button--success.is-plain:hover { color: var(--color-success) !important; background: rgba(72, 214, 168, .18) !important; border-color: rgba(72, 214, 168, .58) !important; }
+.el-button.el-button--warning.is-plain:focus, .el-button.el-button--warning.is-plain:hover { color: var(--color-warning) !important; background: rgba(240, 179, 79, .18) !important; border-color: rgba(240, 179, 79, .58) !important; }
+.el-button.el-button--danger.is-plain:focus, .el-button.el-button--danger.is-plain:hover { color: var(--color-error) !important; background: rgba(240, 113, 120, .18) !important; border-color: rgba(240, 113, 120, .58) !important; }
+
+.el-button--text,
+.el-button--text:focus,
+.el-button--text:hover {
+  color: var(--color-primary-light);
+  background: transparent;
+  border-color: transparent;
+}
+
+.el-button--text:hover { color: var(--color-primary); }
+.el-link { color: var(--color-primary-light); }
+.el-link.el-link--primary { color: var(--color-primary-light); }
+.el-link.el-link--success { color: var(--color-success); }
+.el-link.el-link--warning { color: var(--color-warning); }
+.el-link.el-link--danger { color: var(--color-error); }
+
+.el-button.is-disabled,
+.el-button.is-disabled:focus,
+.el-button.is-disabled:hover {
+  color: var(--color-text-tertiary) !important;
+  background: var(--color-bg-surface) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+.el-button.is-loading::before { background-color: rgba(17, 24, 39, .58); }
+
+/* 输入与表单 */
+.el-input__inner,
+.el-textarea__inner,
+.el-input-number,
+.el-input-number__decrease,
+.el-input-number__increase {
+  color: var(--color-text-primary);
+  background: var(--color-bg-page);
+  border-color: var(--color-border);
+}
+
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder { color: var(--color-text-tertiary); }
+
+.el-input__inner:hover,
+.el-textarea__inner:hover,
+.el-input-number:hover { border-color: #40536f; }
+
+.el-input.is-focus .el-input__inner,
+.el-input__inner:focus,
+.el-textarea__inner:focus,
+.el-input-number:focus { border-color: var(--color-primary); }
+
+.el-input.is-disabled .el-input__inner,
+.el-textarea.is-disabled .el-textarea__inner,
+.el-input-number.is-disabled {
+  color: var(--color-text-tertiary);
+  background: #101726;
+  border-color: var(--color-border-light);
+}
+
+.el-input__prefix,
+.el-input__suffix,
+.el-input-number__decrease,
+.el-input-number__increase,
+.el-form-item__label,
+.el-checkbox,
+.el-radio { color: var(--color-text-secondary); }
+
+.el-checkbox__inner,
+.el-radio__inner { background: var(--color-bg-page); border-color: var(--color-border); }
+.el-checkbox__input.is-checked .el-checkbox__inner,
+.el-checkbox__input.is-indeterminate .el-checkbox__inner,
+.el-radio__input.is-checked .el-radio__inner { background: var(--color-primary); border-color: var(--color-primary); }
+.el-checkbox__input.is-checked + .el-checkbox__label,
+.el-radio__input.is-checked + .el-radio__label { color: var(--color-primary-light); }
+
+.el-switch__core { background: #40506a; border-color: #40506a; }
+.el-switch.is-checked .el-switch__core { background: var(--color-primary); border-color: var(--color-primary); }
+
+/* 卡片、表格与导航 */
+.el-card {
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border-color: var(--color-border);
+  box-shadow: var(--card-shadow);
+}
+
+.el-card__header { border-bottom-color: var(--color-border); }
+
+.el-table,
+.el-table tr,
+.el-table__expanded-cell { color: var(--color-text-primary); background: var(--color-bg-surface); }
+
+/* Element UI 为多个表格单元格规则设置背景，这里使用 important 保证暗色表面覆盖库的白色默认值。 */
+.el-table th.el-table__cell,
+.el-table tr,
+.el-table td.el-table__cell,
+.el-table__fixed,
+.el-table__fixed-right { background: var(--color-bg-surface) !important; border-bottom-color: var(--color-border) !important; }
+
+.el-table th.el-table__cell { color: var(--color-text-secondary); background: var(--table-header-bg) !important; }
+.el-table--border,
+.el-table--group { border-color: var(--color-border); }
+.el-table--border::after,
+.el-table--group::after,
+.el-table::before { background-color: var(--color-border); }
+.el-table--border th.el-table__cell,
+.el-table--border td.el-table__cell { border-right-color: var(--color-border); }
+.el-table tr.el-table__row--striped td.el-table__cell { background: #142033 !important; }
+.el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell { background: #1d3045 !important; }
+.el-table__empty-block { background: var(--color-bg-surface); }
+.el-table__empty-text { color: var(--color-text-tertiary); }
+
+/* 描述列表的标签和内容由 Element UI 分别赋予浅灰、白色背景，必须同时覆盖。 */
+.el-descriptions,
+.el-descriptions__body,
+.el-descriptions__table { color: var(--color-text-primary); background: var(--color-bg-surface); }
+.el-descriptions .el-descriptions-item__cell { border-color: var(--color-border) !important; }
+.el-descriptions .el-descriptions-item__label.is-bordered-label { color: var(--color-text-secondary); background: var(--color-bg-header) !important; }
+.el-descriptions .el-descriptions-item__content.is-bordered-content { color: var(--color-text-primary); background: var(--color-bg-surface) !important; }
+
+/* 步骤条保持状态语义，同时让未激活步骤在深色表面上清晰可读。 */
+.el-step__title { color: var(--color-text-secondary); }
+.el-step__description { color: var(--color-text-tertiary); }
+.el-step__head.is-wait { color: #60708a; border-color: #60708a; }
+.el-step__title.is-wait { color: var(--color-text-tertiary); }
+.el-step__line { background-color: var(--color-border); }
+.el-step__head.is-process { color: var(--color-primary); border-color: var(--color-primary); }
+.el-step__title.is-process { color: var(--color-primary-light); }
+.el-step__head.is-success { color: var(--color-success); border-color: var(--color-success); }
+.el-step__title.is-success { color: var(--color-success); }
+
+.el-tabs--border-card,
+.el-tabs--border-card > .el-tabs__header { background: var(--color-bg-surface); border-color: var(--color-border); }
+.el-tabs--border-card > .el-tabs__header .el-tabs__item { color: var(--color-text-secondary); border-left-color: var(--color-border); }
+.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active { color: var(--color-primary-light); background: var(--color-bg-surface-elevated); border-right-color: var(--color-border); border-left-color: var(--color-border); }
+.el-tabs__item { color: var(--color-text-secondary); }
+.el-tabs__item:hover,
+.el-tabs__item.is-active { color: var(--color-primary-light); }
+.el-tabs__active-bar { background-color: var(--color-primary); }
+.el-tabs__nav-wrap::after { background-color: var(--color-border); }
+
+.el-pagination { color: var(--color-text-secondary); }
+.el-pagination button,
+.el-pager li { color: var(--color-text-secondary); background: var(--color-bg-surface); }
+.el-pager li.active { color: var(--color-primary-light); }
+.el-pagination button:disabled { color: var(--color-text-tertiary); background: var(--color-bg-surface); }
+
+/* 标签不使用实心高亮块：用低明度色面承载状态，避免密集列表产生视觉噪声。 */
+.el-tag,
+.el-tag.el-tag--light,
+.el-tag.el-tag--plain,
+.el-tag.el-tag--dark { color: var(--color-info) !important; background: rgba(115, 167, 232, .12) !important; border-color: rgba(115, 167, 232, .35) !important; }
+.el-tag.el-tag--success { color: var(--color-success) !important; background: rgba(72, 214, 168, .1) !important; border-color: rgba(72, 214, 168, .32) !important; }
+.el-tag.el-tag--warning { color: var(--color-warning) !important; background: rgba(240, 179, 79, .1) !important; border-color: rgba(240, 179, 79, .3) !important; }
+.el-tag.el-tag--danger { color: var(--color-error) !important; background: rgba(240, 113, 120, .1) !important; border-color: rgba(240, 113, 120, .3) !important; }
+.el-tag .el-tag__close { color: currentColor !important; }
+.el-tag .el-tag__close:hover { color: var(--color-text-inverse) !important; background: var(--color-primary-dark) !important; }
+
+/* 反馈组件沿用标签的克制状态色，避免消息、提示和进度条回落到浅色主题。 */
+.el-alert { color: var(--color-text-secondary); background: var(--color-bg-surface-elevated); border: 1px solid var(--color-border); }
+.el-alert--success.is-light { color: var(--color-success); background: rgba(72, 214, 168, .1); border-color: rgba(72, 214, 168, .28); }
+.el-alert--warning.is-light { color: var(--color-warning); background: rgba(240, 179, 79, .1); border-color: rgba(240, 179, 79, .28); }
+.el-alert--error.is-light { color: var(--color-error); background: rgba(240, 113, 120, .1); border-color: rgba(240, 113, 120, .28); }
+.el-alert--info.is-light { color: var(--color-info); background: rgba(115, 167, 232, .1); border-color: rgba(115, 167, 232, .28); }
+.el-alert__description { color: var(--color-text-secondary); }
+.el-progress-bar__outer { background: var(--color-border-light); }
+.el-divider { background-color: var(--color-border); }
+.el-divider__text { color: var(--color-text-secondary); background: var(--color-bg-surface); }
+.el-timeline-item__tail { border-left-color: var(--color-border); }
+.el-badge__content { border-color: var(--color-bg-surface); }
+
+.el-tree { color: var(--color-text-primary); background: transparent; }
+.el-tree-node:focus > .el-tree-node__content,
+.el-tree-node__content:hover { background: var(--color-primary-lighter); }
+
+/* body 挂载的下拉、时间和级联面板 */
+.el-select-dropdown,
+.el-picker-panel,
+.el-cascader-panel,
+.el-dropdown-menu,
+.el-autocomplete-suggestion,
+.el-popover,
+.el-message-box,
+.el-notification,
+.el-message {
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface-elevated);
+  border-color: #3a4a64;
+  box-shadow: var(--shadow-lg);
+}
+
+.el-select-dropdown__item,
+.el-cascader-node,
+.el-dropdown-menu__item,
+.el-autocomplete-suggestion li { color: var(--color-text-secondary); }
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover,
+.el-cascader-node:not(.is-disabled):focus,
+.el-cascader-node:not(.is-disabled):hover,
+.el-dropdown-menu__item:focus,
+.el-dropdown-menu__item:not(.is-disabled):hover,
+.el-autocomplete-suggestion li:hover { color: var(--color-primary-light); background: var(--color-primary-lighter); }
+.el-select-dropdown__item.selected,
+.el-cascader-node.is-active { color: var(--color-primary-light); }
+.el-select-dropdown__empty,
+.el-picker-panel__icon-btn,
+.el-picker-panel__link-btn,
+.el-date-picker__header-label,
+.el-date-table th,
+.el-date-table td.next-month,
+.el-date-table td.prev-month,
+.el-month-table td .cell,
+.el-year-table td .cell { color: var(--color-text-secondary); }
+.el-picker-panel__footer,
+.el-picker-panel__sidebar,
+.el-time-panel,
+.el-time-spinner__item:hover:not(.disabled):not(.active) { background: var(--color-bg-surface-elevated); border-color: var(--color-border); }
+.el-picker-panel__footer { border-top-color: var(--color-border); }
+.el-date-table td.available:hover,
+.el-date-table td.today span,
+.el-date-table td.current:not(.disabled) span,
+.el-month-table td.today .cell,
+.el-month-table td.current:not(.disabled) .cell,
+.el-year-table td.today .cell,
+.el-year-table td.current:not(.disabled) .cell { color: var(--color-primary-light); }
+.el-date-table td.current:not(.disabled) span { color: #062623; background: var(--color-primary); }
+.el-time-spinner__item.active:not(.disabled) { color: var(--color-primary-light); }
+.el-time-spinner__item { color: var(--color-text-secondary); }
+
+.el-tooltip__popper.is-dark { color: var(--color-text-primary); background: #0b1220; }
+.el-tooltip__popper[x-placement^="top"] .popper__arrow,
+.el-tooltip__popper[x-placement^="top"] .popper__arrow::after { border-top-color: #0b1220; }
+.el-tooltip__popper[x-placement^="bottom"] .popper__arrow,
+.el-tooltip__popper[x-placement^="bottom"] .popper__arrow::after { border-bottom-color: #0b1220; }
+
+/* 对话框、抽屉与反馈 */
+.el-dialog,
+.el-drawer { color: var(--color-text-primary); background: var(--color-bg-surface-elevated); }
+.el-dialog__title,
+.el-drawer__title,
+.el-message-box__title,
+.el-message-box__content,
+.el-message__content,
+.el-notification__title,
+.el-notification__content { color: var(--color-text-primary); }
+.el-dialog__header,
+.el-dialog__footer { border-color: var(--color-border); }
+.el-message-box__headerbtn .el-message-box__close,
+.el-dialog__headerbtn .el-dialog__close,
+.el-drawer__close-btn { color: var(--color-text-secondary); }
+.el-message-box__headerbtn:focus .el-message-box__close,
+.el-message-box__headerbtn:hover .el-message-box__close,
+.el-dialog__headerbtn:focus .el-dialog__close,
+.el-dialog__headerbtn:hover .el-dialog__close { color: var(--color-primary-light); }
+.el-message-box__input input.invalid,
+.el-message-box__input input.invalid:focus { border-color: var(--color-error); }
+
+/* 遮罩使用重要声明，覆盖 Element UI 由组件运行时写入的默认白色遮罩色。 */
+.v-modal { background: rgba(3, 9, 18, .72) !important; }
+.el-loading-mask { background-color: rgba(17, 24, 39, .78); }
+.el-loading-spinner .path { stroke: var(--color-primary); }
+.el-loading-text { color: var(--color-primary-light); }
+.el-empty__description p,
+.el-skeleton__item { color: var(--color-text-tertiary); background: #24324a; }
+.el-scrollbar__bar.is-horizontal > div,
+.el-scrollbar__bar.is-vertical > div { background-color: #4a5d79; }

@@ -1,6 +1,12 @@
 <template>
   <div v-if="visible" class="global-search-overlay" @click.self="close">
-    <div class="global-search-panel" @keydown.escape="close">
+    <div
+        class="global-search-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="全局搜索"
+        @keydown.escape="close"
+    >
       <!-- 搜索输入 -->
       <div class="search-header">
         <i class="el-icon-search search-icon"></i>
@@ -8,7 +14,8 @@
             ref="searchInput"
             v-model="query"
             class="search-input"
-            placeholder="搜索应用、分支、凭据..."
+            placeholder="搜索应用、凭据或菜单..."
+            aria-label="搜索应用、凭据或菜单"
             @input="onInput"
             @keydown.up.prevent="navigateUp"
             @keydown.down.prevent="navigateDown"
@@ -101,7 +108,7 @@ export default {
       recentItems: [
         { title: '工作台', typeName: '页面', icon: 'el-icon-s-home', path: '/dashboard' },
         { title: '应用列表', typeName: '页面', icon: 'el-icon-s-platform', path: '/apps' },
-        { title: '部署控制台', typeName: '页面', icon: 'el-icon-s-promotion', path: '/deploy' }
+        { title: '发起部署', typeName: '操作', icon: 'el-icon-s-promotion', path: '/apps' }
       ]
     }
   },
@@ -159,7 +166,7 @@ export default {
               typeName: '应用',
               icon: 'el-icon-s-platform',
               tagType: '',
-              path: '/apps'
+              path: `/apps/${app.id}/edit`
             })
           })
         }
@@ -274,7 +281,7 @@ export default {
 .global-search-panel {
   width: 560px;
   max-height: 480px;
-  background: #fff;
+  background: var(--color-bg-surface-elevated);
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   display: flex;
@@ -293,7 +300,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--color-border-light, #f3f4f6);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .search-icon {
@@ -320,8 +327,8 @@ export default {
   font-size: 11px;
   font-family: var(--font-mono, monospace);
   color: var(--color-text-tertiary, #9ca3af);
-  background: var(--color-gray-100, #f3f4f6);
-  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
 }
 
@@ -448,8 +455,8 @@ export default {
   display: flex;
   gap: 16px;
   padding: 8px 16px;
-  border-top: 1px solid var(--color-border-light, #f3f4f6);
-  background: var(--color-gray-50, #f9fafb);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-bg-header);
 
   span {
     font-size: 11px;
@@ -463,8 +470,8 @@ export default {
     padding: 1px 4px;
     font-size: 10px;
     font-family: var(--font-mono, monospace);
-    background: #fff;
-    border: 1px solid var(--color-border, #e5e7eb);
+    background: var(--color-bg-page);
+    border: 1px solid var(--color-border);
     border-radius: 3px;
   }
 }

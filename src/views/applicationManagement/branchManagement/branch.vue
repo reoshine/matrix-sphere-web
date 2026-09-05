@@ -40,7 +40,7 @@
                 :value="app.id"
             >
               <span style="float: left">{{ app.applicationName }}</span>
-              <span style="float: right; color: #8492a6; font-size: 12px">{{ app.applicationCode }}</span>
+              <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">{{ app.applicationCode }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -502,12 +502,14 @@ export default {
       }
     }
 
-    if (pid) {
+    if (pid && /^[1-9]\d*$/.test(String(pid))) {
       this.applicationId = pid
       localStorage.setItem('applicationId', JSON.stringify(pid))
       this.getApplication(pid)
       this.getBranchListByApplicationId(pid)
       this.preloadCurrentApp(pid)
+    } else if (pid) {
+      localStorage.removeItem('applicationId')
     }
   }
 }
@@ -523,6 +525,16 @@ export default {
 
   /deep/ .el-card__body {
     padding: @space-4 @space-5;
+  }
+
+  /deep/ .el-descriptions-item__label.is-bordered-label {
+    color: @text-secondary;
+    background: @bg-header !important;
+  }
+
+  /deep/ .el-descriptions-item__content.is-bordered-content {
+    color: @text-primary;
+    background: @bg-footer !important;
   }
 }
 
@@ -575,7 +587,7 @@ export default {
 .text-danger {
   color: @error-color;
   &:hover {
-    color: #f78989;
+    color: @error-color;
   }
 }
 </style>

@@ -761,8 +761,8 @@ export default {
     // --- Formatters ---
     formatTime(val) { return val ? val.replace('T', ' ') : ''; },
     getStatusColor(status) {
-      const map = { 1: '#409EFF', 2: '#67C23A', 3: '#F56C6C' };
-      return map[status] || '#909399';
+      const map = { 1: '#20bfa9', 2: '#48d6a8', 3: '#f07178' };
+      return map[status] || '#60708a';
     },
     getStatusIcon(status) {
       if (status === 1) return 'el-icon-loading';
@@ -811,6 +811,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import "~@/assets/css/theme.less";
+
 /* 部署环境组件 — 适配卡片网格布局 */
 .deploy-container {
   padding: 12px;
@@ -818,12 +820,12 @@ export default {
 
 .process-card, .module-card {
   margin-bottom: 12px;
-  border: 1px solid #ebeef5;
+  border: 1px solid @border-color;
 
   ::v-deep .el-card__header {
     padding: 15px 20px;
-    background-color: #fff;
-    border-bottom: 1px solid #ebeef5;
+    background-color: @bg-header;
+    border-bottom: 1px solid @border-color;
   }
 
   ::v-deep .el-card__body {
@@ -836,7 +838,7 @@ export default {
 }
 
 .process-card {
-  background: #fdfdfd;
+  background: @bg-footer;
 
   .process-wrapper {
     padding: 10px 20px;
@@ -851,12 +853,12 @@ export default {
   }
 
   ::v-deep .el-step__line {
-    background-color: #C0C4CC !important;
+    background-color: @border-color !important;
   }
 
   ::v-deep .el-step__head.is-success .el-step__icon {
-    background-color: #67C23A;
-    color: #fff;
+    background-color: @success-color;
+    color: #082a23;
     border: none;
     width: 24px;
     height: 24px;
@@ -868,8 +870,8 @@ export default {
   }
 
   ::v-deep .el-step__head.is-error .el-step__icon {
-    background-color: #F56C6C;
-    color: #fff;
+    background-color: @error-color;
+    color: #380d13;
     border: none;
     width: 24px;
     height: 24px;
@@ -882,13 +884,13 @@ export default {
 
   ::v-deep .el-step__head.is-error .el-step__title,
   ::v-deep .el-step__head.is-error .el-step__description {
-    color: #F56C6C;
+    color: @error-color;
   }
 
   ::v-deep .el-step__head.is-process .el-step__icon {
-    background-color: #fff;
-    //border: 2px solid #303133;
-    color: #303133;
+    background-color: @bg-surface-elevated;
+    border: 2px solid @primary-color;
+    color: @primary-light;
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -898,8 +900,8 @@ export default {
   }
 
   ::v-deep .el-step__head.is-wait .el-step__icon {
-    border: 2px solid #C0C4CC;
-    color: #C0C4CC;
+    border: 2px solid @text-tertiary;
+    color: @text-tertiary;
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -914,8 +916,8 @@ export default {
   .step-desc-card {
     padding: 8px 12px;
     border-radius: 6px;
-    border-left: 3px solid #E6A23C;
-    background: #fef7ee;
+    border-left: 3px solid @warning-color;
+    background: rgba(240, 179, 79, 0.1);
     font-size: 12px;
     line-height: 1.6;
     max-height: 280px;
@@ -923,11 +925,11 @@ export default {
     word-break: break-all;
   }
   .step-desc-card.is-error {
-    border-left-color: #F56C6C;
-    background: #fef0f0;
+    border-left-color: @error-color;
+    background: rgba(240, 113, 120, 0.1);
   }
   .step-desc-text {
-    color: #606266;
+    color: @text-secondary;
     display: block;
   }
   .step-desc-actions {
@@ -949,14 +951,14 @@ export default {
   .header-title {
     font-size: 15px;
     font-weight: bold;
-    color: #303133;
+    color: @text-primary;
 
     i {
       margin-right: 6px;
     }
 
     .text-success {
-      color: #67C23A;
+      color: @success-color;
     }
   }
 }
@@ -991,11 +993,11 @@ export default {
     .log-time {
       font-size: 13px;
       font-weight: bold;
-      color: #606266;
+      color: @text-secondary;
     }
 
     .text-danger {
-      color: #F56C6C;
+      color: @error-color;
     }
   }
 }
@@ -1010,14 +1012,14 @@ export default {
 /* 时间戳样式微调 */
 ::v-deep .el-timeline-item__timestamp {
   font-weight: bold;
-  color: #303133;
+  color: @text-primary;
   font-size: 13px;
 }
 
 /* Timeline 卡片样式 */
 .timeline-card {
-  border: 1px solid #ebeef5;
-  background-color: #fff;
+  border: 1px solid @border-color;
+  background-color: @bg-footer;
 
   ::v-deep .el-card__body {
     padding: 12px 15px; /* 紧凑一点 */
@@ -1029,17 +1031,17 @@ export default {
     justify-content: space-between;
     align-items: center;
     padding-bottom: 10px;
-    border-bottom: 1px dashed #e4e7ed;
+    border-bottom: 1px dashed @border-color;
     margin-bottom: 10px;
 
     .user-info {
       font-size: 13px;
-      color: #606266;
+      color: @text-secondary;
       display: flex;
       align-items: center;
 
       i { margin-right: 4px; font-size: 14px; }
-      .username { font-weight: bold; color: #303133; margin-right: 4px; }
+      .username { font-weight: bold; color: @text-primary; margin-right: 4px; }
       .action-text { margin-right: 4px; }
 
       /* ★★★ 修复点开始 ★★★ */
@@ -1050,10 +1052,10 @@ export default {
       }
 
       /* 必须显式定义这几个颜色类，否则 JS 返回了类名也没效果 */
-      .text-primary { color: #409EFF; } /* 默认蓝 */
-      .text-warning { color: #E6A23C; } /* 重新部署 - 橙色 */
-      .text-danger  { color: #F56C6C; } /* Main部署 - 红色 */
-      .text-info    { color: #909399; } /* 退出部署 - 灰色 */
+      .text-primary { color: @primary-light; }
+      .text-warning { color: @warning-color; }
+      .text-danger  { color: @error-color; }
+      .text-info    { color: @text-tertiary; }
       /* ★★★ 修复点结束 ★★★ */
     }
   }
@@ -1064,11 +1066,11 @@ export default {
 
     .branch-row {
       margin-bottom: 8px;
-      .label { color: #909399; margin-right: 8px; }
+      .label { color: @text-tertiary; margin-right: 8px; }
       .release-tag {
         font-family: monospace;
-        background-color: #ecf5ff;
-        color: #409EFF;
+        background-color: @primary-lighter;
+        color: @primary-light;
         padding: 2px 6px;
         border-radius: 4px;
       }
@@ -1077,7 +1079,7 @@ export default {
     .branch-section {
       margin-bottom: 8px;
       .label-title {
-        color: #909399;
+        color: @text-tertiary;
         font-size: 12px;
         margin-bottom: 5px;
       }
@@ -1088,8 +1090,8 @@ export default {
 
         .branch-tag {
           border: none;
-          background-color: #f4f4f5;
-          color: #606266;
+          background-color: @bg-header;
+          color: @text-secondary;
           font-family: monospace; /* 代码风格字体 */
         }
       }
@@ -1098,19 +1100,19 @@ export default {
     /* 错误提示框 - 重点优化 */
     .error-alert {
       margin-top: 12px;
-      background-color: #fef0f0;
+      background-color: rgba(240, 113, 120, 0.1);
       border-radius: 4px;
       padding: 10px;
-      border-left: 4px solid #F56C6C; /* 左侧红线强调 */
+      border-left: 4px solid @error-color;
 
       .error-title {
-        color: #F56C6C;
+        color: @error-color;
         font-weight: bold;
         margin-bottom: 4px;
         font-size: 12px;
       }
       .error-content {
-        color: #5e6d82;
+        color: @text-secondary;
         font-size: 12px;
         line-height: 1.5;
         word-break: break-all; /* 防止长报错撑破布局 */
@@ -1121,6 +1123,8 @@ export default {
 </style>
 
 <style lang="less">
+@import "~@/assets/css/theme.less";
+
 /* 部署操作确认弹窗样式 */
 .deploy-confirm-dialog {
   .el-message-box__header {
@@ -1128,7 +1132,7 @@ export default {
     .el-message-box__title {
       font-size: 17px;
       font-weight: 600;
-      color: #303133;
+      color: @text-primary;
     }
   }
 
@@ -1138,7 +1142,7 @@ export default {
 
   .el-message-box__message {
     padding: 0;
-    color: #606266;
+    color: @text-secondary;
     line-height: 1.6;
   }
 
@@ -1156,7 +1160,7 @@ export default {
 
   .deploy-confirm-label {
     font-size: 13px;
-    color: #909399;
+    color: @text-tertiary;
     width: 68px;
     flex-shrink: 0;
   }
@@ -1167,33 +1171,33 @@ export default {
     border-radius: 4px;
     font-size: 13px;
     font-family: 'SF Mono', 'Menlo', 'Monaco', Consolas, monospace;
-    background: #f0f2f5;
-    color: #606266;
+    background: @bg-header;
+    color: @text-secondary;
     max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 
     &--env {
-      background: #ecf5ff;
-      color: #409EFF;
+      background: @primary-lighter;
+      color: @primary-light;
       font-family: inherit;
       font-weight: 600;
       letter-spacing: 1px;
     }
 
     &--danger {
-      background: #fef0f0;
-      color: #F56C6C;
+      background: rgba(240, 113, 120, 0.1);
+      color: @error-color;
     }
   }
 
   .deploy-confirm-hint {
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid #ebeef5;
+    border-top: 1px solid @border-color;
     font-size: 12px;
-    color: #909399;
+    color: @text-tertiary;
     line-height: 1.5;
   }
 
@@ -1201,10 +1205,10 @@ export default {
     margin-top: 14px;
     padding: 10px 14px;
     border-radius: 6px;
-    background: #fef0f0;
-    border-left: 3px solid #F56C6C;
+    background: rgba(240, 113, 120, 0.1);
+    border-left: 3px solid @error-color;
     font-size: 13px;
-    color: #F56C6C;
+    color: @error-color;
     line-height: 1.5;
   }
 }

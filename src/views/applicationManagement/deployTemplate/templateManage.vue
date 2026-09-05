@@ -270,7 +270,7 @@ export default {
   color: @error-color;
 
   &:hover {
-    color: #f78989;
+    color: var(--color-error);
   }
 }
 </style>
