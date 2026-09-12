@@ -1,8 +1,8 @@
 import { sphere } from '@/axios'
 
 // ====================================== 应用分组 ======================================
-export function queryList(data) {
-    return sphere.post('/applicationGroup/v1/list', data)
+export function queryList() {
+    return sphere.post('/applicationGroup/v1/list')
 }
 
 export function queryPage(data) {

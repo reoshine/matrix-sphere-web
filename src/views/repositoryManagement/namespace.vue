@@ -1,7 +1,13 @@
 <template>
-  <PageContainer title="命名空间" subtitle="管理 Git 仓库命名空间">
+  <PageContainer title="命名空间" subtitle="Git 仓库命名空间能力">
     <el-card shadow="never">
-      <el-empty description="命名空间管理功能正在开发中..." />
+      <el-alert
+        title="尚未接入后端能力"
+        description="当前版本暂不支持命名空间查询与维护，入口已禁用。"
+        type="info"
+        show-icon
+        :closable="false"
+      />
     </el-card>
   </PageContainer>
 </template>

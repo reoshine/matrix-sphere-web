@@ -1,16 +1,9 @@
 import { sphere } from '@/axios'
 
-// 获取应用下的模板列表
-export function getTemplateList(data) {
-    // 兼容逻辑：如果传的是数字/字符串，视为 applicationId；如果是对象，视为查询参数
-    let query;
-    if (typeof data === 'object') {
-        query = data;
-    } else {
-        query = { applicationId: data, scope: 'APP' };
-    }
-
-    return sphere.post(`/deployTemplate/v1/list`, query)
+// 获取系统模板列表
+export function getTemplateList(query = {}) {
+    const { templateType, jobType, keyword } = query
+    return sphere.post('/deployTemplate/v1/list', { templateType, jobType, keyword })
 }
 
 // 获取模板详情

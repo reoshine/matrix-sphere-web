@@ -66,17 +66,12 @@
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item prop="initTemplateId" label="初始化构建模板">
-                  <el-select v-model="modifyApplicationForm.initTemplateId" placeholder="请选择初始化模板" style="width: 100%">
-                    <el-option
-                        v-for="item in templateList"
-                        :key="item.id"
-                        :label="item.templateName"
-                        :value="item.id"
-                    />
+                <el-form-item prop="jobType" label="构建类型">
+                  <el-select v-model="modifyApplicationForm.jobType" placeholder="请选择构建类型" style="width: 100%">
+                    <el-option v-for="item in jobTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
                   </el-select>
                   <div class="form-tip">
-                    <i class="el-icon-info"></i> 选中后，系统将以该模板为原型，为您自动生成 Jenkinsfile 和 Job 配置。
+                    <i class="el-icon-info"></i> 保存后系统会使用该类型对应的默认系统模板更新 Jenkins Job。
                   </div>
                 </el-form-item>
               </el-col>
@@ -102,9 +97,9 @@
               <el-button type="text" icon="el-icon-document-copy" size="small" @click="copyCode">复制配置</el-button>
             </div>
           </div>
-          <div class="pipeline-editor" :class="{ 'light-theme': isLightTheme }">
-            <el-empty v-if="!modifyApplicationForm.pipelineScript" description="暂无流水线配置信息，请先在基础配置中选择初始化模板" />
-            <codemirror v-else v-model="modifyApplicationForm.pipelineScript" :options="cmOptions" />
+          <div v-loading="pipelineLoading" class="pipeline-editor" :class="{ 'light-theme': isLightTheme }">
+            <el-empty v-if="!systemPipelineScript" description="当前构建类型尚未配置默认系统 Jenkinsfile" />
+            <codemirror v-else v-model="systemPipelineScript" :options="cmOptions" />
           </div>
         </div>
       </el-tab-pane>
@@ -156,7 +151,7 @@ import 'codemirror/addon/selection/active-line.js'
 import PageContainer from '@/components/common/PageContainer.vue'
 import { getApplicationById, modifyApplication } from '@/views/applicationManagement/applicationList/api'
 import { queryList } from '@/views/applicationManagement/applicationGroup/api'
-import { getTemplateList, getTemplateDetail } from '@/views/applicationManagement/deployTemplate/api'
+import { getTemplateList } from '@/views/applicationManagement/deployTemplate/api'
 
 export default {
   name: 'applicationEdit',
@@ -168,6 +163,7 @@ export default {
     return {
       applicationId: '',
       loading: false,
+      pipelineLoading: false,
       activeTab: 'basic',
       editorTheme: localStorage.getItem('matrix_editor_theme') || 'dracula',
 
@@ -180,15 +176,20 @@ export default {
         gitUrl: '',
         enableStatus: null,
         jobXml: '',
-        pipelineScript: '',
-        initTemplateId: ''
+        jobType: ''
       },
 
+      systemPipelineScript: '',
+
       applicationGroupList: [],
-      templateList: [],
       enableStatusList: [
         { label: '启用', value: 1 },
         { label: '停用', value: 0 }
+      ],
+      jobTypeOptions: [
+        { label: '后端可执行应用', value: 'backend' },
+        { label: '后端类库', value: 'backend_library' },
+        { label: '前端应用', value: 'frontend' }
       ],
 
       rules: {
@@ -207,8 +208,8 @@ export default {
         enableStatus: [
           { required: true, message: '请选择状态', trigger: 'change' }
         ],
-        initTemplateId: [
-          { required: true, message: '请选择初始化模板', trigger: 'change' }
+        jobType: [
+          { required: true, message: '请选择构建类型', trigger: 'change' }
         ]
       }
     }
@@ -234,43 +235,41 @@ export default {
   },
 
   watch: {
-    'modifyApplicationForm.initTemplateId': {
+    'modifyApplicationForm.jobType': {
       handler(newVal) {
-        console.log('[Watcher] initTemplateId changed:', newVal)
-        this.fetchTemplateScript(newVal)
+        this.fetchSystemPipeline(newVal)
       }
     }
   },
 
   methods: {
     getGroupList() {
-      queryList({ searchText: '', enableStatus: 1 }).then(res => {
+      queryList().then(res => {
         if (res.code === 200) {
           this.applicationGroupList = res.data || []
         }
       })
     },
 
-    getTemplateList() {
-      getTemplateList().then(res => {
-        if (res.code === 200) {
-          this.templateList = res.data || []
-        }
-      })
-    },
-
-    fetchTemplateScript(templateId) {
-      if (!templateId) {
-        this.modifyApplicationForm.pipelineScript = ''
+    async fetchSystemPipeline(jobType) {
+      if (!jobType) {
+        this.systemPipelineScript = ''
         return
       }
-      getTemplateDetail(templateId).then(res => {
+      this.pipelineLoading = true
+      try {
+        const res = await getTemplateList({ templateType: 'JENKINSFILE', jobType })
         if (res.code === 200 && res.data) {
-          this.modifyApplicationForm.pipelineScript = res.data.templateContent || res.data.pipelineScript || res.data.jenkinsfileContent || ''
+          const templates = res.data || []
+          const template = templates.find(item => item.isDefault) || templates[0]
+          this.systemPipelineScript = template ? template.templateContent || '' : ''
         }
-      }).catch(err => {
-        this.$message.warning('获取模板脚本失败：' + err)
-      })
+      } catch (e) {
+        this.systemPipelineScript = ''
+        this.$message.warning('默认系统流水线模板加载失败')
+      } finally {
+        this.pipelineLoading = false
+      }
     },
 
     fetchApplication(id) {
@@ -291,7 +290,16 @@ export default {
       this.$refs.modifyApplicationFormRef.validate((valid) => {
         if (valid) {
           this.loading = true
-          modifyApplication({ ...this.modifyApplicationForm }).then(res => {
+          const payload = {
+            id: this.modifyApplicationForm.id,
+            applicationCode: this.modifyApplicationForm.applicationCode,
+            applicationName: this.modifyApplicationForm.applicationName,
+            applicationGroupId: this.modifyApplicationForm.applicationGroupId,
+            gitUrl: this.modifyApplicationForm.gitUrl,
+            enableStatus: this.modifyApplicationForm.enableStatus,
+            jobType: this.modifyApplicationForm.jobType
+          }
+          modifyApplication(payload).then(res => {
             if (res.code === 200) {
               this.$message.success('配置保存成功')
               this.$router.back()
@@ -308,9 +316,9 @@ export default {
     },
 
     copyCode() {
-      if (!this.modifyApplicationForm.pipelineScript) return
+      if (!this.systemPipelineScript) return
       const input = document.createElement('textarea')
-      input.value = this.modifyApplicationForm.pipelineScript
+      input.value = this.systemPipelineScript
       document.body.appendChild(input)
       input.select()
       document.execCommand('Copy')
@@ -325,7 +333,6 @@ export default {
 
   created() {
     this.getGroupList()
-    this.getTemplateList()
     let pid = this.$route.params.id || this.$route.params.applicationId || this.$route.query.applicationId
     if (!pid && localStorage.getItem('applicationId')) {
       try {

@@ -9,13 +9,6 @@ export function queryList(data) {
     return sphere.post('/application/v1/list', data)
 }
 
-export function exportApplicationTemplate() {
-    return sphere.get('/application/v1/exportApplicationTemplate', {
-        params: {},
-        responseType: 'blob'
-    })
-}
-
 export function saveApplication(data) {
     return sphere.post('/application/v1/create', data)
 }
@@ -34,10 +27,6 @@ export function removeApplication(data) {
 
 export function enableChange(data) {
     return sphere.post('/application/v1/update-enable-status', data)
-}
-
-export function importFile(data, config) {
-    return sphere.post('/application/v1/importApplication', data, config)
 }
 
 // ====================================== 分支管理 ======================================

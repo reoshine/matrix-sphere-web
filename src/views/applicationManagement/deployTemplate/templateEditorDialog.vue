@@ -46,6 +46,14 @@
         </el-col>
       </el-row>
 
+      <el-form-item v-if="form.templateType === 'JENKINSFILE'" label="构建类型" prop="jobType">
+        <el-select v-model="form.jobType" placeholder="请选择构建类型" style="width: 100%">
+          <el-option label="后端可执行应用" value="backend" />
+          <el-option label="后端类库" value="backend_library" />
+          <el-option label="前端应用" value="frontend" />
+        </el-select>
+      </el-form-item>
+
       <el-form-item label="模板名称" prop="templateName">
         <el-input v-model="form.templateName" placeholder="例如：标准Java构建模板"></el-input>
       </el-form-item>
@@ -113,8 +121,6 @@ export default {
     visible: { type: Boolean, default: false },
     isEdit: { type: Boolean, default: false },
     currentData: { type: Object, default: () => ({}) },
-    applicationId: { type: [Number, String], required: false, default: null },
-    scope: { type: String, default: 'APP' },
     defaultType: { type: String, default: 'JOB_CONFIG_XML' }
   },
   data() {
@@ -125,8 +131,8 @@ export default {
       editorTheme: 'dracula',
       form: {
         id: null,
-        scope: 'APP',
         templateType: 'JOB_CONFIG_XML',
+        jobType: '',
         templateName: '',
         templateContent: '',
         isDefault: false,
@@ -135,7 +141,17 @@ export default {
       rules: {
         templateType: [{ required: true, message: '请选择模板类型', trigger: 'change' }],
         templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }],
-        templateContent: [{ required: true, message: '请输入模板内容', trigger: 'blur' }]
+        templateContent: [{ required: true, message: '请输入模板内容', trigger: 'blur' }],
+        jobType: [{
+          validator: (rule, value, callback) => {
+            if (this.form.templateType === 'JENKINSFILE' && !value) {
+              callback(new Error('请选择构建类型'))
+              return
+            }
+            callback()
+          },
+          trigger: 'change'
+        }]
       }
     }
   },
@@ -200,9 +216,7 @@ export default {
       if (this.isEdit && this.currentData.id) {
         this.form = Object.assign({}, this.form, this.currentData);
       } else {
-        if (this.applicationId) this.form.applicationId = this.applicationId;
-        this.form.scope = this.scope;
-        this.form.templateType = this.defaultType;
+        this.form = Object.assign({}, this.form, this.currentData, { templateType: this.defaultType });
       }
       // 如果有保存用户偏好，可以在这里读取 localStorage 中的 theme
       const savedTheme = localStorage.getItem('matrix_editor_theme');
@@ -217,14 +231,13 @@ export default {
     resetForm() {
       this.form = {
         id: null,
-        scope: this.scope,
         templateType: 'JOB_CONFIG_XML',
+        jobType: '',
         templateName: '',
         templateContent: '',
         isDefault: false,
         remark: ''
       };
-      if (this.applicationId) this.form.applicationId = this.applicationId;
     },
     handleSubmit() {
       // 保存用户的主题偏好
@@ -234,8 +247,7 @@ export default {
         if (valid) {
           this.submitting = true;
           const payload = { ...this.form };
-          if (!payload.scope) payload.scope = this.scope;
-          if (this.applicationId) payload.applicationId = this.applicationId;
+          if (payload.templateType !== 'JENKINSFILE') payload.jobType = null;
 
           const apiFunc = this.isEdit ? updateTemplate : createTemplate;
 

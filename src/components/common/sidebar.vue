@@ -66,9 +66,11 @@
                     v-if="!subSubMenu.hidden"
                     :index="subSubMenu.menuUrl"
                     :key="subSubMenu.menuUrl"
+                    :disabled="isUnavailableMenu(subSubMenu)"
+                    :title="isUnavailableMenu(subSubMenu) ? '尚未接入后端能力' : ''"
                   >
                     <i :class="subSubMenu.icon"></i>
-                    {{ subSubMenu.menuName }}
+                    {{ menuLabel(subSubMenu) }}
                   </el-menu-item>
                 </el-submenu>
 
@@ -76,9 +78,11 @@
                   v-else-if="!subMenu.hidden"
                   :index="subMenu.menuUrl"
                   :key="subMenu.menuUrl"
+                  :disabled="isUnavailableMenu(subMenu)"
+                  :title="isUnavailableMenu(subMenu) ? '尚未接入后端能力' : ''"
                 >
                   <i :class="subMenu.icon"></i>
-                  <span slot="title">{{ subMenu.menuName }}</span>
+                  <span slot="title">{{ menuLabel(subMenu) }}</span>
                 </el-menu-item>
               </template>
             </el-submenu>
@@ -88,9 +92,11 @@
               v-else-if="!menu.hidden"
               :index="menu.menuUrl"
               :key="menu.menuUrl"
+              :disabled="isUnavailableMenu(menu)"
+              :title="isUnavailableMenu(menu) ? '尚未接入后端能力' : ''"
             >
               <i :class="menu.icon"></i>
-              <span slot="title">{{ menu.menuName }}</span>
+              <span slot="title">{{ menuLabel(menu) }}</span>
             </el-menu-item>
           </template>
         </el-menu>
@@ -210,6 +216,15 @@ export default {
   },
 
   methods: {
+    isUnavailableMenu(menu) {
+      const menuUrl = menu && menu.menuUrl ? menu.menuUrl : '';
+      return menuUrl.includes('/resources/namespaces') || menuUrl.includes('repositoryManagement/namespace');
+    },
+
+    menuLabel(menu) {
+      return this.isUnavailableMenu(menu) ? `${menu.menuName}（未接入）` : menu.menuName;
+    },
+
     handleResize() {
       const isSmallScreen = window.innerWidth < 768;
       if (isSmallScreen && !this.collapse) {

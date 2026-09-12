@@ -4,19 +4,11 @@
       <el-form :inline="true" :model="queryParams" size="small" @submit.native.prevent>
         <el-form-item label="服务器名称">
           <el-input
-              v-model="queryParams.name"
-              placeholder="请输入名称"
+              v-model="queryParams.searchText"
+              placeholder="请输入服务器名称"
               clearable
               @keyup.enter.native="handleQuery"
               prefix-icon="el-icon-search"
-          />
-        </el-form-item>
-        <el-form-item label="IP地址">
-          <el-input
-              v-model="queryParams.ip"
-              placeholder="精确匹配"
-              clearable
-              prefix-icon="el-icon-location-outline"
           />
         </el-form-item>
         <el-form-item>
@@ -62,37 +54,28 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="服务器名称" prop="name" min-width="150" show-overflow-tooltip />
-      <el-table-column label="主机 IP" prop="ip" width="140" />
+      <el-table-column label="服务器名称" prop="serverName" min-width="150" show-overflow-tooltip />
+      <el-table-column label="主机 IP" prop="ipAddress" width="150" />
       <el-table-column label="SSH端口" prop="port" width="100" align="center" />
-
-      <el-table-column label="创建时间" prop="createTime" width="160" align="center">
+      <el-table-column label="认证方式" width="130" align="center">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
+          <span>{{ scope.row.authType === 2 ? 'SSH 密钥' : '密码' }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="描述" prop="description" min-width="180" show-overflow-tooltip />
 
       <el-table-column label="操作" align="center" width="280" fixed="right">
         <template slot-scope="scope">
           <el-button type="text" icon="el-icon-edit" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button type="text" icon="el-icon-monitor" size="small" class="text-success" @click="handleTerminal(scope.row)">WebSSH</el-button>
+          <el-tooltip content="WebSSH 能力将在 M1 阶段启用" placement="top">
+            <span class="unavailable-action">
+              <el-button type="text" icon="el-icon-monitor" size="small" disabled>WebSSH</el-button>
+            </span>
+          </el-tooltip>
           <el-button type="text" icon="el-icon-delete" size="small" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-
-    <div class="pagination-container">
-      <el-pagination
-          background
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          :current-page.sync="queryParams.pageNum"
-          :page-size.sync="queryParams.pageSize"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-      />
-    </div>
 
     <el-drawer
         :title="dialogTitle"
@@ -107,13 +90,13 @@
           <div class="section-title">基础信息</div>
           <el-row :gutter="20">
             <el-col :span="24">
-              <el-form-item label="服务器名称" prop="name">
-                <el-input v-model="form.name" placeholder="例如: 生产环境-DB-01" />
+              <el-form-item label="服务器名称" prop="serverName">
+                <el-input v-model="form.serverName" placeholder="例如：生产环境-DB-01" />
               </el-form-item>
             </el-col>
             <el-col :span="16">
-              <el-form-item label="主机 IP" prop="ip">
-                <el-input v-model="form.ip" placeholder="192.168.x.x" />
+              <el-form-item label="主机 IP" prop="ipAddress">
+                <el-input v-model="form.ipAddress" placeholder="192.168.x.x" />
               </el-form-item>
             </el-col>
             <el-col :span="8">
@@ -128,28 +111,37 @@
             <el-input v-model="form.username" placeholder="root" />
           </el-form-item>
 
-          <el-form-item label="认证方式">
-            <el-radio-group v-model="form.authType">
+          <el-form-item label="认证方式" prop="authType">
+            <el-radio-group v-model="form.authType" @change="handleAuthTypeChange">
               <el-radio label="PASSWORD">密码认证</el-radio>
-              <el-radio label="KEY">密钥认证</el-radio>
+              <el-radio label="PRIVATE_KEY">密钥认证</el-radio>
             </el-radio-group>
           </el-form-item>
 
           <el-form-item v-if="form.authType === 'PASSWORD'" label="密码" prop="password">
             <el-input v-model="form.password" type="password" show-password placeholder="请输入SSH密码" />
+            <div v-if="form.id" class="field-helper">密码不会回显，保存修改时请重新输入。</div>
           </el-form-item>
 
-          <el-form-item v-else label="私钥内容" prop="privateKey">
-            <el-input v-model="form.privateKey" type="textarea" :rows="4" placeholder="-----BEGIN RSA PRIVATE KEY-----" />
+          <el-form-item v-else label="服务器私钥路径" prop="privateKeyPath">
+            <el-input v-model="form.privateKeyPath" placeholder="例如：/etc/matrix-sphere/keys/id_rsa" />
+            <div class="field-helper">
+              仅填写后端服务器可访问的文件路径，不要粘贴私钥正文。
+              <span v-if="form.id && form.privateKeyConfigured">原配置已隐藏，保存修改时请重新填写。</span>
+            </div>
           </el-form-item>
 
-          <el-form-item label="备注">
-            <el-input v-model="form.remark" type="textarea" :rows="2" />
+          <el-form-item label="描述" prop="description">
+            <el-input v-model="form.description" type="textarea" :rows="2" maxlength="500" show-word-limit />
           </el-form-item>
         </el-form>
 
         <div class="drawer-footer">
-          <el-button type="warning" plain :loading="testing" icon="el-icon-connection" @click="handleTestConnection">测试连接</el-button>
+          <el-tooltip content="连接测试能力将在 M1 阶段启用" placement="top">
+            <span class="unavailable-action">
+              <el-button type="warning" plain icon="el-icon-connection" disabled>测试连接</el-button>
+            </span>
+          </el-tooltip>
           <div>
             <el-button @click="drawerVisible = false">取 消</el-button>
             <el-button type="primary" :loading="submitLoading" @click="submitForm">确 定</el-button>
@@ -161,60 +153,66 @@
 </template>
 
 <script>
-// 引入 API
 import {
   getServerList,
+  getServerDetail,
   addServer,
   updateServer,
-  deleteServer,
-  testServerConnection
+  deleteServer
 } from './api'
+
+const AUTH_TYPE = Object.freeze({
+  PASSWORD: 1,
+  PRIVATE_KEY: 2
+})
+
+function createDefaultForm() {
+  return {
+    id: undefined,
+    serverName: '',
+    ipAddress: '',
+    port: 22,
+    username: 'root',
+    authType: 'PASSWORD',
+    password: '',
+    privateKeyPath: '',
+    privateKeyConfigured: false,
+    description: ''
+  }
+}
 
 export default {
   name: "serverManagement",
   data() {
+    const validatePassword = (rule, value, callback) => {
+      if (this.form.authType === 'PASSWORD' && !value) {
+        callback(new Error('密码认证必须填写登录密码'))
+        return
+      }
+      callback()
+    }
+    const validatePrivateKeyPath = (rule, value, callback) => {
+      if (this.form.authType === 'PRIVATE_KEY' && !value) {
+        callback(new Error('密钥认证必须填写服务器私钥路径'))
+        return
+      }
+      callback()
+    }
     return {
-      // 遮罩层
       loading: true,
-      // 提交状态
       submitLoading: false,
-      // 测试连接状态
-      testing: false,
-      // 选中数组
       selectedIds: [],
-      // 表格数据
       tableData: [],
-      // 总条数
-      total: 0,
-      // 查询参数
       queryParams: {
-        pageNum: 1,
-        pageSize: 10,
-        name: undefined,
-        ip: undefined
+        searchText: ''
       },
-      // 抽屉显示
       drawerVisible: false,
-      // 抽屉标题
       dialogTitle: '',
-      // 表单参数
-      form: {
-        id: undefined,
-        name: '',
-        ip: '',
-        port: 22,
-        username: 'root',
-        authType: 'PASSWORD', // PASSWORD or KEY
-        password: '',
-        privateKey: '',
-        remark: ''
-      },
-      // 表单校验
+      form: createDefaultForm(),
       rules: {
-        name: [{required: true, message: "服务器名称不能为空", trigger: "blur"}],
-        ip: [
+        serverName: [{required: true, message: "服务器名称不能为空", trigger: "blur"}],
+        ipAddress: [
           {required: true, message: "主机IP不能为空", trigger: "blur"},
-          // 简单的IP校验正则
           {
             pattern: /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/,
             message: "IP地址格式不正确",
@@ -222,201 +220,166 @@ export default {
           }
         ],
         username: [{required: true, message: "用户名不能为空", trigger: "blur"}],
-        password: [{required: false, trigger: "blur"}], // 根据逻辑动态校验
-        port: [{required: true, message: "端口不能为空", trigger: "blur"}]
+        authType: [{required: true, message: "请选择认证方式", trigger: "change"}],
+        password: [{validator: validatePassword, trigger: "blur"}],
+        privateKeyPath: [{validator: validatePrivateKeyPath, trigger: "blur"}],
+        port: [{required: true, message: "端口不能为空", trigger: "change"}]
       }
-    };
+    }
   },
   created() {
-    this.getList();
+    this.getList()
   },
   methods: {
-    /** 查询服务器列表 */
     getList() {
-      this.loading = true;
+      this.loading = true
       getServerList(this.queryParams).then(response => {
         if (response.code === 200) {
-          this.tableData = response.data || [];
-          this.total = this.tableData.length;
+          this.tableData = response.data || []
         } else {
-          this.$message.error(response.message || '获取数据失败');
+          this.$message.error(response.message || '获取数据失败')
         }
-        this.loading = false;
+        this.loading = false
       }).catch(() => {
-        this.loading = false;
-      });
+        this.loading = false
+      })
     },
-    /** 搜索按钮操作 */
     handleQuery() {
-      this.queryParams.pageNum = 1;
-      this.getList();
+      this.getList()
     },
-    /** 重置按钮操作 */
     resetQuery() {
-      this.queryParams.name = '';
-      this.queryParams.ip = '';
-      this.handleQuery();
+      this.queryParams.searchText = ''
+      this.handleQuery()
     },
-    /** 多选框选中数据 */
     handleSelectionChange(selection) {
-      this.selectedIds = selection.map(item => item.id);
+      this.selectedIds = selection.map(item => item.id)
     },
-    /** 分页大小改变 */
-    handleSizeChange(val) {
-      this.queryParams.pageSize = val;
-      this.getList();
-    },
-    /** 当前页改变 */
-    handleCurrentChange(val) {
-      this.queryParams.pageNum = val;
-      this.getList();
-    },
-    /** 表单重置 */
     resetForm() {
-      this.form = {
-        id: undefined,
-        name: '',
-        ip: '',
-        port: 22,
-        username: 'root',
-        authType: 'PASSWORD',
-        password: '',
-        privateKey: '',
-        remark: ''
-      };
+      this.form = createDefaultForm()
       this.$nextTick(() => {
         if (this.$refs.form) {
-          this.$refs.form.clearValidate();
+          this.$refs.form.clearValidate()
         }
-      });
+      })
     },
-    /** 新增按钮操作 */
     handleAdd() {
-      this.resetForm();
-      this.dialogTitle = "接入新服务器";
-      this.drawerVisible = true;
+      this.resetForm()
+      this.dialogTitle = "接入新服务器"
+      this.drawerVisible = true
     },
-    /** 修改按钮操作 */
     handleEdit(row) {
-      this.resetForm();
-      // 深拷贝防止修改表单时影响表格显示
-      this.form = JSON.parse(JSON.stringify(row));
-      // 确保默认值
-      if (!this.form.authType) this.form.authType = 'PASSWORD';
-      this.dialogTitle = "编辑服务器配置";
-      this.drawerVisible = true;
+      this.resetForm()
+      this.loading = true
+      getServerDetail(row.id).then(response => {
+        if (response.code !== 200 || !response.data) {
+          this.$message.error(response.message || '获取服务器详情失败')
+          return
+        }
+        const detail = response.data
+        this.form = {
+          id: detail.id,
+          serverName: detail.serverName || '',
+          ipAddress: detail.ipAddress || '',
+          port: detail.port || 22,
+          username: detail.username || 'root',
+          authType: detail.authType === AUTH_TYPE.PRIVATE_KEY ? 'PRIVATE_KEY' : 'PASSWORD',
+          password: '',
+          privateKeyPath: '',
+          privateKeyConfigured: Boolean(detail.privateKeyConfigured),
+          description: detail.description || ''
+        }
+        this.dialogTitle = "编辑服务器配置"
+        this.drawerVisible = true
+      }).finally(() => {
+        this.loading = false
+      })
     },
-    /** 测试连接 */
-    handleTestConnection() {
-      this.$refs.form.validateField(['ip', 'port', 'username'], (errMsg) => {
-        if (errMsg) return; // 如果基础字段校验失败则不测试
-
-        this.testing = true;
-        testServerConnection(this.form).then(response => {
-          if (response.code === 200) {
-            this.$message.success(response.data ? '连接测试成功' : '连接测试失败');
-          } else {
-            this.$message.warning(response.message || '连接测试失败');
-          }
-          this.testing = false;
-        }).catch(() => {
-          this.testing = false;
-        });
-      });
+    handleAuthTypeChange() {
+      if (this.form.authType === 'PASSWORD') {
+        this.form.privateKeyPath = ''
+      } else {
+        this.form.password = ''
+      }
+      this.$nextTick(() => this.$refs.form && this.$refs.form.clearValidate(['password', 'privateKeyPath']))
     },
-    /** 提交按钮 */
+    buildRequestPayload() {
+      const payload = {
+        serverName: this.form.serverName.trim(),
+        ipAddress: this.form.ipAddress.trim(),
+        port: this.form.port,
+        username: this.form.username.trim(),
+        authType: AUTH_TYPE[this.form.authType],
+        description: this.form.description ? this.form.description.trim() : ''
+      }
+      if (this.form.id) payload.id = this.form.id
+      if (this.form.authType === 'PASSWORD') {
+        payload.password = this.form.password
+      } else {
+        payload.privateKeyPath = this.form.privateKeyPath.trim()
+      }
+      return payload
+    },
     submitForm() {
       this.$refs.form.validate(valid => {
-        if (valid) {
-          this.submitLoading = true;
-          if (this.form.id) {
-            updateServer(this.form).then(response => {
-              if (response.code === 200) {
-                this.$message.success("修改成功");
-                this.drawerVisible = false;
-                this.getList();
-              } else {
-                this.$message.error(response.message || "修改失败");
-              }
-              this.submitLoading = false;
-            }).catch(() => {
-              this.submitLoading = false;
-            });
+        if (!valid) return
+
+        this.submitLoading = true
+        const request = this.form.id ? updateServer : addServer
+        request(this.buildRequestPayload()).then(response => {
+          if (response.code === 200) {
+            this.$message.success(this.form.id ? "修改成功" : "接入成功")
+            this.drawerVisible = false
+            this.getList()
           } else {
-            addServer(this.form).then(response => {
-              if (response.code === 200) {
-                this.$message.success("接入成功");
-                this.drawerVisible = false;
-                this.getList();
-              } else {
-                this.$message.error(response.message || "接入失败");
-              }
-              this.submitLoading = false;
-            }).catch(() => {
-              this.submitLoading = false;
-            });
+            this.$message.error(response.message || (this.form.id ? "修改失败" : "接入失败"))
           }
-        }
-      });
+        }).finally(() => {
+          this.submitLoading = false
+        })
+      })
     },
-    /** 删除按钮操作 */
     handleDelete(row) {
-      const ids = row.id;
-      this.$confirm(`是否确认下线服务器 "${row.name}" ?`, "警告", {
+      const ids = row.id
+      this.$confirm(`是否确认下线服务器 "${row.serverName}"？`, "警告", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning"
       }).then(() => {
-        return deleteServer(ids);
+        return deleteServer(ids)
       }).then(response => {
         if (response.code === 200) {
-          this.getList();
-          this.$message.success("删除成功");
+          this.getList()
+          this.$message.success("删除成功")
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message)
         }
       }).catch(() => {
-      });
+      })
     },
-    /** 批量删除 */
     handleBatchDelete() {
-      const ids = this.selectedIds.join(',');
+      const ids = this.selectedIds.join(',')
       this.$confirm('是否确认下线选中的服务器节点?', "警告", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning"
       }).then(() => {
-        return deleteServer(ids);
+        return deleteServer(ids)
       }).then(response => {
         if (response.code === 200) {
-          this.getList();
-          this.$message.success("删除成功");
+          this.getList()
+          this.$message.success("删除成功")
         }
       }).catch(() => {
-      });
-    },
-    /** WebSSH 跳转 (预留) */
-    handleTerminal(row) {
-      // this.$router.push(`/ops/terminal?id=${row.id}`);
-      this.$message.info(`正在连接至 ${row.ip} ...`);
-    },
-    // 时间格式化简易版，建议使用 dayjs 或 moment
-    parseTime(time) {
-      if (!time) return '';
-      return time.replace('T', ' ');
+      })
     }
   }
-};
+}
 </script>
 
 <style scoped>
-.server-management {
-  /* 组件容器样式 */
-}
-
 .filter-container {
   margin-bottom: 15px;
-  border: none; /* 去除边框，更现代 */
+  border: none;
 }
 
 .action-bar {
@@ -425,7 +388,6 @@ export default {
   gap: 10px;
 }
 
-/* MatrixSphere 风格状态灯 */
 .status-dot {
   display: inline-block;
   width: 6px;
@@ -441,22 +403,26 @@ export default {
   box-shadow: none;
 }
 
-/* 文本颜色辅助类 */
-.text-success {
-  color: var(--color-success);
-}
-
 .text-danger {
   color: var(--color-error);
 }
 
-.pagination-container {
-  margin-top: 20px;
-  text-align: right;
-  padding: 10px 0;
+.unavailable-action {
+  display: inline-block;
+  cursor: not-allowed;
 }
 
-/* 抽屉内部样式 */
+.unavailable-action + .text-danger {
+  margin-left: 10px;
+}
+
+.field-helper {
+  margin-top: 6px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .drawer-content {
   padding: 20px;
   height: 100%;
@@ -467,7 +433,7 @@ export default {
 .drawer-content form {
   flex: 1;
   overflow-y: auto;
-  padding-right: 10px; /* 避免滚动条遮挡 */
+  padding-right: 10px;
 }
 
 .drawer-footer {

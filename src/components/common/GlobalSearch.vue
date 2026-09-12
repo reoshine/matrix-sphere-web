@@ -157,7 +157,7 @@ export default {
 
       // 搜索应用
       try {
-        const appRes = await queryList({ searchText: keyword, enableStatus: 1 })
+        const appRes = await queryList({ keyword, enableStatus: 1 })
         if (appRes.code === 200 && appRes.data) {
           appRes.data.forEach(app => {
             results.push({

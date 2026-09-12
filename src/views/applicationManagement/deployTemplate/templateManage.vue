@@ -1,223 +1,143 @@
 <template>
-  <PageContainer title="模板中心" subtitle="管理部署模板与构建脚本">
-    <!-- 头部操作按钮 -->
+  <PageContainer title="系统模板" subtitle="统一维护 Jenkins Job、流水线和镜像构建模板">
     <template #header-actions>
       <el-button type="primary" icon="el-icon-plus" size="small" @click="handleAdd">
-        {{ activeTab === 'user' ? '新增应用模板' : '新增系统模板' }}
+        新增系统模板
       </el-button>
     </template>
 
-    <!-- 模板类型切换 -->
-    <el-tabs v-model="activeTab" @tab-click="handleTabChange">
-      <!-- 用户模板 -->
-      <el-tab-pane label="应用模板" name="user">
-        <div class="tab-toolbar">
-          <el-select
-            v-model="selectedAppId"
-            placeholder="请选择应用"
-            size="small"
-            filterable
-            clearable
-            style="width: 240px;"
-            @change="loadUserTemplates"
-          >
-            <el-option
-              v-for="app in appList"
-              :key="app.id"
-              :label="app.applicationName"
-              :value="app.id"
-            />
-          </el-select>
-        </div>
+    <el-alert
+      title="当前仅支持系统模板。应用创建和部署时将根据构建类型自动选择对应的默认模板。"
+      type="info"
+      show-icon
+      :closable="false"
+      class="template-notice"
+    />
 
-        <el-table :data="userTemplates" border stripe v-loading="userLoading" empty-text="请选择应用查看模板">
-          <el-table-column prop="templateName" label="模板名称" min-width="150">
-            <template slot-scope="scope">
-              <span>{{ scope.row.templateName }}</span>
-              <el-tag v-if="scope.row.isDefault" size="mini" type="success" effect="dark" style="margin-left: 10px">默认</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="templateType" label="模板类型" width="150" align="center">
-            <template slot-scope="scope">
-              <el-tag size="mini" type="info">{{ formatTemplateType(scope.row.templateType) }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="gmtModified" label="更新时间" width="160" align="center" />
-          <el-table-column label="操作" width="180" align="center" fixed="right">
-            <template slot-scope="scope">
-              <el-button type="text" icon="el-icon-edit" size="mini" @click="handleEdit(scope.row, 'user')">编辑</el-button>
-              <el-popconfirm title="确定删除该模板吗？" @confirm="handleDelete(scope.row)">
-                <el-button slot="reference" type="text" icon="el-icon-delete" size="mini" class="text-danger">删除</el-button>
-              </el-popconfirm>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-tab-pane>
+    <div class="template-filter" role="group" aria-label="模板筛选">
+      <el-radio-group v-model="templateType" size="small" @change="handleTypeChange">
+        <el-radio-button label="JOB_CONFIG_XML">Jenkins Job 配置</el-radio-button>
+        <el-radio-button label="JENKINSFILE">Jenkinsfile</el-radio-button>
+        <el-radio-button label="DOCKERFILE">Dockerfile</el-radio-button>
+      </el-radio-group>
 
-      <!-- 系统模板 -->
-      <el-tab-pane label="系统模板" name="system">
-        <el-alert
-          title="此处维护的模板为系统级通用标准 (SYSTEM Scope)。新应用创建时，可选择以此为原型初始化其私有配置。"
-          type="info"
-          show-icon
-          style="margin-bottom: 15px;"
-          :closable="false"
-        />
+      <el-select
+        v-if="templateType === 'JENKINSFILE'"
+        v-model="jobType"
+        size="small"
+        clearable
+        placeholder="全部构建类型"
+        class="job-type-filter"
+        @change="loadTemplates"
+      >
+        <el-option v-for="item in jobTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+    </div>
 
-        <el-tabs v-model="systemTemplateType" @tab-click="loadSystemTemplates">
-          <el-tab-pane label="Jenkins Job配置 (XML)" name="JOB_CONFIG_XML" />
-          <el-tab-pane label="Jenkinsfile 流水线" name="JENKINSFILE" />
-          <el-tab-pane label="Dockerfile" name="DOCKERFILE" />
-        </el-tabs>
+    <el-table :data="templates" border stripe v-loading="loading" empty-text="暂无系统模板">
+      <el-table-column prop="templateName" label="模板名称" min-width="200">
+        <template slot-scope="scope">
+          <span class="template-name">{{ scope.row.templateName }}</span>
+          <el-tag v-if="scope.row.isDefault" size="mini" type="success" effect="dark" class="default-tag">
+            默认
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="templateType === 'JENKINSFILE'" label="构建类型" width="150" align="center">
+        <template slot-scope="scope">
+          <el-tag size="mini" type="info">{{ formatJobType(scope.row.jobType) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="remark" label="适用场景说明" min-width="280" show-overflow-tooltip />
+      <el-table-column prop="gmtModified" label="更新时间" width="160" align="center" />
+      <el-table-column label="操作" width="150" align="center" fixed="right">
+        <template slot-scope="scope">
+          <el-button type="text" icon="el-icon-edit" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-popconfirm title="确定删除该系统模板吗？" @confirm="handleDelete(scope.row)">
+            <el-button slot="reference" type="text" icon="el-icon-delete" class="text-danger">删除</el-button>
+          </el-popconfirm>
+        </template>
+      </el-table-column>
+    </el-table>
 
-        <el-table :data="systemTemplates" border stripe v-loading="systemLoading" empty-text="暂无系统模板">
-          <el-table-column prop="templateName" label="模板名称" min-width="200">
-            <template slot-scope="scope">
-              <span style="font-weight: 500">{{ scope.row.templateName }}</span>
-              <el-tag v-if="scope.row.isDefault" size="mini" type="success" effect="dark" style="margin-left: 10px">默认推荐</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="remark" label="适用场景说明" min-width="300" show-overflow-tooltip />
-          <el-table-column prop="gmtModified" label="更新时间" width="160" align="center" />
-          <el-table-column label="操作" width="150" align="center" fixed="right">
-            <template slot-scope="scope">
-              <el-button type="text" icon="el-icon-edit" @click="handleEdit(scope.row, 'system')">编辑</el-button>
-              <el-popconfirm title="确定删除该系统模板吗？" @confirm="handleDelete(scope.row)">
-                <el-button slot="reference" type="text" icon="el-icon-delete" class="text-danger">删除</el-button>
-              </el-popconfirm>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-tab-pane>
-    </el-tabs>
-
-    <!-- 模板编辑弹窗 -->
     <template-editor-dialog
       v-if="dialogVisible"
       :visible.sync="dialogVisible"
       :is-edit="isEdit"
       :current-data="currentData"
-      :application-id="editAppId"
-      :scope="editScope"
-      :default-type="editType"
-      @refresh="refreshData"
+      :default-type="templateType"
+      @refresh="loadTemplates"
     />
   </PageContainer>
 </template>
 
 <script>
 import PageContainer from '@/components/common/PageContainer.vue'
-import { getTemplateList, deleteTemplate } from '@/views/applicationManagement/deployTemplate/api'
-import { queryList } from '@/views/applicationManagement/applicationGroup/api'
-import templateEditorDialog from './templateEditorDialog'
+import { deleteTemplate, getTemplateList } from './api'
+import templateEditorDialog from './templateEditorDialog.vue'
 
 export default {
-  name: 'templateManage',
+  name: 'TemplateManage',
   components: {
     PageContainer,
     templateEditorDialog
   },
   data() {
     return {
-      activeTab: 'user',
-      // 用户模板相关
-      selectedAppId: null,
-      userTemplates: [],
-      userLoading: false,
-      appList: [],
-      // 系统模板相关
-      systemTemplateType: 'JOB_CONFIG_XML',
-      systemTemplates: [],
-      systemLoading: false,
-      // 弹窗相关
+      templateType: 'JOB_CONFIG_XML',
+      jobType: '',
+      templates: [],
+      loading: false,
       dialogVisible: false,
       isEdit: false,
       currentData: {},
-      editAppId: null,
-      editScope: 'APP',
-      editType: 'JOB_CONFIG_XML'
+      jobTypeOptions: [
+        { label: '后端可执行应用', value: 'backend' },
+        { label: '后端类库', value: 'backend_library' },
+        { label: '前端应用', value: 'frontend' }
+      ]
     }
   },
   created() {
-    this.loadAppList()
+    this.loadTemplates()
   },
   methods: {
-    handleTabChange() {
-      if (this.activeTab === 'user' && this.selectedAppId) {
-        this.loadUserTemplates()
-      } else if (this.activeTab === 'system') {
-        this.loadSystemTemplates()
-      }
+    handleTypeChange() {
+      this.jobType = ''
+      this.loadTemplates()
     },
 
-    async loadAppList() {
-      try {
-        const res = await queryList()
-        if (res.code === 200) {
-          this.appList = res.data || []
-        }
-      } catch (e) {
-        console.error('加载应用列表失败', e)
-      }
-    },
-
-    async loadUserTemplates() {
-      if (!this.selectedAppId) {
-        this.userTemplates = []
-        return
-      }
-      this.userLoading = true
-      try {
-        const res = await getTemplateList(this.selectedAppId)
-        if (res.code === 200) {
-          this.userTemplates = res.data || []
-        }
-      } catch (e) {
-        console.error('加载用户模板失败', e)
-      } finally {
-        this.userLoading = false
-      }
-    },
-
-    async loadSystemTemplates() {
-      this.systemLoading = true
+    async loadTemplates() {
+      this.loading = true
       try {
         const res = await getTemplateList({
-          scope: 'SYSTEM',
-          templateType: this.systemTemplateType
+          templateType: this.templateType,
+          jobType: this.templateType === 'JENKINSFILE' ? this.jobType || undefined : undefined
         })
         if (res.code === 200) {
-          this.systemTemplates = res.data || []
+          this.templates = res.data || []
+        } else {
+          this.$message.error(res.message || '系统模板加载失败')
         }
       } catch (e) {
-        console.error('加载系统模板失败', e)
+        this.$message.error('系统模板加载失败，请重试')
       } finally {
-        this.systemLoading = false
+        this.loading = false
       }
     },
 
     handleAdd() {
       this.isEdit = false
-      this.currentData = {}
-      if (this.activeTab === 'user') {
-        this.editAppId = this.selectedAppId
-        this.editScope = 'APP'
-        this.editType = 'JOB_CONFIG_XML'
-      } else {
-        this.editAppId = null
-        this.editScope = 'SYSTEM'
-        this.editType = this.systemTemplateType
+      this.currentData = {
+        templateType: this.templateType,
+        jobType: this.templateType === 'JENKINSFILE' ? this.jobType : ''
       }
       this.dialogVisible = true
     },
 
-    handleEdit(row, scope) {
+    handleEdit(row) {
       this.isEdit = true
       this.currentData = JSON.parse(JSON.stringify(row))
-      this.editAppId = row.applicationId || this.selectedAppId
-      this.editScope = scope === 'system' ? 'SYSTEM' : 'APP'
-      this.editType = row.templateType
       this.dialogVisible = true
     },
 
@@ -226,31 +146,18 @@ export default {
         const res = await deleteTemplate(row.id)
         if (res.code === 200) {
           this.$message.success('删除成功')
-          this.refreshData()
+          this.loadTemplates()
         } else {
-          this.$message.error(res.message)
+          this.$message.error(res.message || '删除失败')
         }
       } catch (e) {
-        this.$message.error('删除失败')
+        this.$message.error('删除失败，请重试')
       }
     },
 
-    refreshData() {
-      if (this.activeTab === 'user') {
-        this.loadUserTemplates()
-      } else {
-        this.loadSystemTemplates()
-      }
-    },
-
-    formatTemplateType(type) {
-      const map = {
-        JOB_CONFIG_XML: 'Jenkins Job',
-        JENKINSFILE: 'Jenkinsfile',
-        DOCKERFILE: 'Dockerfile',
-        DEPLOY_SCRIPT: '部署脚本'
-      }
-      return map[type] || type
+    formatJobType(jobType) {
+      const option = this.jobTypeOptions.find(item => item.value === jobType)
+      return option ? option.label : '未指定'
     }
   }
 }
@@ -259,18 +166,30 @@ export default {
 <style lang="less" scoped>
 @import "~@/assets/css/theme.less";
 
-.tab-toolbar {
+.template-notice {
   margin-bottom: @space-4;
+}
+
+.template-filter {
   display: flex;
   align-items: center;
   gap: @space-3;
+  margin-bottom: @space-4;
+}
+
+.job-type-filter {
+  width: 180px;
+}
+
+.template-name {
+  font-weight: 500;
+}
+
+.default-tag {
+  margin-left: @space-2;
 }
 
 .text-danger {
   color: @error-color;
-
-  &:hover {
-    color: var(--color-error);
-  }
 }
 </style>

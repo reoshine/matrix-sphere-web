@@ -3,40 +3,31 @@
     <!-- 头部操作按钮 -->
     <template #header-actions>
       <el-button type="primary" icon="el-icon-plus" size="small" @click="addApplication">新增应用</el-button>
-      <el-dropdown trigger="click" @command="handleHeaderCommand" style="margin-left: 10px;">
+      <el-dropdown trigger="click" style="margin-left: 10px;">
         <el-button plain size="small">
           更多操作 <i class="el-icon-arrow-down el-icon--right"></i>
         </el-button>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="download" icon="el-icon-download">模板下载</el-dropdown-item>
-          <el-dropdown-item command="import" icon="el-icon-upload2">导入应用</el-dropdown-item>
-          <el-dropdown-item divided command="sync-gitee" icon="el-icon-connection">从 Gitee 同步</el-dropdown-item>
-          <el-dropdown-item command="sync-gitlab" icon="el-icon-connection">从 GitLab 同步</el-dropdown-item>
+          <el-dropdown-item disabled icon="el-icon-download">模板下载（后端能力未接入）</el-dropdown-item>
+          <el-dropdown-item disabled icon="el-icon-upload2">导入应用（后端能力未接入）</el-dropdown-item>
+          <el-dropdown-item disabled divided icon="el-icon-connection">从 Gitee 同步（后端能力未接入）</el-dropdown-item>
+          <el-dropdown-item disabled icon="el-icon-connection">从 GitLab 同步（后端能力未接入）</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
-      <el-upload
-          ref="uploadRef"
-          class="upload-hidden"
-          action="#"
-          :http-request="upload"
-          :accept="uploadFileType"
-          :show-file-list="false"
-      >
-      </el-upload>
     </template>
 
     <!-- 筛选区 -->
     <template #filter>
-      <FilterBar @search="queryApplicationPage" @reset="resetQuery">
+      <FilterBar @search="handleQuery" @reset="resetQuery">
         <el-form-item label="应用搜索">
           <el-input
-              v-model="searchText"
+              v-model="keyword"
               placeholder="输入编码/名称"
               prefix-icon="el-icon-search"
               clearable
               style="width: 240px;"
               size="small"
-              @keyup.enter.native="queryApplicationPage"
+              @keyup.enter.native="handleQuery"
           />
         </el-form-item>
         <el-form-item label="启用状态">
@@ -46,19 +37,19 @@
         </el-form-item>
         <el-form-item label="项目分组">
           <el-select
-              v-model="applicationGroupCode"
+              v-model="applicationGroupId"
               placeholder="请选择分组"
               clearable
               filterable
               style="width: 180px;"
               size="small"
-              @change="queryApplicationPage"
+              @change="handleQuery"
           >
             <el-option
                 v-for="item in applicationGroupList"
-                :key="item.applicationGroupCode"
+                :key="item.id"
                 :label="item.applicationGroupName"
-                :value="item.applicationGroupCode"
+                :value="item.id"
             >
               <span style="float: left">{{ item.applicationGroupName }}</span>
               <span style="float: right; color: var(--color-text-tertiary); font-size: 12px; margin-left: 10px">{{ item.applicationGroupCode }}</span>
@@ -101,6 +92,8 @@
                     v-model="application.enableStatus"
                     :active-value="1"
                     :inactive-value="0"
+                    :loading="application.statusUpdating"
+                    :disabled="application.statusUpdating"
                     @change="enableChange($event, application)"
                 />
               </div>
@@ -264,28 +257,16 @@
           </el-col>
 
           <el-col :span="24">
-            <el-form-item prop="initTemplateId" label="初始化构建模板">
+            <el-form-item prop="jobType" label="构建类型">
               <el-select
-                  v-model="saveApplicationForm.initTemplateId"
-                  placeholder="请选择构建模板（强烈推荐，将自动生成 Jenkins 配置）"
+                  v-model="saveApplicationForm.jobType"
+                  placeholder="请选择构建类型"
                   style="width: 100%"
-                  clearable
-                  @focus="fetchSystemTemplates"
               >
-                <el-option
-                    v-for="item in systemTemplates"
-                    :key="item.id"
-                    :label="item.templateName"
-                    :value="item.id"
-                >
-                  <span style="float: left">{{ item.templateName }}</span>
-                  <span style="float: right; color: var(--color-text-tertiary); font-size: 12px">
-                    {{ item.isDefault ? '默认' : '' }}
-                  </span>
-                </el-option>
+                <el-option v-for="item in jobTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
               <div style="font-size: 12px; color: var(--color-text-tertiary); line-height: 1.5; margin-top: 4px;">
-                <i class="el-icon-info"></i> 选中后，系统将以该模板为原型，为您自动生成 Jenkinsfile 和 Job 配置。
+                <i class="el-icon-info"></i> 系统将自动使用该构建类型对应的默认系统模板创建 Jenkins Job。
               </div>
             </el-form-item>
           </el-col>
@@ -314,16 +295,13 @@ import FormDialog from '@/components/common/FormDialog.vue'
 import StatusDot from '@/components/common/StatusDot.vue'
 import {
   enableChange,
-  exportApplicationTemplate,
   getApplicationById,
-  importFile,
   queryPage,
   removeApplication,
   saveApplication,
   modifyApplication
 } from "@/views/applicationManagement/applicationList/api";
-import {getTemplateList} from '@/views/applicationManagement/deployTemplate/api'
-import {queryList} from "@/views/applicationManagement/applicationGroup/api";
+import {queryList as queryGroupList} from "@/views/applicationManagement/applicationGroup/api";
 
 export default {
   name: "Application",
@@ -335,21 +313,16 @@ export default {
   },
   data() {
     return {
-      uploadFileType: '.xlsx, .xls',
-      fileList: [],
       viewMode: 'card',
       tableLoading: false,
       selectedRows: [],
 
-      searchText: '',
+      keyword: '',
       enableStatus: null,
       enableStatusList: [{ label: '启用', value: 1 }, { label: '停用', value: 0 }],
 
-      applicationGroupCode: '',
+      applicationGroupId: '',
       applicationGroupList: [],
-
-      systemTemplates: [],
-      templatesLoaded: false,
 
       dialog: false,
       loading: false,
@@ -361,8 +334,14 @@ export default {
         applicationGroupCode: '',
         gitUrl: '',
         enableStatus: 1,
-        initTemplateId: null
+        jobType: 'backend'
       },
+
+      jobTypeOptions: [
+        { label: '后端可执行应用', value: 'backend' },
+        { label: '后端类库', value: 'backend_library' },
+        { label: '前端应用', value: 'frontend' }
+      ],
 
       rules: {
         applicationCode: [
@@ -381,6 +360,9 @@ export default {
         ],
         enableStatus: [
           { required: true, message: '请选择启用状态', trigger: 'change' },
+        ],
+        jobType: [
+          { required: true, message: '请选择构建类型', trigger: 'change' },
         ]
       },
 
@@ -392,51 +374,12 @@ export default {
     };
   },
   methods: {
-    handleHeaderCommand(command) {
-      switch (command) {
-        case 'download':
-          this.exportApplicationTemplate()
-          break
-        case 'import':
-          this.$refs.uploadRef.$el.querySelector('input').click()
-          break
-        case 'sync-gitee':
-          this.handleSyncRepo('gitee')
-          break
-        case 'sync-gitlab':
-          this.handleSyncRepo('gitlab')
-          break
-      }
-    },
-    handleSyncRepo(command) {
-      const label = command === 'gitee' ? 'Gitee' : 'GitLab'
-      this.$message.info(`从 ${label} 同步仓库功能正在开发中`)
-    },
     getGroupList() {
-      queryList({ searchText: '', enableStatus: 1 }).then(res => {
+      queryGroupList().then(res => {
         if (res.code === 200) {
           this.applicationGroupList = res.data || []
         }
       })
-    },
-
-    fetchSystemTemplates() {
-      if (this.templatesLoaded) return;
-
-      getTemplateList({
-        scope: 'SYSTEM',
-        templateType: 'JENKINSFILE'
-      }).then(res => {
-        if (res.code === 200) {
-          this.systemTemplates = res.data || [];
-          this.templatesLoaded = true;
-
-          const defaultTemp = this.systemTemplates.find(t => t.isDefault);
-          if (defaultTemp && !this.saveApplicationForm.initTemplateId) {
-            this.saveApplicationForm.initTemplateId = defaultTemp.id;
-          }
-        }
-      });
     },
 
     handleSizeChange(val) {
@@ -450,9 +393,14 @@ export default {
     },
 
     resetQuery() {
-      this.searchText = '';
+      this.keyword = '';
       this.enableStatus = null;
-      this.applicationGroupCode = '';
+      this.applicationGroupId = '';
+      this.handleQuery();
+    },
+
+    handleQuery() {
+      this.pageNum = 1;
       this.queryApplicationPage();
     },
 
@@ -461,9 +409,9 @@ export default {
       queryPage({
         pageNum: this.pageNum,
         pageSize: this.pageSize,
-        searchText: this.searchText,
+        keyword: this.keyword,
         enableStatus: this.enableStatus !== null ? this.enableStatus : undefined,
-        applicationGroupCode: this.applicationGroupCode || undefined
+        applicationGroupId: this.applicationGroupId || undefined
       }).then(res => {
         if (res.code === 200) {
           const result = res.data;
@@ -480,11 +428,8 @@ export default {
     async addApplication() {
       this.saveApplicationForm = {
         enableStatus: 1,
-        initTemplateId: undefined
+        jobType: 'backend'
       };
-
-      this.templatesLoaded = false;
-      this.systemTemplates = [];
 
       if (this.applicationGroupList.length === 0) {
         await this.getGroupList();
@@ -494,7 +439,6 @@ export default {
 
       this.$nextTick(() => {
         this.$refs.saveApplicationFormRef && this.$refs.saveApplicationFormRef.clearValidate();
-        this.fetchSystemTemplates();
       });
     },
 
@@ -503,8 +447,6 @@ export default {
         if (res.code === 200) {
           this.saveApplicationForm = res.data;
           this.dialog = true;
-          this.templatesLoaded = false;
-          this.fetchSystemTemplates();
           if (this.applicationGroupList.length === 0) this.getGroupList();
         }
       });
@@ -528,16 +470,23 @@ export default {
     },
 
     enableChange($event, application) {
+      const originalStatus = $event === 1 ? 0 : 1;
+      this.$set(application, 'statusUpdating', true);
       enableChange({
-        applicationId: application.id,
+        id: application.id,
         enableStatus: $event
       }).then(res => {
         if (res.code === 200) {
           this.$message.success('状态已更新');
         } else {
-          application.enableStatus = $event === 1 ? 0 : 1;
-          this.$message.error(res.message);
+          application.enableStatus = originalStatus;
+          this.$message.error(res.message || '状态更新失败，请重试');
         }
+      }).catch(() => {
+        application.enableStatus = originalStatus;
+        this.$message.error('状态更新失败，请重试');
+      }).finally(() => {
+        application.statusUpdating = false;
       })
     },
 
@@ -546,15 +495,21 @@ export default {
         if (valid) {
           this.loading = true;
           const isEdit = !!this.saveApplicationForm.id;
+          const payload = {
+            id: this.saveApplicationForm.id,
+            applicationCode: this.saveApplicationForm.applicationCode,
+            applicationName: this.saveApplicationForm.applicationName,
+            applicationGroupId: this.saveApplicationForm.applicationGroupId,
+            gitUrl: this.saveApplicationForm.gitUrl,
+            enableStatus: this.saveApplicationForm.enableStatus,
+            jobType: this.saveApplicationForm.jobType
+          };
           let requestPromise;
 
           if (isEdit) {
-            requestPromise = modifyApplication(this.saveApplicationForm);
+            requestPromise = modifyApplication(payload);
           } else {
-            requestPromise = saveApplication({
-              ...this.saveApplicationForm,
-              shouldAddJenkinsJob: true
-            });
+            requestPromise = saveApplication(payload);
           }
 
           requestPromise.then(res => {
@@ -572,24 +527,6 @@ export default {
           });
         }
       });
-    },
-
-    exportApplicationTemplate() {
-      exportApplicationTemplate().then(res => {
-        let blob = new Blob([res.data], { type: 'application/vnd.ms-excel;charset=utf-8' })
-        let contentDisposition = res.headers['content-disposition']
-        let fileName = 'application_template.xlsx';
-        if (contentDisposition) {
-          let pattern = new RegExp('filename=([^;]+\\.[^.;]+);*')
-          let result = pattern.exec(contentDisposition)
-          if(result) fileName = decodeURI(result[1])
-        }
-        let link = document.createElement('a')
-        link.href = window.URL.createObjectURL(blob)
-        link.download = fileName
-        link.click()
-        window.URL.revokeObjectURL(link.href)
-      })
     },
 
     toBranchManagement(applicationId) {
@@ -610,19 +547,6 @@ export default {
         path: "/applicationManagement/applicationList/applicationEdit",
         params: { applicationId: applicationId }
       });
-    },
-
-    upload(content) {
-      importFile({ file: content.file }, {
-        headers: {'Content-Type':'multipart/form-data'}
-      }).then(res => {
-        if (res.code === 200) {
-          this.$message.success('应用导入成功！');
-          this.queryApplicationPage();
-        } else {
-          this.$message.error(res.message);
-        }
-      })
     },
 
     handleSelectionChange(selection) {
@@ -660,10 +584,6 @@ export default {
 <style lang="less" scoped>
 @import "~@/assets/css/theme.less";
 
-/* 隐藏的文件上传触发器 */
-.upload-hidden {
-  display: none;
-}
 
 /* 工具栏 */
 .toolbar-left {

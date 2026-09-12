@@ -2,7 +2,11 @@
   <PageContainer title="系统参数" subtitle="管理系统配置参数">
     <!-- 头部操作按钮 -->
     <template #header-actions>
-      <el-button type="primary" icon="el-icon-plus" size="small" @click="addApplication()">新增参数</el-button>
+      <el-tooltip content="尚未接入后端能力" placement="bottom">
+        <span>
+          <el-button type="primary" icon="el-icon-plus" size="small" disabled>新增参数</el-button>
+        </span>
+      </el-tooltip>
     </template>
 
     <!-- 筛选区 -->
@@ -60,8 +64,12 @@
         </el-table-column>
         <el-table-column label="操作" width="150" align="center" fixed="right">
           <template slot-scope="scope">
-            <el-button type="text" icon="el-icon-edit" size="small" @click="editSysParamValue(scope.row)">编辑</el-button>
-            <el-button type="text" icon="el-icon-delete" size="small" class="text-danger" @click="deleteConfirm(scope.row.id)">删除</el-button>
+            <el-tooltip content="尚未接入后端能力" placement="top">
+              <span><el-button type="text" icon="el-icon-edit" size="small" disabled>编辑</el-button></span>
+            </el-tooltip>
+            <el-tooltip content="尚未接入后端能力" placement="top">
+              <span><el-button type="text" icon="el-icon-delete" size="small" disabled>删除</el-button></span>
+            </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
@@ -131,14 +139,6 @@ export default {
       this.getSysParamList()
     },
 
-    addApplication() {
-      this.$message.info('新增参数功能开发中')
-    },
-
-    editSysParamValue(row) {
-      this.$message.info('编辑参数功能开发中')
-    },
-
     async modifyParamValue(value, row) {
       try {
         const res = await modifySysParam(row)
@@ -150,15 +150,6 @@ export default {
       } catch (e) {
         this.$message.error('修改失败')
       }
-    },
-
-    deleteConfirm(id) {
-      this.$confirm('确定删除该参数吗？', '警告', {
-        type: 'warning'
-      }).then(() => {
-        this.$message.success('删除成功')
-        this.getSysParamList()
-      }).catch(() => {})
     }
   }
 }

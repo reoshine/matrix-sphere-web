@@ -258,7 +258,7 @@ export default {
     },
 
     getGroupList() {
-      queryList({ searchText: '', enableStatus: 1 }).then(res => {
+      queryList().then(res => {
         if (res.code === 200) {
           this.applicationGroupList = res.data || []
         }

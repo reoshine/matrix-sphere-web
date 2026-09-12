@@ -1,6 +1,6 @@
 import axios from 'axios'
 import router from '@/router'
-import { Message, MessageBox } from 'element-ui'
+import { Message } from 'element-ui'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
@@ -8,6 +8,26 @@ NProgress.configure({ showSpinner: false })
 
 let isRefreshing = false
 let requestQueue = []
+
+function getResponseHeader(headers, name) {
+    if (!headers) return ''
+    if (typeof headers.get === 'function') return headers.get(name) || ''
+    return headers[name.toLowerCase()] || headers[name] || ''
+}
+
+function normalizeApiError(error, response = error && error.response) {
+    const data = response && response.data
+    const payload = data && typeof data === 'object' ? data : {}
+    const httpStatus = (response && response.status) || 0
+
+    return {
+        message: payload.message || payload.msg || (typeof data === 'string' ? data : '') || (error && error.message) || '网络请求失败，请稍后重试',
+        code: payload.code !== undefined ? payload.code : httpStatus,
+        requestId: getResponseHeader(response && response.headers, 'X-Request-Id'),
+        httpStatus,
+        cause: error
+    }
+}
 
 function createAxiosInstance(baseURL) {
     const instance = axios.create({
@@ -24,7 +44,7 @@ function createAxiosInstance(baseURL) {
         },
         error => {
             NProgress.done()
-            return Promise.reject(error)
+            return Promise.reject(normalizeApiError(error))
         }
     )
 
@@ -32,15 +52,16 @@ function createAxiosInstance(baseURL) {
         response => {
             NProgress.done()
             const res = response.data
-            if (res.code && res.code !== 200) {
-                Message.error(res.msg || res.message || '系统异常')
-                return Promise.reject(new Error(res.msg || 'Error'))
+            if (res && res.code !== undefined && res.code !== 200) {
+                const apiError = normalizeApiError(null, response)
+                Message.error(apiError.message)
+                return Promise.reject(apiError)
             }
             return res
         },
         async error => {
             NProgress.done()
-            if (!error.response) return Promise.reject(error)
+            if (!error.response) return Promise.reject(normalizeApiError(error))
             const { status, config } = error.response
 
             if (status === 401) {
@@ -85,7 +106,7 @@ function createAxiosInstance(baseURL) {
                     isRefreshing = false
                 }
             }
-            return Promise.reject(error)
+            return Promise.reject(normalizeApiError(error))
         }
     )
 

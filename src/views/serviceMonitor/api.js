@@ -43,14 +43,6 @@ export function deleteServer(ids) {
 }
 
 /**
- * 测试连接
- * POST /server-info/v1/test-connection
- */
-export function testServerConnection(data) {
-    return sphere.post(`/server-info/v1/test-connection`, data)
-}
-
-/**
  * 获取服务器实时资源指标
  * GET /server-info/v1/metrics/{id}
  */

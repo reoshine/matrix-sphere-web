@@ -69,18 +69,26 @@
     </el-card>
 
     <!-- 分支列表 -->
-    <el-card class="table-card" shadow="never">
+    <el-card v-loading="tableLoading" class="table-card" shadow="never">
       <div slot="header" class="table-header">
         <span class="table-title">分支列表</span>
         <el-button type="text" icon="el-icon-refresh" size="small" @click="refreshList" :disabled="!applicationId">刷新</el-button>
       </div>
 
       <el-empty v-if="!applicationId" description="请先选择一个应用" icon="el-icon-s-platform" />
+      <EmptyState
+        v-else-if="branchLoadError"
+        icon="el-icon-warning-outline"
+        title="分支列表加载失败"
+        :description="branchLoadError.message || '请稍后重试'"
+        :request-id="branchLoadError.requestId"
+        retry-text="重新加载"
+        @retry="refreshList"
+      />
       <el-empty v-else-if="branchList.length <= 0" description="暂无分支信息，请先创建" />
 
       <el-table
           v-else
-          v-loading="tableLoading"
           :data="branchList"
           stripe
           style="width: 100%"
@@ -209,6 +217,7 @@
 import PageContainer from '@/components/common/PageContainer.vue'
 import FilterBar from '@/components/common/FilterBar.vue'
 import FormDialog from '@/components/common/FormDialog.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import {
   createBranch,
   modifyBranch,
@@ -216,14 +225,16 @@ import {
   removeBranch,
   getApplicationById
 } from '@/views/applicationManagement/applicationList/api'
-import { queryList } from '@/views/applicationManagement/applicationList/api'
+import { queryList as queryApplicationList } from '@/views/applicationManagement/applicationList/api'
+import { queryList as queryGroupList } from '@/views/applicationManagement/applicationGroup/api'
 
 export default {
   name: 'branch',
   components: {
     PageContainer,
     FilterBar,
-    FormDialog
+    FormDialog,
+    EmptyState
   },
   data() {
     return {
@@ -237,6 +248,7 @@ export default {
       // 分支列表
       branchList: [],
       tableLoading: false,
+      branchLoadError: null,
       selectedRows: [],
 
       // 创建分支
@@ -272,10 +284,12 @@ export default {
     searchApplications(query) {
       if (query.length < 1) return
       this.appSearchLoading = true
-      queryList({ searchText: query, enableStatus: 1 }).then(res => {
+      queryApplicationList({ keyword: query, enableStatus: 1 }).then(res => {
         if (res.code === 200) {
           this.appOptions = res.data || []
         }
+      }).catch(() => {
+        this.appOptions = []
       }).finally(() => {
         this.appSearchLoading = false
       })
@@ -285,6 +299,7 @@ export default {
       if (!appId) {
         this.applicationInfo = {}
         this.branchList = []
+        this.branchLoadError = null
         return
       }
       localStorage.setItem('applicationId', JSON.stringify(appId))
@@ -302,6 +317,7 @@ export default {
       this.applicationId = ''
       this.applicationInfo = {}
       this.branchList = []
+      this.branchLoadError = null
       this.appOptions = []
     },
 
@@ -310,6 +326,8 @@ export default {
         if (res.code === 200) {
           this.applicationInfo = res.data
         }
+      }).catch(() => {
+        this.applicationInfo = {}
       })
     },
 
@@ -322,16 +340,20 @@ export default {
             this.appOptions.unshift(app)
           }
         }
-      })
+      }).catch(() => {})
     },
 
     // --- 分支列表 ---
     getBranchListByApplicationId(applicationId) {
       this.tableLoading = true
-      getUnDeployedBranchList({ applicationId }).then(res => {
+      this.branchLoadError = null
+      return getUnDeployedBranchList({ applicationId }).then(res => {
         if (res.code === 200) {
           this.branchList = res.data || []
         }
+      }).catch(error => {
+        this.branchList = []
+        this.branchLoadError = error || { message: '分支列表加载失败，请稍后重试', requestId: '' }
       }).finally(() => {
         this.tableLoading = false
       })
@@ -375,8 +397,8 @@ export default {
             } else {
               this.$message.error(res.message || '创建失败')
             }
-          }).catch(err => {
-            this.$message.error('创建异常: ' + err)
+          }).catch(error => {
+            this.$message.error(error.message || '创建分支失败，请稍后重试')
           }).finally(() => {
             this.createLoading = false
           })
@@ -425,6 +447,8 @@ export default {
             } else {
               this.$message.error(res.message)
             }
+          }).catch(error => {
+            this.$message.error(error.message || '修改分支失败，请稍后重试')
           }).finally(() => {
             this.modifyLoading = false
           })
@@ -487,11 +511,11 @@ export default {
 
   created() {
     // 加载分组列表（用于显示）
-    queryList({ searchText: '', enableStatus: 1 }).then(res => {
+    queryGroupList().then(res => {
       if (res.code === 200) {
         this.applicationGroupList = res.data || []
       }
-    })
+    }).catch(() => {})
 
     // 从路由参数或 localStorage 恢复应用选择
     let pid = this.$route.params.applicationId

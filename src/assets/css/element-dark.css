@@ -125,6 +125,26 @@ body {
 .el-checkbox__input.is-checked + .el-checkbox__label,
 .el-radio__input.is-checked + .el-radio__label { color: var(--color-primary-light); }
 
+/* 单选按钮组默认使用白色按钮面，需要单独覆盖普通、悬停、选中和禁用状态。 */
+.el-radio-button__inner {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface);
+  border-color: var(--color-border);
+}
+.el-radio-button:first-child .el-radio-button__inner { border-left-color: var(--color-border); }
+.el-radio-button__inner:hover { color: var(--color-primary-light); }
+.el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  border-color: var(--color-primary);
+  box-shadow: -1px 0 0 0 var(--color-primary);
+}
+.el-radio-button__orig-radio:disabled + .el-radio-button__inner {
+  color: var(--color-text-tertiary);
+  background: #101726;
+  border-color: var(--color-border-light);
+}
+
 .el-switch__core { background: #40506a; border-color: #40506a; }
 .el-switch.is-checked .el-switch__core { background: var(--color-primary); border-color: var(--color-primary); }
 
@@ -155,6 +175,8 @@ body {
 .el-table--border::after,
 .el-table--group::after,
 .el-table::before { background-color: var(--color-border); }
+.el-table__fixed::before,
+.el-table__fixed-right::before { background-color: var(--color-border); }
 .el-table--border th.el-table__cell,
 .el-table--border td.el-table__cell { border-right-color: var(--color-border); }
 .el-table tr.el-table__row--striped td.el-table__cell { background: #142033 !important; }

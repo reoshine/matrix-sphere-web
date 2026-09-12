@@ -159,7 +159,7 @@ export default new Router({
                 {
                     path: 'applicationManagement/deployTemplate/templateManage',
                     component: () => import('@/views/applicationManagement/deployTemplate/templateManage.vue'),
-                    meta: { title: '部署模板管理' }
+                    meta: { title: '系统模板' }
                 },
                 {
                     path: 'applicationManagement/deployTemplate/templateEditorDialog',
@@ -168,7 +168,7 @@ export default new Router({
                 },
                 {
                     path: 'applicationManagement/deployTemplate/systemTemplateManage',
-                    component: () => import('@/views/applicationManagement/deployTemplate/systemTemplateManage.vue'),
+                    component: () => import('@/views/applicationManagement/deployTemplate/templateManage.vue'),
                     meta: { title: '系统模板' }
                 },
 

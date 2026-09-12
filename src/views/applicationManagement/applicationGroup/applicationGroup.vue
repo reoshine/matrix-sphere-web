@@ -10,7 +10,7 @@
       <FilterBar @search="handleQuery" @reset="resetQuery">
         <el-form-item label="应用分组">
           <el-input
-            v-model="queryParams.searchText"
+            v-model="queryParams.keyword"
             placeholder="输入编码/名称模糊搜索"
             clearable
             prefix-icon="el-icon-search"
@@ -50,6 +50,8 @@
               v-model="scope.row.enableStatus"
               :active-value="1"
               :inactive-value="0"
+              :loading="scope.row.statusUpdating"
+              :disabled="scope.row.statusUpdating"
               @change="enableChange($event, scope.row)"
             />
           </template>
@@ -128,7 +130,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        searchText: '',
+        keyword: '',
         enableStatus: null
       },
       pageSizes: [10, 20, 50, 100],
@@ -172,7 +174,7 @@ export default {
         const params = {
           pageNum: this.queryParams.pageNum,
           pageSize: this.queryParams.pageSize,
-          searchText: this.queryParams.searchText,
+          keyword: this.queryParams.keyword,
           enableStatus: this.queryParams.enableStatus !== null ? this.queryParams.enableStatus : undefined
         }
         const res = await queryPage(params)
@@ -203,7 +205,7 @@ export default {
     },
 
     resetQuery() {
-      this.queryParams.searchText = ''
+      this.queryParams.keyword = ''
       this.queryParams.enableStatus = null
       this.handleQuery()
     },
@@ -337,6 +339,7 @@ export default {
 
     enableChange(newValue, row) {
       const originalStatus = newValue === 1 ? 0 : 1
+      this.$set(row, 'statusUpdating', true)
       modify({ id: row.id, enableStatus: newValue }).then(res => {
         if (res.code === 200) {
           this.$message.success(newValue === 1 ? '已启用' : '已停用')
@@ -345,8 +348,10 @@ export default {
           row.enableStatus = originalStatus
         }
       }).catch(() => {
-        this.$message.error('网络错误')
+        this.$message.error('状态修改失败，请重试')
         row.enableStatus = originalStatus
+      }).finally(() => {
+        row.statusUpdating = false
       })
     }
   }
