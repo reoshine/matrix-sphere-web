@@ -59,7 +59,7 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      loginForm: {username: 'roshine', password: '123456'},
+      loginForm: {username: '', password: ''},
       loading: false
     }
   },

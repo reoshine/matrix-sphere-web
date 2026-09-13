@@ -1,20 +1,14 @@
 import router from './router'
 import store from './store'
-import { manage } from '@/axios'
-
-// OAuth2 授权服务器配置
-const SSO_CONFIG = {
-    clientId: 'matrix-sphere',
-    authorizeUrl: 'http://192.168.0.10:7002/matrix-sphere/oauth2/authorize',
-    redirectUri: 'http://192.168.0.10:8081/callback',
-}
+import { redirectToAuthorization } from '@/auth/oauth'
+import { getCurrentUserMenuTree } from '@/views/accountManagement/api'
 
 const whiteList = ['/login', '/callback', '/404', '/403']
 
 async function loadMenus() {
     if (store.state.menus.length > 0) return
     try {
-        const res = await manage.get('/menu/tree')
+        const res = await getCurrentUserMenuTree()
         if (res.code === 200) {
             store.commit('SET_MENUS', res.data || [])
         }
@@ -38,9 +32,13 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (!token) {
-        sessionStorage.setItem('target_route', to.fullPath)
-        const authUrl = `${SSO_CONFIG.authorizeUrl}?response_type=code&client_id=${SSO_CONFIG.clientId}&redirect_uri=${encodeURIComponent(SSO_CONFIG.redirectUri)}&scope=message.read`
-        window.location.href = authUrl
+        try {
+            await redirectToAuthorization(to.fullPath)
+        } catch (error) {
+            console.error('OAuth2 授权跳转失败，回退到登录页', error)
+            sessionStorage.setItem('target_route', to.fullPath)
+            return next('/login')
+        }
     } else {
         await loadMenus()
         next()

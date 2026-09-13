@@ -55,6 +55,8 @@
 
 <script>
 import axios from 'axios'
+import { runtimeConfig, joinUrl } from '@/config/runtime'
+import { redirectToAuthorization } from '@/auth/oauth'
 
 export default {
   data() {
@@ -73,7 +75,7 @@ export default {
         params.append('password', this.loginForm.password)
 
         // 发送到 SSO 后端的认证接口
-        const res = await axios.post('http://192.168.0.10:8081/matrix-sphere-sso/authentication/login', params, {
+        const res = await axios.post(joinUrl(runtimeConfig.apiBase, '/authentication/login'), params, {
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
           withCredentials: true // 极其重要：跨域携带 Cookie
         })
@@ -82,8 +84,7 @@ export default {
           this.$message.success('认证成功，正在跳转...')
           // 核心逻辑：登录成功后，跳回 SSO 最初的授权页面（即 /oauth2/authorize）
           // 因为 Spring 会在 Session 中记录 SavedRequest，直接重新访问 SSO 即可
-          window.location.href = 'http://192.168.0.10:8081/matrix-sphere-sso/oauth2/authorize?response_type=code&client_id=matrix-sphere'
-          // 提示：上面的 URL 建议从之前的路由参数中动态获取
+          await redirectToAuthorization(sessionStorage.getItem('target_route') || '/')
         }
       } catch (error) {
         this.$message.error(error.response?.data?.msg || '登录失败')

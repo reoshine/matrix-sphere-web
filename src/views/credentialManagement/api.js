@@ -1,4 +1,4 @@
-import {sphere} from "@/axios";
+import { sphere } from '@/axios'
 
 export function page(data) {
   return sphere.post('/credential/v1/page', data)

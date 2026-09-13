@@ -1,6 +1,6 @@
 /**
  * 菜单分组映射工具
- * 将后端 /menu/tree 返回的菜单映射到前端定义的分组结构
+ * 将后端 /menu/v1/current-user-tree 返回的用户菜单映射到前端定义的分组结构
  * 后端零改动，前端做分组适配
  *
  * 后端顶级菜单（menu_level=1）的标识字段为 menuCode（如 applicationManagement、serviceMonitor）。

@@ -138,6 +138,7 @@ import bus from '@/util/bus';
 import { mapGetters } from 'vuex';
 import { groupMenus } from '@/utils/menuGroups';
 import { sso } from '@/axios';
+import { clearAuthentication } from '@/auth/oauth';
 
 export default {
   name: "sidebar",
@@ -251,8 +252,7 @@ export default {
       } catch (error) {
         console.error('SSO注销请求异常，强制执行本地清理', error);
       } finally {
-        localStorage.removeItem("adpSsoToken");
-        localStorage.removeItem("adpSsoRefreshToken");
+        clearAuthentication();
         localStorage.removeItem("ms_username");
         this.$message.success('退出成功！');
         setTimeout(() => {

@@ -39,9 +39,10 @@
                 </template>
               </el-table-column>
               <el-table-column prop="createByName" label="创建人" width="100" align="center" />
-              <el-table-column label="操作" width="250" fixed="right" align="center">
+              <el-table-column label="操作" width="330" fixed="right" align="center">
                 <template slot-scope="{ row }">
                   <el-button type="text" size="small" icon="el-icon-edit" @click="modifyRole(row)">编辑</el-button>
+                  <el-button type="text" size="small" icon="el-icon-key" @click="roleAuthorityAllocation(row)">权限分配</el-button>
                   <el-button type="text" size="small" icon="el-icon-s-operation" @click="roleMenuAllocation(row)">菜单分配</el-button>
                   <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeRole(row)">删除</el-button>
                 </template>
@@ -152,13 +153,42 @@
 
     <!-- 菜单分配抽屉 -->
     <el-drawer title="菜单权限分配" :visible.sync="showMenuDrawer" size="500px" custom-class="custom-drawer">
-      <div class="drawer-content">
+      <div class="drawer-content" v-loading="menuLoading">
         <el-input v-model="menuFilterText" placeholder="输入菜单名称进行过滤" size="small" prefix-icon="el-icon-search" style="margin-bottom: 15px;" />
-        <el-tree ref="menuTree" :data="menuList" show-checkbox node-key="id" default-expand-all :filter-node-method="filterMenuNode" :default-checked-keys="roleMenuSave.menuIdList" :props="{ children: 'children', label: 'menuName' }" highlight-current @check="onMenuCheck" />
+        <el-tree ref="menuTree" :data="menuList" show-checkbox node-key="id" default-expand-all :filter-node-method="filterMenuNode" :default-checked-keys="roleMenuSave.menuIds" :props="{ children: 'children', label: 'menuName' }" highlight-current @check="onMenuCheck" />
       </div>
       <div class="drawer-footer">
         <el-button @click="showMenuDrawer = false">取 消</el-button>
         <el-button type="primary" :loading="menuLoading" @click="saveRoleMenu">保存分配</el-button>
+      </div>
+    </el-drawer>
+
+    <!-- 权限分配抽屉 -->
+    <el-drawer title="角色权限分配" :visible.sync="showRoleAuthorityDrawer" size="500px" custom-class="custom-drawer">
+      <div class="drawer-content" v-loading="authorityAllocationLoading">
+        <div class="allocation-summary">
+          <span>{{ currentRole.roleName || '-' }}</span>
+          <span>已选择 {{ roleAuthorityIds.length }} 项权限</span>
+        </div>
+        <el-input v-model="authorityFilterText" placeholder="输入权限编码或名称过滤" size="small" prefix-icon="el-icon-search" clearable />
+        <el-checkbox-group v-if="filteredAuthorityList.length" v-model="roleAuthorityIds" class="authority-list">
+          <el-checkbox
+            v-for="authority in filteredAuthorityList"
+            :key="authority.id"
+            :label="authority.id"
+            :disabled="!authority.enabled && !roleAuthorityIds.includes(authority.id)"
+            class="authority-item"
+          >
+            <span class="authority-code">{{ authority.authorityCode }}</span>
+            <span class="authority-description">{{ authority.authorityDesc }}</span>
+            <span v-if="!authority.enabled" class="authority-disabled">已停用</span>
+          </el-checkbox>
+        </el-checkbox-group>
+        <div v-else-if="!authorityAllocationLoading" class="allocation-empty">没有匹配的可用权限</div>
+      </div>
+      <div class="drawer-footer">
+        <el-button @click="showRoleAuthorityDrawer = false">取 消</el-button>
+        <el-button type="primary" :loading="authorityAllocationLoading" @click="saveRoleAuthorities">保存权限</el-button>
       </div>
     </el-drawer>
   </PageContainer>
@@ -170,7 +200,8 @@ import FilterBar from '@/components/common/FilterBar.vue'
 import {
   getRolePage, addRole, getRoleById, modifyRole, removeRole,
   getAuthorityPage, addAuthority, getAuthorityById, modifyAuthority, removeAuthority,
-  addRoleMenu, getRoleMenuByRoleId, getMenuList
+  addRoleMenu, getRoleMenuByRoleId, getMenuList,
+  getAuthorityList, getRoleAuthorityIds, replaceRoleAuthorities
 } from '@/views/accountManagement/api'
 
 export default {
@@ -215,8 +246,25 @@ export default {
       menuLoading: false,
       menuList: [],
       menuFilterText: '',
-      roleMenuSave: { roleId: '', menuIdList: [] },
-      currentRole: {}
+      roleMenuSave: { roleId: '', menuIds: [] },
+      currentRole: {},
+
+      // --- 权限分配 ---
+      showRoleAuthorityDrawer: false,
+      authorityAllocationLoading: false,
+      authorityList: [],
+      authorityFilterText: '',
+      roleAuthorityIds: []
+    }
+  },
+  computed: {
+    filteredAuthorityList() {
+      const keyword = this.authorityFilterText.trim().toLowerCase()
+      if (!keyword) return this.authorityList
+      return this.authorityList.filter(authority =>
+        (authority.authorityCode || '').toLowerCase().includes(keyword) ||
+        (authority.authorityDesc || '').toLowerCase().includes(keyword)
+      )
     }
   },
   watch: {
@@ -364,19 +412,27 @@ export default {
       this.currentRole = role
       this.menuFilterText = ''
       this.showMenuDrawer = true
-      if (this.menuList.length === 0) {
-        await getMenuList(1).then(res => { if (res.code === 200) this.menuList = res.data || [] })
-      }
-      this.roleMenuSave = { roleId: role.id, menuIdList: [] }
-      getRoleMenuByRoleId(role.id).then(res => {
-        if (res.code === 200 && res.data) {
-          this.roleMenuSave = { roleId: role.id, menuIdList: res.data.menuIdList || [] }
-          this.$nextTick(() => { this.$refs.menuTree && this.$refs.menuTree.setCheckedKeys(this.roleMenuSave.menuIdList) })
+      this.menuLoading = true
+      try {
+        if (this.menuList.length === 0) {
+          const menuRes = await getMenuList()
+          if (menuRes.code !== 200) throw new Error(menuRes.message || '菜单加载失败')
+          this.menuList = menuRes.data || []
         }
-      })
+        const roleMenuRes = await getRoleMenuByRoleId(role.id)
+        if (roleMenuRes.code !== 200) throw new Error(roleMenuRes.message || '角色菜单加载失败')
+        this.roleMenuSave = { roleId: role.id, menuIds: roleMenuRes.data || [] }
+        this.$nextTick(() => {
+          this.$refs.menuTree && this.$refs.menuTree.setCheckedKeys(this.roleMenuSave.menuIds)
+        })
+      } catch (error) {
+        this.$message.error(error.message || '菜单分配信息加载失败')
+      } finally {
+        this.menuLoading = false
+      }
     },
     onMenuCheck(_, checkedKeys) {
-      this.roleMenuSave.menuIdList = [...checkedKeys.checkedKeys, ...checkedKeys.halfCheckedKeys]
+      this.roleMenuSave.menuIds = [...checkedKeys.checkedKeys, ...checkedKeys.halfCheckedKeys]
     },
     saveRoleMenu() {
       this.menuLoading = true
@@ -389,6 +445,45 @@ export default {
     filterMenuNode(value, data) {
       if (!value) return true
       return data.menuName.indexOf(value) !== -1
+    },
+
+    // ==================== 权限分配 ====================
+    async roleAuthorityAllocation(role) {
+      this.currentRole = role
+      this.authorityFilterText = ''
+      this.roleAuthorityIds = []
+      this.showRoleAuthorityDrawer = true
+      this.authorityAllocationLoading = true
+      try {
+        const [authorityRes, selectedRes] = await Promise.all([
+          getAuthorityList(),
+          getRoleAuthorityIds(role.id)
+        ])
+        if (authorityRes.code !== 200) throw new Error(authorityRes.message || '权限列表加载失败')
+        if (selectedRes.code !== 200) throw new Error(selectedRes.message || '角色权限加载失败')
+        this.authorityList = authorityRes.data || []
+        this.roleAuthorityIds = selectedRes.data || []
+      } catch (error) {
+        this.$message.error(error.message || '权限分配信息加载失败')
+      } finally {
+        this.authorityAllocationLoading = false
+      }
+    },
+    async saveRoleAuthorities() {
+      this.authorityAllocationLoading = true
+      try {
+        const saveRes = await replaceRoleAuthorities(this.currentRole.id, this.roleAuthorityIds)
+        if (saveRes.code !== 200) throw new Error(saveRes.message || '权限保存失败')
+        const selectedRes = await getRoleAuthorityIds(this.currentRole.id)
+        if (selectedRes.code !== 200) throw new Error(selectedRes.message || '权限结果刷新失败')
+        this.roleAuthorityIds = selectedRes.data || []
+        this.$message.success('角色权限保存成功')
+        this.showRoleAuthorityDrawer = false
+      } catch (error) {
+        this.$message.error(error.message || '角色权限保存失败')
+      } finally {
+        this.authorityAllocationLoading = false
+      }
     }
   },
   created() {
@@ -455,6 +550,55 @@ export default {
   position: absolute;
   bottom: 0;
   width: 100%;
+}
+
+.allocation-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: @space-3;
+  color: @text-secondary;
+  font-size: @font-size-sm;
+}
+
+.authority-list {
+  display: flex;
+  flex-direction: column;
+  gap: @space-2;
+  margin-top: @space-4;
+}
+
+.authority-item {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin-right: 0;
+  padding: @space-2 @space-3;
+  border: 1px solid @border-color-light;
+  border-radius: @border-radius;
+  background: @bg-content;
+}
+
+.authority-code {
+  display: inline-block;
+  min-width: 150px;
+  color: @text-primary;
+  font-family: var(--font-mono);
+}
+
+.authority-description {
+  color: @text-secondary;
+}
+
+.authority-disabled {
+  margin-left: auto;
+  color: @text-tertiary;
+  font-size: @font-size-xs;
+}
+
+.allocation-empty {
+  padding: @space-8 0;
+  color: @text-tertiary;
+  text-align: center;
 }
 
 ::v-deep .custom-drawer .el-drawer__body {

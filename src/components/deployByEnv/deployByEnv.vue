@@ -219,6 +219,7 @@ import {
 } from "@/views/applicationManagement/applicationList/api";
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import * as CollUtils from '@/util/CollUtils'
+import { joinUrl, runtimeConfig } from '@/config/runtime'
 
 const STEP_STATUS_MAP = {
   0: 'wait',
@@ -392,7 +393,7 @@ export default {
         clearInterval(this.pollingTimer);
         this.pollingTimer = null;
       }
-      const sseUrl = `http://192.168.0.10:7002/matrix-sphere/sse/v1/connect/${applicationId}`;
+      const sseUrl = joinUrl(runtimeConfig.sseBase, `connect/${encodeURIComponent(applicationId)}`);
       console.log('SSE 连接中...', sseUrl);
 
       try {

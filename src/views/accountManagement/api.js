@@ -73,6 +73,14 @@ export function getRoleList() {
   return manage.get('/role/list')
 }
 
+export function replaceRoleAuthorities(roleId, authorityIds) {
+  return manage.put(`/role/v1/${roleId}/authorities`, { authorityIds })
+}
+
+export function getRoleAuthorityIds(roleId) {
+  return manage.get(`/role/v1/${roleId}/authorities`)
+}
+
 // ====================================== 权限管理 ======================================
 
 export function getAuthorityById(data) {
@@ -95,10 +103,18 @@ export function removeAuthority(data) {
   return manage.post(`/authority/remove/${data}`)
 }
 
+export function getAuthorityList() {
+  return manage.get('/authority/list')
+}
+
 // ====================================== 菜单管理 ======================================
 
 export function getMenuList() {
   return manage.get('/menu/tree')
+}
+
+export function getCurrentUserMenuTree() {
+  return manage.get('/menu/v1/current-user-tree')
 }
 
 export function getMenuById(data) {

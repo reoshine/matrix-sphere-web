@@ -9,9 +9,30 @@
 
 <script>
 import axios from 'axios'
-import { manage } from '@/axios'
 import store from '@/store'
 import { MessageBox } from 'element-ui'
+import { runtimeConfig } from '@/config/runtime'
+import { clearAuthentication, consumeAuthorizationRequest, redirectToAuthorization } from '@/auth/oauth'
+import { getCurrentUserMenuTree } from '@/views/accountManagement/api'
+
+function authenticationErrorMessage(error) {
+  const oauthError = error.response && error.response.data && error.response.data.error
+  const errorDescription = error.response && error.response.data && error.response.data.error_description
+
+  if (oauthError === 'invalid_grant') {
+    return '授权码无效或 PKCE 校验失败，请重新登录'
+  }
+  if (oauthError === 'invalid_client') {
+    return 'OAuth2 客户端配置无效，请联系管理员'
+  }
+  if (oauthError === 'invalid_request') {
+    return errorDescription || 'Token 请求参数无效，请重新登录'
+  }
+  if (!error.response) {
+    return '无法连接认证服务，请检查网络后重试'
+  }
+  return errorDescription || 'Token 兑换失败，请重新登录'
+}
 
 export default {
   name: 'SsoCallback',
@@ -22,26 +43,38 @@ export default {
     async handleCallback() {
       // 1. 从 URL 获取 SSO 传回来的 code
       const code = this.$route.query.code
+      const state = this.$route.query.state
 
-      if (!code) return // 如果没有code直接返回，不弹窗，防止二次执行报错
+      if (!code) {
+        return this.showAuthenticationError('授权服务器未返回有效授权码')
+      }
 
-      window.isProcessingToken = true; // 锁定
-      this.$router.replace({ query: {} }); // 立即抹掉 URL 中的 code
+      window.isProcessingToken = true
+
+      let authorizationRequest
+      try {
+        authorizationRequest = consumeAuthorizationRequest(state)
+      } catch (error) {
+        console.error('OAuth2 授权事务校验失败', error)
+        this.$router.replace({ query: {} }).catch(() => {})
+        window.isProcessingToken = false
+        return this.showAuthenticationError(error.message)
+      }
+
+      this.$router.replace({ query: {} }).catch(() => {})
 
       try {
-        // 2. 发起请求换取 Token
-        // 注意：这里必须用原生 axios，不要用封装好的 service，以免触发 401 拦截
-        const res = await axios.post('/oauth2/token',
+        const res = await axios.post(runtimeConfig.oauth.tokenUrl,
             new URLSearchParams({
               grant_type: 'authorization_code',
-              code: code,
-              redirect_uri: 'http://192.168.0.10:8081/callback' // 必须与发 code 时的 uri 一字不差
+              code,
+              client_id: runtimeConfig.oauth.clientId,
+              redirect_uri: runtimeConfig.oauth.redirectUri,
+              code_verifier: authorizationRequest.verifier
             }),
             {
               headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                // Basic Auth (client_id:client_secret 的 base64)
-                'Authorization': 'Basic ' + btoa('matrix-sphere:matrix-sphere-secret')
+                'Content-Type': 'application/x-www-form-urlencoded'
               }
             }
         )
@@ -55,7 +88,7 @@ export default {
 
         // 5. 加载菜单数据到 Vuex store
         try {
-          const menuRes = await manage.get('/menu/tree')
+          const menuRes = await getCurrentUserMenuTree()
           if (menuRes.code === 200) {
             store.commit('SET_MENUS', menuRes.data || [])
           }
@@ -63,25 +96,25 @@ export default {
           console.warn('菜单加载失败，不影响登录', e)
         }
 
-        // 6. 跳转目标页面
-        const targetRoute = sessionStorage.getItem('target_route') || '/'
-        sessionStorage.removeItem('target_route')
-
-        this.$router.replace(targetRoute)
+        this.$router.replace(authorizationRequest.targetRoute)
 
       } catch (error) {
-        console.error('获取Token失败', error)
-        MessageBox.alert('授权码已过期或非法', '认证失败', {
-          type: 'error',
-          callback: () => {
-            // 换取失败，重新触发一次 SSO 登录
-            localStorage.removeItem('adpSsoToken')
-            window.location.reload()
-          }
+        console.error('OAuth2 Token 兑换失败', {
+          status: error.response && error.response.status,
+          data: error.response && error.response.data,
+          message: error.message
         })
+        this.showAuthenticationError(authenticationErrorMessage(error))
       } finally {
-        window.isProcessingToken = false; // 释放
+        window.isProcessingToken = false
       }
+    },
+    showAuthenticationError(message) {
+      clearAuthentication()
+      MessageBox.alert(message, '认证失败', {
+        type: 'error',
+        callback: () => redirectToAuthorization('/')
+      })
     }
   }
 }

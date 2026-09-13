@@ -125,6 +125,68 @@ body {
 .el-checkbox__input.is-checked + .el-checkbox__label,
 .el-radio__input.is-checked + .el-radio__label { color: var(--color-primary-light); }
 
+/* 穿梭框默认面板使用纯白背景，需要覆盖完整结构，避免暗色抽屉内出现亮色块。 */
+.el-transfer-panel {
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border-color: var(--color-border);
+}
+
+.el-transfer-panel .el-transfer-panel__header {
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface-elevated);
+  border-bottom-color: var(--color-border);
+}
+
+.el-transfer-panel .el-transfer-panel__header .el-checkbox .el-checkbox__label,
+.el-transfer-panel__item.el-checkbox {
+  color: var(--color-text-secondary);
+}
+
+.el-transfer-panel .el-transfer-panel__header .el-checkbox .el-checkbox__label span,
+.el-transfer-panel__empty {
+  color: var(--color-text-tertiary);
+}
+
+.el-transfer-panel__body,
+.el-transfer-panel__list {
+  background: var(--color-bg-surface);
+}
+
+.el-transfer-panel__item.el-checkbox:hover {
+  color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+}
+
+.el-transfer-panel__item.is-disabled.el-checkbox,
+.el-transfer-panel__item.is-disabled.el-checkbox:hover {
+  color: var(--color-text-tertiary);
+  background: transparent;
+}
+
+.el-transfer-panel__filter .el-input__inner {
+  color: var(--color-text-primary);
+  background: var(--color-bg-page);
+  border-color: var(--color-border);
+}
+
+.el-transfer-panel__filter .el-input__inner:focus {
+  border-color: var(--color-primary);
+}
+
+.el-transfer-panel .el-transfer-panel__footer {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface-elevated);
+  border-top-color: var(--color-border);
+}
+
+.el-transfer__buttons .el-transfer__button.is-disabled,
+.el-transfer__buttons .el-transfer__button.is-disabled:hover {
+  color: var(--color-text-tertiary) !important;
+  background: var(--color-bg-page) !important;
+  border-color: var(--color-border-light) !important;
+}
+
 /* 单选按钮组默认使用白色按钮面，需要单独覆盖普通、悬停、选中和禁用状态。 */
 .el-radio-button__inner {
   color: var(--color-text-secondary);
@@ -213,11 +275,50 @@ body {
 .el-tabs__active-bar { background-color: var(--color-primary); }
 .el-tabs__nav-wrap::after { background-color: var(--color-border); }
 
-.el-pagination { color: var(--color-text-secondary); }
+/* 分页的 background 变体拥有更高优先级，完整覆盖按钮、页码、文字和输入控件的浅色默认值。 */
+.el-pagination,
+.el-pagination__sizes,
+.el-pagination__total,
+.el-pagination__jump { color: var(--color-text-secondary); }
 .el-pagination button,
-.el-pager li { color: var(--color-text-secondary); background: var(--color-bg-surface); }
-.el-pager li.active { color: var(--color-primary-light); }
-.el-pagination button:disabled { color: var(--color-text-tertiary); background: var(--color-bg-surface); }
+.el-pagination .btn-prev,
+.el-pagination .btn-next,
+.el-pager li,
+.el-pagination.is-background .btn-prev,
+.el-pagination.is-background .btn-next,
+.el-pagination.is-background .el-pager li {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface-elevated);
+}
+.el-pagination button:hover,
+.el-pagination.is-background .btn-prev:not(:disabled):hover,
+.el-pagination.is-background .btn-next:not(:disabled):hover,
+.el-pagination.is-background .el-pager li:not(.disabled):not(.active):hover {
+  color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+}
+.el-pager li.active,
+.el-pagination.is-background .el-pager li:not(.disabled).active {
+  color: #062623;
+  background: var(--color-primary);
+}
+.el-pagination button:focus-visible,
+.el-pagination .el-pager li:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.el-pagination button:disabled,
+.el-pagination.is-background .btn-prev:disabled,
+.el-pagination.is-background .btn-next:disabled,
+.el-pagination.is-background .el-pager li.disabled {
+  color: var(--color-text-tertiary);
+  background: #101726;
+}
+.el-pagination .el-input__inner {
+  color: var(--color-text-primary);
+  background: var(--color-bg-page);
+  border-color: var(--color-border);
+}
 
 /* 标签不使用实心高亮块：用低明度色面承载状态，避免密集列表产生视觉噪声。 */
 .el-tag,

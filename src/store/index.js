@@ -6,7 +6,7 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
   state: {
-    menus: [], // 存储从API获取的 *原始* 菜单
+    menus: [], // 存储后端按当前用户权限过滤后的菜单树
     hasAddedRoutes: false // 是否已动态添加路由
   },
   mutations: {
@@ -18,7 +18,7 @@ const store = new Vuex.Store({
     }
   },
   actions: {
-    // 可以在这里封装 getMenuList，但为简单起见，我们在 permission.js 中直接调用
+    // 菜单由 permission.js 在认证后通过 current-user-tree 加载
   },
   getters: {
     menus: state => state.menus,

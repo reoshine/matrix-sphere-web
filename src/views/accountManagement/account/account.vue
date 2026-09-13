@@ -510,7 +510,7 @@ export default {
     }
   }
 
-  :deep(.el-transfer-panel) {
+  /deep/ .el-transfer-panel {
     width: 220px;
   }
 }

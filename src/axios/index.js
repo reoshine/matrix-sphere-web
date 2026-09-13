@@ -3,6 +3,8 @@ import router from '@/router'
 import { Message } from 'element-ui'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
+import { runtimeConfig } from '@/config/runtime'
+import { clearTokens, redirectToAuthorization } from '@/auth/oauth'
 
 NProgress.configure({ showSpinner: false })
 
@@ -79,12 +81,13 @@ function createAxiosInstance(baseURL) {
 
                 isRefreshing = true
                 try {
-                    const refreshRes = await axios.post('/oauth2/token',
+                    const refreshRes = await axios.post(runtimeConfig.oauth.tokenUrl,
                         new URLSearchParams({
                             grant_type: 'refresh_token',
-                            refresh_token: refreshToken
+                            refresh_token: refreshToken,
+                            client_id: runtimeConfig.oauth.clientId
                         }),
-                        { headers: { 'Authorization': 'Basic ' + btoa('matrix-sphere:matrix-sphere-secret') } }
+                        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                     )
 
                     const newToken = refreshRes.data.access_token
@@ -113,30 +116,21 @@ function createAxiosInstance(baseURL) {
     return instance
 }
 
-function triggerSsoLogin(failedUrl) {
-    localStorage.removeItem('adpSsoToken')
-    localStorage.removeItem('adpSsoRefreshToken')
-
-    // 静默跳转到 OAuth2 授权端点，不弹窗
-    sessionStorage.setItem('target_route', router.currentRoute.fullPath)
-    const SSO_CONFIG = {
-        clientId: 'matrix-sphere',
-        authorizeUrl: 'http://192.168.0.10:7002/matrix-sphere/oauth2/authorize',
-        redirectUri: 'http://192.168.0.10:8081/callback',
-    }
-    const authUrl = `${SSO_CONFIG.authorizeUrl}?response_type=code&client_id=${SSO_CONFIG.clientId}&redirect_uri=${encodeURIComponent(SSO_CONFIG.redirectUri)}&scope=message.read`
-    window.location.href = authUrl
-
-    // 返回一个 pending 的 Promise，阻止后续请求
-    return new Promise(() => {})
+function triggerSsoLogin() {
+    clearTokens()
+    return redirectToAuthorization(router.currentRoute.fullPath).catch(error => {
+        console.error('OAuth2 授权跳转失败，回退到登录页', error)
+        router.replace('/login')
+        return new Promise(() => {})
+    })
 }
 
 // 统一 API 实例，通过代理前缀区分模块
 const services = {
-    api: createAxiosInstance(''),
-    sso: createAxiosInstance('/matrix-sphere-sso'),
-    manage: createAxiosInstance('/matrix-sphere-management'),
-    sphere: createAxiosInstance('/matrix-sphere')
+    api: createAxiosInstance(runtimeConfig.apiBase),
+    sso: createAxiosInstance(runtimeConfig.apiBase),
+    manage: createAxiosInstance(runtimeConfig.apiBase),
+    sphere: createAxiosInstance(runtimeConfig.apiBase)
 }
 
 export const { api, sso, manage, sphere } = services
