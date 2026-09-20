@@ -19,6 +19,7 @@
                         <el-button type="warning" size="mini" icon="el-icon-link" class="action-btn"
                                    @click.stop="openMrLink(line)">前往 GitLab 解决冲突</el-button>
                         <el-button v-if="step.rawStatus === 4 && step.id === 'merge'"
+                                   v-authority="deployAuthorities"
                                    type="primary" size="mini" icon="el-icon-refresh" class="action-btn"
                                    @click.stop="handleRetry">重试</el-button>
                       </div>
@@ -37,7 +38,7 @@
       <div slot="header" class="card-header-flex">
         <span class="header-title"><i class="el-icon-success text-success"></i> 已部署分支 (Feature)</span>
         <div class="header-actions">
-          <el-button type="text" icon="el-icon-document" @click="getDepLoyLogList">查看部署历史</el-button>
+          <el-button v-authority="'DEPLOY_VIEW'" type="text" icon="el-icon-document" @click="getDepLoyLogList">查看部署历史</el-button>
         </div>
       </div>
 
@@ -45,6 +46,7 @@
         <div class="left-actions">
           <el-tooltip content="将选中分支从环境中移除" placement="top">
             <el-button type="warning"
+                       v-authority="deployAuthorities"
                        plain
                        icon="el-icon-remove-outline"
                        size="small" @click="confirmWithdraw"
@@ -53,6 +55,7 @@
           </el-tooltip>
           <el-tooltip content="重新构建并部署选中分支" placement="top">
             <el-button type="primary"
+                       v-authority="deployAuthorities"
                        plain
                        icon="el-icon-refresh"
                        size="small"
@@ -62,6 +65,7 @@
           </el-tooltip>
           <el-divider direction="vertical"></el-divider>
           <el-button type="danger"
+                     v-authority="deployAuthorities"
                      plain
                      icon="el-icon-s-flag"
                      size="small"
@@ -103,6 +107,7 @@
       <div class="toolbar-container">
         <div class="left-actions">
           <el-button type="primary"
+                     v-authority="deployAuthorities"
                      size="small"
                      icon="el-icon-upload2"
                      @click="deploy"
@@ -274,6 +279,11 @@ export default {
   },
 
   computed: {
+    deployAuthorities() {
+      return String(this.env).toUpperCase() === 'PROD'
+        ? ['DEPLOY_EXECUTE', 'DEPLOY_PROD']
+        : ['DEPLOY_EXECUTE'];
+    },
     isDeploying() {
       return this.deployMaster && this.deployMaster.deployStatus === 1;
     }

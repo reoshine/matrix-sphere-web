@@ -14,6 +14,7 @@ import { MessageBox } from 'element-ui'
 import { runtimeConfig } from '@/config/runtime'
 import { clearAuthentication, consumeAuthorizationRequest, redirectToAuthorization } from '@/auth/oauth'
 import { getCurrentUserMenuTree } from '@/views/accountManagement/api'
+import { getCurrentUser, normalizeAuthorityCodes } from '@/auth/user'
 
 function authenticationErrorMessage(error) {
   const oauthError = error.response && error.response.data && error.response.data.error
@@ -86,14 +87,18 @@ export default {
           localStorage.setItem('adpSsoRefreshToken', refresh_token)
         }
 
-        // 5. 加载菜单数据到 Vuex store
+        // 5. 加载用户权限与菜单数据到 Vuex store
         try {
-          const menuRes = await getCurrentUserMenuTree()
+          const [userRes, menuRes] = await Promise.all([
+            getCurrentUser(),
+            getCurrentUserMenuTree()
+          ])
+          store.commit('SET_AUTHORITIES', normalizeAuthorityCodes(userRes.authorities))
           if (menuRes.code === 200) {
             store.commit('SET_MENUS', menuRes.data || [])
           }
         } catch (e) {
-          console.warn('菜单加载失败，不影响登录', e)
+          console.warn('用户权限或菜单加载失败，不影响登录', e)
         }
 
         this.$router.replace(authorizationRequest.targetRoute)

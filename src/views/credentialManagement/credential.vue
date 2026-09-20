@@ -1,7 +1,7 @@
 <template>
   <PageContainer title="凭据管理" subtitle="集中管理 GitLab 与 Jenkins 访问凭据，密钥始终脱敏展示">
     <template #header-actions>
-      <el-button type="primary" icon="el-icon-plus" size="small" @click="addDialog">新增凭据</el-button>
+      <el-button v-authority="'CREDENTIAL_MANAGE'" type="primary" icon="el-icon-plus" size="small" @click="addDialog">新增凭据</el-button>
     </template>
 
     <template #filter>
@@ -53,8 +53,8 @@
           </el-table-column>
           <el-table-column label="操作" width="150" align="center" fixed="right">
             <template slot-scope="{ row }">
-              <el-button type="text" size="small" icon="el-icon-edit" @click.stop="credentialEdit(row)">编辑</el-button>
-              <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click.stop="removeCredential(row)">删除</el-button>
+              <el-button v-authority="'CREDENTIAL_MANAGE'" type="text" size="small" icon="el-icon-edit" @click.stop="credentialEdit(row)">编辑</el-button>
+              <el-button v-authority="'CREDENTIAL_MANAGE'" type="text" size="small" class="text-danger" icon="el-icon-delete" @click.stop="removeCredential(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>

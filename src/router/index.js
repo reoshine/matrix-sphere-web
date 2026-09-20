@@ -96,7 +96,7 @@ export default new Router({
                 {
                     path: 'resources/namespaces',
                     component: () => import('@/views/repositoryManagement/namespace.vue'),
-                    meta: { title: '命名空间' }
+                    meta: { title: '命名空间', hidden: true }
                 },
                 {
                     path: 'resources/credentials',
@@ -193,7 +193,7 @@ export default new Router({
                 {
                     path: 'repositoryManagement/namespace',
                     component: () => import('@/views/repositoryManagement/namespace.vue'),
-                    meta: { title: '命名空间' }
+                    meta: { title: '命名空间', hidden: true }
                 },
                 {
                     path: 'repositoryManagement/gitRepository',

@@ -64,14 +64,9 @@
       </el-table-column>
       <el-table-column label="描述" prop="description" min-width="180" show-overflow-tooltip />
 
-      <el-table-column label="操作" align="center" width="280" fixed="right">
+      <el-table-column label="操作" align="center" width="200" fixed="right">
         <template slot-scope="scope">
           <el-button type="text" icon="el-icon-edit" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-tooltip content="WebSSH 能力将在 M1 阶段启用" placement="top">
-            <span class="unavailable-action">
-              <el-button type="text" icon="el-icon-monitor" size="small" disabled>WebSSH</el-button>
-            </span>
-          </el-tooltip>
           <el-button type="text" icon="el-icon-delete" size="small" class="text-danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>

@@ -17,7 +17,7 @@
                 style="margin-bottom: 10px;">
             </el-input>
 
-            <el-button type="primary" icon="el-icon-plus" size="small" style="width: 100%" @click="handleAddRoot">新增根菜单</el-button>
+            <el-button v-authority="'ROLE_MANAGE'" type="primary" icon="el-icon-plus" size="small" style="width: 100%" @click="handleAddRoot">新增根菜单</el-button>
           </div>
 
           <div class="tree-wrapper">
@@ -39,10 +39,10 @@
                 </span>
                 <span class="node-actions" v-if="currentMenuId === data.id">
                   <el-tooltip content="添加子菜单" placement="top" :open-delay="500">
-                    <el-button type="text" icon="el-icon-plus" size="mini" @click.stop="handleAddChild(data)"></el-button>
+                    <el-button v-authority="'ROLE_MANAGE'" type="text" icon="el-icon-plus" size="mini" @click.stop="handleAddChild(data)"></el-button>
                   </el-tooltip>
                   <el-tooltip content="删除当前菜单" placement="top" :open-delay="500">
-                    <el-button type="text" class="text-danger" icon="el-icon-delete" size="mini" @click.stop="handleDelete(node, data)"></el-button>
+                    <el-button v-authority="'ROLE_MANAGE'" type="text" class="text-danger" icon="el-icon-delete" size="mini" @click.stop="handleDelete(node, data)"></el-button>
                   </el-tooltip>
                 </span>
               </span>
@@ -57,10 +57,10 @@
             <span class="title"><i class="el-icon-edit-outline"></i> 菜单详情配置</span>
             <div class="header-actions" v-if="!cannotEdit">
               <el-button size="small" icon="el-icon-close" @click="cancelEditStatus">取消</el-button>
-              <el-button type="primary" size="small" icon="el-icon-check" @click="saveMenu">保存变更</el-button>
+              <el-button v-authority="'ROLE_MANAGE'" type="primary" size="small" icon="el-icon-check" @click="saveMenu">保存变更</el-button>
             </div>
             <div class="header-actions" v-else>
-              <el-button type="primary" plain size="small" icon="el-icon-edit" @click="enableEdit" :disabled="!currentMenuId">编辑当前菜单</el-button>
+              <el-button v-authority="'ROLE_MANAGE'" type="primary" plain size="small" icon="el-icon-edit" @click="enableEdit" :disabled="!currentMenuId">编辑当前菜单</el-button>
             </div>
           </div>
 

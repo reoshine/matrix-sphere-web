@@ -6,6 +6,7 @@ import './permission'
 import * as echarts from 'echarts'
 import ElementUI from 'element-ui'
 import { initGlobalKeys } from '@/utils/globalKeys'
+import { installAuthority } from '@/plugins/authority'
 
 import 'element-ui/lib/theme-chalk/index.css'
 import '@/assets/css/design-tokens.css'
@@ -17,6 +18,7 @@ import '@/assets/css/theme.less'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)
+installAuthority(Vue)
 Vue.prototype.$echarts = echarts
 
 // 初始化全局键盘快捷键

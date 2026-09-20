@@ -1,124 +1,126 @@
 <template>
-  <PageContainer :title="'工作台'">
-    <!-- 欢迎语 -->
+  <PageContainer title="工作台">
     <template #header-actions>
       <span class="dashboard-greeting">{{ greeting }}，{{ username }}</span>
     </template>
 
-    <!-- KPI 统计卡片 -->
-    <div class="dashboard-stats" v-if="!statsLoading">
-      <StatCard
-        label="应用总数"
-        :value="stats.appCount"
-        :trend="stats.appCountTrend > 0 ? '+' + stats.appCountTrend : ''"
-        :trendType="stats.appCountTrend > 0 ? 'up' : 'flat'"
-      />
-      <StatCard
-        label="今日部署"
-        :value="stats.todayDeployCount"
-        :trend="stats.todayDeployTrend > 0 ? '+' + stats.todayDeployTrend : ''"
-        :trendType="stats.todayDeployTrend > 0 ? 'up' : 'flat'"
-      />
-      <StatCard
-        label="部署成功率"
-        :value="stats.deploySuccessRate + '%'"
-        trendType="flat"
-      />
-      <StatCard
-        label="活跃分支"
-        :value="stats.activeBranchCount"
-        :trend="stats.activeBranchTrend < 0 ? stats.activeBranchTrend + '' : ''"
-        :trendType="stats.activeBranchTrend < 0 ? 'down' : 'flat'"
-      />
-    </div>
-    <div class="dashboard-stats" v-else>
-      <SkeletonCard v-for="i in 4" :key="i" />
+    <div v-if="loading" class="dashboard-stats">
+      <SkeletonCard v-for="i in 5" :key="i" />
     </div>
 
-    <!-- 快速操作 -->
-    <el-card class="dashboard-section" shadow="never">
-      <div slot="header" class="section-header">
-        <span class="section-title">快速操作</span>
-      </div>
-      <div class="quick-actions">
-        <button
-          v-for="action in quickActions"
-          :key="action.path"
-          type="button"
-          class="quick-action-item"
-          @click="$router.push(action.path)"
-        >
-          <i :class="action.icon" class="quick-action-icon"></i>
-          <span class="quick-action-label">{{ action.label }}</span>
-        </button>
-      </div>
+    <el-card v-else-if="error" class="dashboard-state-card" shadow="never">
+      <EmptyState
+        :icon="forbidden ? 'el-icon-lock' : 'el-icon-warning-outline'"
+        :title="forbidden ? '暂无工作台查看权限' : '工作台数据加载失败'"
+        :description="forbidden ? '请联系管理员授予 DEPLOY_VIEW 权限' : error.message"
+        :request-id="error.requestId"
+        :retry-text="forbidden ? '' : '重新加载'"
+        @retry="loadDashboard"
+      />
     </el-card>
 
-    <!-- 最近部署 + 活跃应用 -->
-    <div class="dashboard-panels">
-      <!-- 最近部署 -->
-      <el-card class="dashboard-panel" shadow="never">
-        <div slot="header" class="section-header">
-          <span class="section-title">最近部署</span>
-          <el-button type="text" size="small" @click="$router.push('/deploy')">
-            查看全部 <i class="el-icon-arrow-right"></i>
-          </el-button>
+    <template v-else>
+      <div class="dashboard-stats">
+        <button type="button" class="stat-card-button" @click="openApplications">
+          <StatCard label="应用总数" :value="overview.applicationCount" />
+        </button>
+        <button type="button" class="stat-card-button" @click="openDeployments({ date: 'today' })">
+          <StatCard label="今日部署" :value="overview.todayDeployCount" />
+        </button>
+        <button type="button" class="stat-card-button" @click="openDeployments({ date: 'today', status: 'success' })">
+          <StatCard label="今日成功率" :value="overview.todaySuccessRate + '%'" />
+        </button>
+        <button type="button" class="stat-card-button" @click="openDeployments({ date: 'today', status: 'failed' })">
+          <StatCard label="今日失败" :value="overview.failedDeployCount" />
+        </button>
+        <div class="stat-card-static">
+          <StatCard label="待审批" :value="overview.pendingApprovalCount" />
         </div>
-        <div v-if="recentDeploys.length > 0" class="deploy-list">
-          <div
-            v-for="item in recentDeploys"
-            :key="item.id"
-            class="deploy-item"
-          >
-            <StatusDot :type="item.success ? 'success' : 'error'" />
-            <div class="deploy-info">
-              <span class="deploy-app">{{ item.appName }}</span>
-              <span class="deploy-env">{{ item.env }}</span>
-            </div>
-            <span class="deploy-branch">{{ item.branch }}</span>
-            <span class="deploy-time">{{ item.time }}</span>
-          </div>
-        </div>
-        <EmptyState
-          v-else
-          icon="el-icon-s-promotion"
-          title="暂无部署记录"
-          description="还没有进行过部署操作"
-        />
-      </el-card>
+      </div>
 
-      <!-- 活跃应用 -->
-      <el-card class="dashboard-panel" shadow="never">
+      <el-card class="dashboard-section" shadow="never">
         <div slot="header" class="section-header">
-          <span class="section-title">活跃应用</span>
-          <el-button type="text" size="small" @click="$router.push('/apps')">
-            查看全部 <i class="el-icon-arrow-right"></i>
-          </el-button>
+          <span class="section-title">快速操作</span>
         </div>
-        <div v-if="activeApps.length > 0" class="app-list">
+        <div class="quick-actions">
           <button
-            v-for="item in activeApps"
-            :key="item.id"
+            v-for="action in quickActions"
+            :key="action.path"
             type="button"
-            class="app-item"
-            @click="$router.push('/apps')"
+            class="quick-action-item"
+            @click="$router.push(action.path)"
           >
-            <StatusDot type="success" />
-            <div class="app-info">
-              <span class="app-name">{{ item.name }}</span>
-              <span class="app-code">{{ item.code }}</span>
-            </div>
-            <span class="app-time">{{ item.lastDeployTime }}</span>
+            <i :class="action.icon" class="quick-action-icon"></i>
+            <span class="quick-action-label">{{ action.label }}</span>
           </button>
         </div>
-        <EmptyState
-          v-else
-          icon="el-icon-s-platform"
-          title="暂无活跃应用"
-          description="还没有应用进行过部署"
-        />
       </el-card>
-    </div>
+
+      <div class="dashboard-panels">
+        <el-card class="dashboard-panel" shadow="never">
+          <div slot="header" class="section-header">
+            <span class="section-title">最近部署</span>
+            <el-button type="text" size="small" @click="openDeployments()">
+              查看全部 <i class="el-icon-arrow-right"></i>
+            </el-button>
+          </div>
+          <div v-if="recentDeploys.length > 0" class="deploy-list">
+            <button
+              v-for="item in recentDeploys"
+              :key="item.id"
+              type="button"
+              class="deploy-item"
+              @click="openDeploy(item)"
+            >
+              <StatusDot :type="deployStatusType(item.status)" />
+              <div class="deploy-info">
+                <span class="deploy-app">{{ item.applicationName || item.applicationCode || '未知应用' }}</span>
+                <span class="deploy-env">{{ item.env || '-' }}</span>
+              </div>
+              <span class="deploy-status">{{ item.statusName || '未知状态' }}</span>
+              <span class="deploy-time">{{ formatDateTime(item.deployTime) }}</span>
+            </button>
+          </div>
+          <EmptyState
+            v-else
+            icon="el-icon-s-promotion"
+            title="暂无部署记录"
+            description="还没有进行过部署操作"
+          />
+        </el-card>
+
+        <el-card class="dashboard-panel" shadow="never">
+          <div slot="header" class="section-header">
+            <span class="section-title">活跃应用</span>
+            <el-button type="text" size="small" @click="openApplications">
+              查看全部 <i class="el-icon-arrow-right"></i>
+            </el-button>
+          </div>
+          <div v-if="activeApplications.length > 0" class="app-list">
+            <button
+              v-for="item in activeApplications"
+              :key="item.applicationId"
+              type="button"
+              class="app-item"
+              @click="openApplication(item)"
+            >
+              <StatusDot :type="deployStatusType(item.lastDeployStatus)" />
+              <div class="app-info">
+                <span class="app-name">{{ item.applicationName || item.applicationCode || '未知应用' }}</span>
+                <span class="app-code">{{ item.applicationCode || '-' }}</span>
+              </div>
+              <span class="app-time">{{ formatDateTime(item.lastDeployTime) }}</span>
+            </button>
+          </div>
+          <EmptyState
+            v-else
+            icon="el-icon-s-platform"
+            title="暂无活跃应用"
+            description="还没有应用进行过部署"
+          />
+        </el-card>
+      </div>
+    </template>
   </PageContainer>
 </template>
 
@@ -128,7 +130,7 @@ import StatCard from '@/components/common/StatCard.vue'
 import StatusDot from '@/components/common/StatusDot.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import SkeletonCard from '@/components/common/SkeletonCard.vue'
-import { getDashboardStats, getRecentDeploys, getActiveApps } from './api'
+import { getDashboardOverview } from './api'
 
 export default {
   name: 'Dashboard',
@@ -143,18 +145,9 @@ export default {
     return {
       username: '用户',
       greeting: '你好',
-      statsLoading: true,
-      stats: {
-        appCount: 0,
-        appCountTrend: 0,
-        todayDeployCount: 0,
-        todayDeployTrend: 0,
-        deploySuccessRate: 0,
-        activeBranchCount: 0,
-        activeBranchTrend: 0
-      },
-      recentDeploys: [],
-      activeApps: [],
+      loading: true,
+      error: null,
+      overview: this.createEmptyOverview(),
       quickActions: [
         { label: '选择应用部署', icon: 'el-icon-s-promotion', path: '/apps' },
         { label: '应用列表', icon: 'el-icon-s-platform', path: '/apps' },
@@ -163,68 +156,83 @@ export default {
       ]
     }
   },
+  computed: {
+    forbidden() {
+      return this.error && this.error.httpStatus === 403
+    },
+    recentDeploys() {
+      return this.overview.recentDeploys || []
+    },
+    activeApplications() {
+      return this.overview.activeApplications || []
+    }
+  },
   created() {
     this.initUser()
     this.loadDashboard()
   },
   methods: {
+    createEmptyOverview() {
+      return {
+        applicationCount: 0,
+        todayDeployCount: 0,
+        todaySuccessRate: 0,
+        failedDeployCount: 0,
+        pendingApprovalCount: 0,
+        recentDeploys: [],
+        activeApplications: []
+      }
+    },
     initUser() {
       const username = localStorage.getItem('ms_username')
       this.username = username || '用户'
-
       const hour = new Date().getHours()
-      if (hour < 12) {
-        this.greeting = '早上好'
-      } else if (hour < 18) {
-        this.greeting = '下午好'
-      } else {
-        this.greeting = '晚上好'
-      }
+      this.greeting = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
     },
     async loadDashboard() {
-      this.statsLoading = true
+      this.loading = true
+      this.error = null
       try {
-        const [statsRes, deploysRes, appsRes] = await Promise.all([
-          getDashboardStats(),
-          getRecentDeploys(),
-          getActiveApps()
-        ])
-        if (statsRes && statsRes.data) {
-          this.stats = statsRes.data
-        }
-        if (deploysRes && deploysRes.data) {
-          this.recentDeploys = deploysRes.data
-        }
-        if (appsRes && appsRes.data) {
-          this.activeApps = appsRes.data
-        }
-      } catch (e) {
-        // API 未就绪时使用 mock 数据
-        this.loadMockData()
+        const response = await getDashboardOverview({ recentLimit: 5, activeLimit: 5 })
+        this.overview = response.data || this.createEmptyOverview()
+      } catch (error) {
+        this.overview = this.createEmptyOverview()
+        this.error = error
       } finally {
-        this.statsLoading = false
+        this.loading = false
       }
     },
-    loadMockData() {
-      this.stats = {
-        appCount: 16,
-        appCountTrend: 2,
-        todayDeployCount: 5,
-        todayDeployTrend: 3,
-        deploySuccessRate: 100,
-        activeBranchCount: 8,
-        activeBranchTrend: -1
-      }
-      this.recentDeploys = [
-        { id: 1, appName: '用户中心服务', env: 'DEV', branch: 'feat-login', operator: 'roshine', time: '10:30', success: true },
-        { id: 2, appName: '订单服务', env: 'TEST', branch: 'feat-v2', operator: 'zhangsan', time: '09:15', success: true },
-        { id: 3, appName: '支付网关', env: 'PROD', branch: 'main', operator: 'lisi', time: '昨天 18:00', success: true }
-      ]
-      this.activeApps = [
-        { id: 1, name: '用户中心服务', code: 'user-center', lastDeployTime: '2小时前' },
-        { id: 2, name: '订单服务', code: 'order-svc', lastDeployTime: '1天前' },
-        { id: 3, name: '支付网关', code: 'pay-gateway', lastDeployTime: '3天前' }
-      ]
+    openApplications() {
+      this.$router.push('/apps')
+    },
+    openDeployments(query = {}) {
+      this.$router.push({ path: '/apps', query: { view: 'deployments', ...query } })
+    },
+    openDeploy(item) {
+      if (!item.applicationId) return
+      this.$router.push({ path: `/deploy/${item.applicationId}`, query: { masterId: item.id } })
+    },
+    openApplication(item) {
+      if (!item.applicationId) return
+      this.$router.push(`/deploy/${item.applicationId}`)
+    },
+    deployStatusType(status) {
+      if (status === 2) return 'success'
+      if (status === 3) return 'error'
+      if (status === 1 || status === 4) return 'running'
+      return 'info'
+    },
+    formatDateTime(value) {
+      if (!value) return '-'
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return value
+      return new Intl.DateTimeFormat('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(date)
     }
   }
 }
@@ -238,15 +246,18 @@ export default {
   color: @text-secondary;
 }
 
-/* KPI 统计卡片网格 */
 .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: @space-4;
   margin-bottom: @space-5;
 
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (max-width: 640px) {
@@ -254,7 +265,32 @@ export default {
   }
 }
 
-/* 通用区块 */
+.dashboard-state-card {
+  min-height: 360px;
+}
+
+.stat-card-button,
+.stat-card-static {
+  display: block;
+  min-width: 0;
+}
+
+.stat-card-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stat-card-button:hover /deep/ .stat-card,
+.stat-card-button:focus-visible /deep/ .stat-card {
+  border-color: @primary-color;
+  box-shadow: @shadow-md;
+}
+
 .dashboard-section {
   margin-bottom: @space-5;
   border-radius: @border-radius;
@@ -281,7 +317,6 @@ export default {
   color: @text-primary;
 }
 
-/* 快速操作 */
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -307,10 +342,10 @@ export default {
   cursor: pointer;
   transition: all @transition-fast;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     border-color: @primary-color;
     background: @primary-lighter;
-    transform: translateY(-2px);
     box-shadow: @shadow-md;
   }
 }
@@ -326,10 +361,9 @@ export default {
   font-weight: 500;
 }
 
-/* 双栏面板 */
 .dashboard-panels {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: @space-5;
 
   @media (max-width: 1024px) {
@@ -350,65 +384,13 @@ export default {
   }
 }
 
-/* 最近部署列表 */
-.deploy-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.deploy-item {
-  display: flex;
-  align-items: center;
-  gap: @space-3;
-  padding: @space-3 0;
-  border-bottom: 1px solid @border-color-light;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.deploy-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.deploy-app {
-  font-size: @font-size-sm;
-  color: @text-primary;
-  font-weight: 500;
-}
-
-.deploy-env {
-  font-size: @font-size-xs;
-  color: @text-tertiary;
-}
-
-.deploy-branch {
-  font-size: @font-size-xs;
-  color: @primary-color;
-  background: @primary-lighter;
-  padding: 2px 8px;
-  border-radius: @border-radius-sm;
-  font-family: @font-mono;
-  flex-shrink: 0;
-}
-
-.deploy-time {
-  font-size: @font-size-xs;
-  color: @text-tertiary;
-  flex-shrink: 0;
-}
-
-/* 活跃应用列表 */
+.deploy-list,
 .app-list {
   display: flex;
   flex-direction: column;
 }
 
+.deploy-item,
 .app-item {
   display: flex;
   align-items: center;
@@ -418,7 +400,8 @@ export default {
   border: none;
   border-bottom: 1px solid @border-color-light;
   background: transparent;
-  font-family: inherit;
+  color: inherit;
+  font: inherit;
   text-align: left;
   cursor: pointer;
   transition: background @transition-fast;
@@ -427,14 +410,13 @@ export default {
     border-bottom: none;
   }
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     background: @primary-lighter;
-    margin: 0 calc(-1 * @space-5);
-    padding-left: @space-5;
-    padding-right: @space-5;
   }
 }
 
+.deploy-info,
 .app-info {
   flex: 1;
   min-width: 0;
@@ -443,21 +425,36 @@ export default {
   gap: 2px;
 }
 
+.deploy-app,
 .app-name {
   font-size: @font-size-sm;
   color: @text-primary;
   font-weight: 500;
 }
 
-.app-code {
-  font-size: @font-size-xs;
-  color: @text-tertiary;
-  font-family: @font-mono;
-}
-
+.deploy-env,
+.app-code,
+.deploy-time,
 .app-time {
   font-size: @font-size-xs;
   color: @text-tertiary;
+}
+
+.app-code {
+  font-family: @font-mono;
+}
+
+.deploy-status {
+  font-size: @font-size-xs;
+  color: @primary-color;
+  background: @primary-lighter;
+  padding: 2px 8px;
+  border-radius: @border-radius-sm;
+  flex-shrink: 0;
+}
+
+.deploy-time,
+.app-time {
   flex-shrink: 0;
 }
 </style>

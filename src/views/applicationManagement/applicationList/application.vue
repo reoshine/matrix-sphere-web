@@ -10,8 +10,6 @@
         <el-dropdown-menu slot="dropdown">
           <el-dropdown-item disabled icon="el-icon-download">模板下载（后端能力未接入）</el-dropdown-item>
           <el-dropdown-item disabled icon="el-icon-upload2">导入应用（后端能力未接入）</el-dropdown-item>
-          <el-dropdown-item disabled divided icon="el-icon-connection">从 Gitee 同步（后端能力未接入）</el-dropdown-item>
-          <el-dropdown-item disabled icon="el-icon-connection">从 GitLab 同步（后端能力未接入）</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
     </template>

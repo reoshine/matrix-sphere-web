@@ -1,7 +1,7 @@
 <template>
   <PageContainer title="用户管理" subtitle="管理系统用户账号、状态及角色分配">
     <template #header-actions>
-      <el-button type="primary" icon="el-icon-plus" size="small" @click="addAccount">新增用户</el-button>
+      <el-button v-authority="'USER_MANAGE'" type="primary" icon="el-icon-plus" size="small" @click="addAccount">新增用户</el-button>
     </template>
 
     <template #filter>
@@ -57,6 +57,7 @@
         <el-table-column prop="enabled" label="状态" width="100" align="center">
           <template slot-scope="{ row }">
             <el-switch
+                v-authority="'USER_MANAGE'"
                 v-model="row.enabled"
                 @change="modifyAccountStatus(row)"
             />
@@ -65,9 +66,9 @@
         <el-table-column prop="createByName" label="创建人" width="100" align="center" />
         <el-table-column label="操作" width="250" fixed="right" align="center">
           <template slot-scope="{ row }">
-            <el-button type="text" size="small" icon="el-icon-edit" @click="modifyAccount(row)">编辑</el-button>
-            <el-button type="text" size="small" icon="el-icon-user" @click="roleAllocation(row)">分配角色</el-button>
-            <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeAccount(row)">删除</el-button>
+            <el-button v-authority="'USER_MANAGE'" type="text" size="small" icon="el-icon-edit" @click="modifyAccount(row)">编辑</el-button>
+            <el-button v-authority="'USER_MANAGE'" type="text" size="small" icon="el-icon-user" @click="roleAllocation(row)">分配角色</el-button>
+            <el-button v-authority="'USER_MANAGE'" type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeAccount(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

@@ -63,40 +63,34 @@
                   <template slot="title">{{ subMenu.menuName }}</template>
                   <el-menu-item
                     v-for="subSubMenu in subMenu.children"
-                    v-if="!subSubMenu.hidden"
+                    v-if="!subSubMenu.hidden && !isUnavailableMenu(subSubMenu)"
                     :index="subSubMenu.menuUrl"
                     :key="subSubMenu.menuUrl"
-                    :disabled="isUnavailableMenu(subSubMenu)"
-                    :title="isUnavailableMenu(subSubMenu) ? '尚未接入后端能力' : ''"
                   >
                     <i :class="subSubMenu.icon"></i>
-                    {{ menuLabel(subSubMenu) }}
+                    {{ subSubMenu.menuName }}
                   </el-menu-item>
                 </el-submenu>
 
                 <el-menu-item
-                  v-else-if="!subMenu.hidden"
+                  v-else-if="!subMenu.hidden && !isUnavailableMenu(subMenu)"
                   :index="subMenu.menuUrl"
                   :key="subMenu.menuUrl"
-                  :disabled="isUnavailableMenu(subMenu)"
-                  :title="isUnavailableMenu(subMenu) ? '尚未接入后端能力' : ''"
                 >
                   <i :class="subMenu.icon"></i>
-                  <span slot="title">{{ menuLabel(subMenu) }}</span>
+                  <span slot="title">{{ subMenu.menuName }}</span>
                 </el-menu-item>
               </template>
             </el-submenu>
 
             <!-- 无子菜单的项 -->
             <el-menu-item
-              v-else-if="!menu.hidden"
+              v-else-if="!menu.hidden && !isUnavailableMenu(menu)"
               :index="menu.menuUrl"
               :key="menu.menuUrl"
-              :disabled="isUnavailableMenu(menu)"
-              :title="isUnavailableMenu(menu) ? '尚未接入后端能力' : ''"
             >
               <i :class="menu.icon"></i>
-              <span slot="title">{{ menuLabel(menu) }}</span>
+              <span slot="title">{{ menu.menuName }}</span>
             </el-menu-item>
           </template>
         </el-menu>
@@ -138,7 +132,8 @@ import bus from '@/util/bus';
 import { mapGetters } from 'vuex';
 import { groupMenus } from '@/utils/menuGroups';
 import { sso } from '@/axios';
-import { clearAuthentication } from '@/auth/oauth';
+import { clearAuthentication, redirectToAuthorization } from '@/auth/oauth';
+import { joinUrl, runtimeConfig } from '@/config/runtime';
 
 export default {
   name: "sidebar",
@@ -222,10 +217,6 @@ export default {
       return menuUrl.includes('/resources/namespaces') || menuUrl.includes('repositoryManagement/namespace');
     },
 
-    menuLabel(menu) {
-      return this.isUnavailableMenu(menu) ? `${menu.menuName}（未接入）` : menu.menuName;
-    },
-
     handleResize() {
       const isSmallScreen = window.innerWidth < 768;
       if (isSmallScreen && !this.collapse) {
@@ -238,7 +229,7 @@ export default {
       if (!children || children.length === 0) {
         return false;
       }
-      return children.some(child => !child.hidden);
+      return children.some(child => !child.hidden && !this.isUnavailableMenu(child));
     },
 
     collapseChange() {
@@ -256,7 +247,10 @@ export default {
         localStorage.removeItem("ms_username");
         this.$message.success('退出成功！');
         setTimeout(() => {
-          this.$router.push('/login');
+          redirectToAuthorization('/').catch(error => {
+            console.error('退出后重新发起 OAuth2 授权失败，回退到后端登录页', error);
+            window.location.assign(joinUrl(runtimeConfig.apiBase, '/login'));
+          });
         }, 1500);
       }
     }

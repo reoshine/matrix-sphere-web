@@ -1,7 +1,7 @@
 <template>
   <PageContainer title="角色权限" subtitle="管理角色、权限及其分配关系">
     <template #header-actions>
-      <el-button type="primary" icon="el-icon-plus" size="small" @click="onAdd">新增{{ activeTab === 'role' ? '角色' : '权限' }}</el-button>
+      <el-button v-authority="'ROLE_MANAGE'" type="primary" icon="el-icon-plus" size="small" @click="onAdd">新增{{ activeTab === 'role' ? '角色' : '权限' }}</el-button>
     </template>
 
     <el-tabs v-model="activeTab" type="border-card" class="role-tabs">
@@ -35,16 +35,16 @@
               </el-table-column>
               <el-table-column prop="enabled" label="状态" width="100" align="center">
                 <template slot-scope="{ row }">
-                  <el-switch v-model="row.enabled"  @change="modifyRoleConfirm(row)" />
+                  <el-switch v-authority="'ROLE_MANAGE'" v-model="row.enabled" @change="modifyRoleConfirm(row)" />
                 </template>
               </el-table-column>
               <el-table-column prop="createByName" label="创建人" width="100" align="center" />
               <el-table-column label="操作" width="330" fixed="right" align="center">
                 <template slot-scope="{ row }">
-                  <el-button type="text" size="small" icon="el-icon-edit" @click="modifyRole(row)">编辑</el-button>
-                  <el-button type="text" size="small" icon="el-icon-key" @click="roleAuthorityAllocation(row)">权限分配</el-button>
-                  <el-button type="text" size="small" icon="el-icon-s-operation" @click="roleMenuAllocation(row)">菜单分配</el-button>
-                  <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeRole(row)">删除</el-button>
+                  <el-button v-authority="'ROLE_MANAGE'" type="text" size="small" icon="el-icon-edit" @click="modifyRole(row)">编辑</el-button>
+                  <el-button v-authority="'ROLE_MANAGE'" type="text" size="small" icon="el-icon-key" @click="roleAuthorityAllocation(row)">权限分配</el-button>
+                  <el-button v-authority="'ROLE_MANAGE'" type="text" size="small" icon="el-icon-s-operation" @click="roleMenuAllocation(row)">菜单分配</el-button>
+                  <el-button v-authority="'ROLE_MANAGE'" type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeRole(row)">删除</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -85,14 +85,14 @@
               </el-table-column>
               <el-table-column prop="enabled" label="状态" width="100" align="center">
                 <template slot-scope="{ row }">
-                  <el-switch v-model="row.enabled"  @change="modifyAuthorityConfirm(row)" />
+                  <el-switch v-authority="'ROLE_MANAGE'" v-model="row.enabled" @change="modifyAuthorityConfirm(row)" />
                 </template>
               </el-table-column>
               <el-table-column prop="createByName" label="创建人" width="100" align="center" />
               <el-table-column label="操作" width="200" fixed="right" align="center">
                 <template slot-scope="{ row }">
-                  <el-button type="text" size="small" icon="el-icon-edit" @click="modifyAuthority(row)">编辑</el-button>
-                  <el-button type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeAuthority(row)">删除</el-button>
+                  <el-button v-authority="'ROLE_MANAGE'" type="text" size="small" icon="el-icon-edit" @click="modifyAuthority(row)">编辑</el-button>
+                  <el-button v-authority="'ROLE_MANAGE'" type="text" size="small" class="text-danger" icon="el-icon-delete" @click="removeAuthority(row)">删除</el-button>
                 </template>
               </el-table-column>
             </el-table>
