@@ -275,6 +275,7 @@ export default {
       loadingUnDeployed: false,
       btnLoading: false, // 全局按钮 Loading
       isInitializing: true, // 标志：是否正在初始化
+      pendingDeployRequests: {}, // 网络结果不确定时复用同一requestId
     };
   },
 
@@ -686,6 +687,34 @@ export default {
       });
     },
 
+    createDeployRequestId() {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+      } catch (error) {
+        console.debug('当前环境无法使用 crypto.randomUUID，使用兼容请求标识', error);
+      }
+      const randomPart = Math.random().toString(36).slice(2, 14);
+      return `deploy-${Date.now().toString(36)}-${randomPart}`;
+    },
+
+    resolveDeployRequestId(actionType, branchIds) {
+      const fingerprint = JSON.stringify({
+        applicationId: String(this.applicationId),
+        env: String(this.env).toUpperCase(),
+        deployType: actionType,
+        branchIds: [...branchIds].sort((left, right) => Number(left) - Number(right))
+      });
+      const pending = this.pendingDeployRequests[actionType];
+      if (pending && pending.fingerprint === fingerprint) {
+        return pending.requestId;
+      }
+      const requestId = this.createDeployRequestId();
+      this.$set(this.pendingDeployRequests, actionType, {requestId, fingerprint});
+      return requestId;
+    },
+
     async executeDeployAction(actionType) {
       // 1. 立即给用户反馈，锁定按钮
       this.btnLoading = true;
@@ -704,12 +733,16 @@ export default {
       }
 
       try {
+        const requestId = this.resolveDeployRequestId(actionType, ids);
         const res = await deploy({
           applicationId: this.applicationId,
           branchIds: ids,
           env: this.env,
-          deployType: actionType
+          deployType: actionType,
+          requestId
         });
+
+        this.$delete(this.pendingDeployRequests, actionType);
 
         if (res.code === 200) {
           const result = res.data;
@@ -742,6 +775,9 @@ export default {
           this.steps.forEach(s => s.status = 'wait');
         }
       } catch (err) {
+        if (err && err.response) {
+          this.$delete(this.pendingDeployRequests, actionType);
+        }
         console.error(err);
         this.$message.error('操作失败: ' + err);
         this.closeResources();
